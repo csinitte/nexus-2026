@@ -6,10 +6,17 @@ import { OBJECTS, SIZE, WORDMARK, drawN, nFit, sampleShape, sourceScale, type Sh
 /**
  * Scroll story for the home page.
  *
- * 1. The hero is still. On scroll the NEXUS logo detaches and comes down;
- *    E·X·U·S slide in behind the N and disappear.
- * 2. The N settles in the sticky stage beside the content, breaks into
- *    particles and becomes one object per chapter ([data-chapter] 0–2).
+ * The hero and the three chapters ([data-chapter] 0–2) behave like pages:
+ * a small scroll (wheel tick, short swipe, arrow / Page keys) glides to the
+ * next page and the whole transition plays on its own timing:
+ *
+ * 1. Hero → About: the NEXUS logo detaches and comes down, E·X·U·S slide in
+ *    behind the N, then the N breaks into particles and becomes a network.
+ * 2. About → Hosts → Innovation: the object morphs into the next one.
+ *
+ * Scrolling up plays it in reverse. In chapters taller than the screen each
+ * small scroll glides most of a screen; after the last chapter the page
+ * scrolls normally.
  *
  * Reads layout from: `.nx-logo h1 img` (hero wordmark), `[data-story-stage]`
  * (sticky target box) and `[data-chapter]` (content sections).
@@ -67,38 +74,56 @@ export function LogoStory() {
       return c;
     };
 
-    /** Scroll positions that drive the timeline. */
-    const timeline = () => {
+    const mobile = window.matchMedia('(max-width: 860px)');
+    const stickyTop = () => parseFloat(getComputedStyle(stage).top) || 0;
+
+    /** Scroll position of each page: hero, then each chapter just below the header (and band on mobile). */
+    const targets = () => {
+      const offset = stickyTop() + (mobile.matches ? stage.offsetHeight - 8 : 0);
+      return [0, ...chapters.map((c) => Math.max(0, Math.round(c.getBoundingClientRect().top + window.scrollY - offset)))];
+    };
+    const lastChapterEnd = () => {
+      const r = chapters[chapters.length - 1].getBoundingClientRect();
+      return r.bottom + window.scrollY;
+    };
+    /** Which page the animation should show for a scroll position. */
+    const pageFor = (y: number, T: number[]) => {
       const vh = window.innerHeight;
-      const tops = chapters.map((c) => c.getBoundingClientRect().top + window.scrollY);
-      const anchors = tops.map((t) => t - 0.55 * vh);
-      const D = 0.45 * vh;
-      // Phase A (logo comes down) gets at least 70% of a screen of scrolling,
-      // then the N takes at least another 40% to become the first object.
-      const aEnd = Math.max(anchors[0] - D, 0.7 * vh);
-      const m0End = Math.max(anchors[0], aEnd + 0.4 * vh);
-      return { anchors, D, aEnd, m0End };
+      let i = 0;
+      for (let k = 1; k < T.length; k++) if (y >= T[k] - 0.5 * vh) i = k;
+      return i;
     };
 
-    const progress = (y: number) => {
-      const t = timeline();
-      const pA = clamp(y / t.aEnd);
-      let f = 0;
-      if (y >= t.aEnd) f = clamp((y - t.aEnd) / (t.m0End - t.aEnd));
-      for (let i = 1; i < OBJECTS.length; i++) {
-        const a = t.anchors[i];
-        if (y >= a - t.D) f = i + clamp((y - (a - t.D)) / t.D);
+    /** Animated page value: 0 = hero, 1–3 = chapters. Moves at a fixed speed toward the current page. */
+    let v = -1;
+    let lastNow = 0;
+    const segmentMs = (seg: number) => (seg < 1 ? 1800 : 1200);
+    const step = (target: number, now: number) => {
+      const dt = Math.min(64, now - (lastNow || now));
+      lastNow = now;
+      if (v < 0 || reduced) {
+        v = target;
+        return;
       }
-      return { pA, f };
+      if (v < target) v = Math.min(target, v + dt / segmentMs(Math.floor(v)));
+      else if (v > target) v = Math.max(target, v - dt / segmentMs(Math.ceil(v) - 1));
+    };
+    /** Maps the page value to the drawing phases: pA = logo coming down, f = shape index (0 = N). */
+    const phases = () => {
+      if (v <= 0) return { pA: 0, f: 0 };
+      if (v < 1) return v < 0.55 ? { pA: v / 0.55, f: 0 } : { pA: 1, f: (v - 0.55) / 0.45 };
+      return { pA: 1, f: v };
     };
 
     const box = () => {
       const r = stage.getBoundingClientRect();
-      const stickyTop = parseFloat(getComputedStyle(stage).top) || 0;
+      const top = stickyTop();
       const cx = r.left + r.width / 2;
-      const cy = Math.min(r.top + r.height / 2, stickyTop + r.height / 2);
+      const cy = Math.min(r.top + r.height / 2, top + r.height / 2);
       const B = Math.min(r.width, r.height) * 0.82;
-      return { cx, cy, B };
+      // Once the stage is pinned, keep the sliding letters out of the text column.
+      const clipRight = r.top <= top + 1 ? r.right : Infinity;
+      return { cx, cy, B, clipRight };
     };
 
     const drawParticles = (
@@ -155,7 +180,7 @@ export function LogoStory() {
     };
 
     /** Phase A: the wordmark comes down and E·X·U·S slide behind the N. */
-    const drawLetters = (pA: number, cx: number, cy: number, B: number) => {
+    const drawLetters = (pA: number, cx: number, cy: number, B: number, clipRight: number) => {
       const fit = nFit();
       const nFinal = { x: cx - B / 2 + (fit.x / SIZE) * B, y: cy - B / 2 + (fit.y / SIZE) * B, h: (fit.h / SIZE) * B };
       const [nsx] = WORDMARK.letters[0];
@@ -168,9 +193,16 @@ export function LogoStory() {
         w: start.w + (wFinal.w - start.w) * e,
         h: start.h + (wFinal.h - start.h) * e,
       };
-      const s = ease(clamp((pA - 0.2) / 0.6));
+      // E·X·U·S tuck in behind the N early, before the page lands next to the content.
+      const s = ease(clamp((pA - 0.05) / 0.5));
       const nx = W.x + (nsx / WORDMARK.width) * W.w;
       halo(cx, cy, B, e);
+      ctx.save();
+      if (Number.isFinite(clipRight)) {
+        ctx.beginPath();
+        ctx.rect(0, 0, clipRight * dpr, canvas.height);
+        ctx.clip();
+      }
       for (let i = WORDMARK.letters.length - 1; i >= 0; i--) {
         const [sx, ex] = WORDMARK.letters[i];
         const lw = ((ex - sx) / WORDMARK.width) * W.w;
@@ -183,7 +215,7 @@ export function LogoStory() {
           const shrink = 1 - 0.3 * s;
           ly += (lh * (1 - shrink)) / 2;
           lh *= shrink;
-          alpha = Math.pow(1 - s, 1.5);
+          alpha = Math.pow(1 - s, 2);
           if (alpha <= 0.01) continue;
         }
         ctx.globalAlpha = alpha;
@@ -200,6 +232,7 @@ export function LogoStory() {
           lh * dpr,
         );
       }
+      ctx.restore();
       ctx.globalAlpha = 1;
     };
 
@@ -209,12 +242,13 @@ export function LogoStory() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (!shapes.length) return;
 
-      const { pA, f } = progress(y);
-      const { cx, cy, B } = box();
+      step(pageFor(y, targets()), now);
+      const { pA, f } = phases();
+      const { cx, cy, B, clipRight } = box();
       const floatY = reduced ? 0 : Math.sin(now / 1700) * 4;
 
       root.style.setProperty('--story-a', reduced ? '0' : pA.toFixed(3));
-      const handoff = !reduced && y > 1;
+      const handoff = !reduced && v > 0.001;
       root.style.setProperty('--story-handoff', handoff ? '1' : '0');
 
       const active = f > 0.5 ? String(Math.min(OBJECTS.length, Math.round(f)) - 1) : '';
@@ -236,7 +270,7 @@ export function LogoStory() {
       if (!handoff) return;
 
       if (f <= 0) {
-        drawLetters(pA, cx, cy + floatY * pA, B);
+        drawLetters(pA, cx, cy + floatY * pA, B, clipRight);
         return;
       }
       halo(cx, cy + floatY, B, 1);
@@ -268,6 +302,111 @@ export function LogoStory() {
       drawParticles(shapes[i], shapes[Math.min(i + 1, OBJECTS.length)], i >= OBJECTS.length ? 0 : t, cx, cy + floatY, B, 1, now);
     };
 
+    /* ---------- Page navigation: a small scroll moves a whole page ---------- */
+    let locked = false;
+    let unlockTimer = 0;
+    let lastWheel = 0;
+    let gestureUsed = false;
+
+    const goto = (dest: number) => {
+      locked = true;
+      gestureUsed = true;
+      window.scrollTo({ top: dest, behavior: 'smooth' });
+      window.clearTimeout(unlockTimer);
+      const unlock = () => {
+        window.clearTimeout(unlockTimer);
+        window.removeEventListener('scrollend', unlock);
+        unlockTimer = window.setTimeout(() => (locked = false), 120);
+      };
+      window.addEventListener('scrollend', unlock, { once: true });
+      unlockTimer = window.setTimeout(unlock, 1100);
+    };
+
+    /** Where a scroll in `dir` should glide to, or null to let the page scroll normally. */
+    const destination = (dir: 1 | -1): number | null => {
+      if (root.classList.contains('intro-playing') || root.classList.contains('menu-open')) return null;
+      const y = window.scrollY;
+      const vh = window.innerHeight;
+      const T = targets();
+      const last = T.length - 1;
+      const end = lastChapterEnd();
+      let i = 0;
+      for (let k = 1; k < T.length; k++) if (y >= T[k] - 2) i = k;
+      const bottom = (k: number) => (k < last ? T[k + 1] : end);
+      const overflows = (k: number) => k > 0 && bottom(k) - T[k] > vh * 1.15;
+
+      if (dir > 0) {
+        if (i >= last) return null; // last chapter and footer scroll normally
+        const remaining = bottom(i) - (y + vh);
+        // Tall chapter: glide most of a screen further before moving to the next page.
+        if (overflows(i) && remaining > vh * 0.3) return Math.round(y + Math.min(remaining, vh * 0.85));
+        return T[i + 1];
+      }
+      if (y <= 2) return null;
+      if (i === last && y > end - vh * 0.5) return null; // in the footer area
+      if (y > T[i] + 2) {
+        if (overflows(i) && y - T[i] > vh * 0.3) return Math.round(y - Math.min(y - T[i], vh * 0.85));
+        return T[i];
+      }
+      const prev = i - 1;
+      if (prev < 0) return null;
+      return overflows(prev) ? Math.max(T[prev], T[i] - vh) : T[prev];
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+      const now = performance.now();
+      const newGesture = now - lastWheel > 200;
+      lastWheel = now;
+      if (newGesture) gestureUsed = false;
+      if (locked) return e.preventDefault();
+      if (Math.abs(e.deltaY) < 2) return;
+      const dest = destination(e.deltaY > 0 ? 1 : -1);
+      if (dest === null) return;
+      e.preventDefault();
+      if (!gestureUsed) goto(dest); // one page per gesture, even with trackpad momentum
+    };
+
+    let touchY = 0;
+    let touchUsed = false;
+    const onTouchStart = (e: TouchEvent) => {
+      touchY = e.touches[0].clientY;
+      touchUsed = false;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (locked) return e.preventDefault();
+      const dy = touchY - e.touches[0].clientY;
+      if (Math.abs(dy) < 10) return;
+      const dest = destination(dy > 0 ? 1 : -1);
+      if (dest === null) return;
+      e.preventDefault();
+      if (!touchUsed && Math.abs(dy) > 30) {
+        touchUsed = true;
+        goto(dest);
+      }
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(t.tagName))) return;
+      const down = e.key === 'ArrowDown' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey);
+      const up = e.key === 'ArrowUp' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey);
+      if (!down && !up) return;
+      if (locked) return e.preventDefault();
+      const dest = destination(down ? 1 : -1);
+      if (dest === null) return;
+      e.preventDefault();
+      goto(dest);
+    };
+
+    if (!reduced) {
+      window.addEventListener('wheel', onWheel, { passive: false });
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMove, { passive: false });
+      window.addEventListener('keydown', onKey);
+    }
+
     const ready = () => {
       shapes = [sampleShape(drawN(img), count), ...OBJECTS.map((o) => sampleShape(o.draw, count))];
       root.classList.add('story-ready');
@@ -281,7 +420,12 @@ export function LogoStory() {
 
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(unlockTimer);
       window.removeEventListener('resize', resize);
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('keydown', onKey);
       root.classList.remove('story-ready');
       root.style.removeProperty('--story-a');
       root.style.removeProperty('--story-handoff');

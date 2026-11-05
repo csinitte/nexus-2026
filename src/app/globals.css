@@ -341,10 +341,6 @@ em {
 .site-header.is-overlay {
   position: fixed;
   inset: 0 0 auto;
-  background: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0));
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-bottom-color: transparent;
 }
 .site-nav {
   display: flex;

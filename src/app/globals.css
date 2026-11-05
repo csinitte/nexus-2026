@@ -630,7 +630,7 @@ html.menu-open .site-header {
 .nx-logo {
   position: absolute;
   left: 50.9%;
-  top: 9%;
+  top: 14%;
   width: 66%;
   transform: translateX(-50%);
   z-index: 1;
@@ -669,7 +669,7 @@ html.menu-open .site-header {
 .nx-robot {
   position: absolute;
   left: 31.5%;
-  top: 22%;
+  top: 27%;
   width: 36.1%;
   aspect-ratio: 772 / 841;
   z-index: 2;
@@ -726,7 +726,7 @@ html.menu-open .site-header {
   margin-bottom: clamp(8px, 1.4vh, 14px);
 }
 .hero-subtitle {
-  margin: 0 0 clamp(4px, 0.8vh, 8px);
+  margin: 0 0 clamp(14px, 2.4vh, 24px);
   font-family: var(--font-display), sans-serif;
   font-size: clamp(13px, min(1.5vw, 2.2vh), 19px);
   font-weight: 400;
@@ -3236,12 +3236,12 @@ html:not(.deck-ready) .deck-hint {
   }
   .nx-logo {
     width: 90%;
-    top: 5%;
+    top: 8%;
   }
   .nx-robot {
     width: 76%;
     left: 12%;
-    top: 10%;
+    top: 13%;
   }
   .hero-corners {
     top: auto;

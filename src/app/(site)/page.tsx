@@ -82,9 +82,6 @@ export default function HomePage() {
                 <span className="venue-short">{EVENT.venueShort}</span>
               </p>
               <p className="hero-subtitle">CSI Student Summit on Innovation &amp; Technology</p>
-              <p className="hero-tagline">
-                Connecting chapters. <em>Inspiring innovation.</em>
-              </p>
               <div className="hero-ctas">
                 <Link className="button" href="/register">
                   Register now <span aria-hidden="true">↗</span>

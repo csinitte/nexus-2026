@@ -188,7 +188,14 @@ export function ChoiceGroup<T extends string>({
       <div className="choices">
         {options.map((o) => (
           <label key={o.value} className={`choice${value === o.value ? ' is-selected' : ''}${o.disabled ? ' is-disabled' : ''}`}>
-            <input type="radio" name={id} value={o.value} checked={value === o.value} disabled={o.disabled} onChange={() => onChange(o.value)} />
+            <input
+              type="radio"
+              name={id}
+              value={o.value}
+              checked={value === o.value}
+              disabled={o.disabled}
+              onChange={() => onChange(o.value)}
+            />
             <span>
               <strong>{o.label}</strong>
               {o.detail && <small>{o.detail}</small>}

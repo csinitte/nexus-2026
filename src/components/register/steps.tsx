@@ -120,7 +120,12 @@ export function FacultyStep({ state, errors, update }: StepProps) {
         value={state.facultyAccompanying}
         onChange={(facultyAccompanying) => update({ facultyAccompanying })}
         error={errors.facultyAccompanying}
-        options={YES_NO('Yes', 'No', `Up to ${MAX_STUDENTS_WITH_FACULTY} students can join`, `Up to ${MAX_TOTAL_REPRESENTATIVES} students can join`)}
+        options={YES_NO(
+          'Yes',
+          'No',
+          `Up to ${MAX_STUDENTS_WITH_FACULTY} students can join`,
+          `Up to ${MAX_TOTAL_REPRESENTATIVES} students can join`,
+        )}
       />
     </>
   );
@@ -163,10 +168,7 @@ export function DelegationStep({ state, errors, update, updateStudent }: StepPro
           <fieldset key={i} className="student-card">
             <legend>
               Student {String(i + 1).padStart(2, '0')}
-              <span>
-                {' '}
-                of {String(count).padStart(2, '0')}
-              </span>
+              <span> of {String(count).padStart(2, '0')}</span>
             </legend>
             <div className="fields">
               <TextField
@@ -485,7 +487,10 @@ export function ReviewStep({ state, errors, update, abstract, goTo }: StepProps)
         ...state.students.map((s, i): [string, string] => [`Student ${i + 1}`, `${s.fullName} · ${s.department} · Year ${s.year}`]),
       ],
     },
-    { step: 3, rows: [['Showcase presenter', state.presenterIndex !== null ? (state.students[state.presenterIndex]?.fullName ?? '') : '']] },
+    {
+      step: 3,
+      rows: [['Showcase presenter', state.presenterIndex !== null ? (state.students[state.presenterIndex]?.fullName ?? '') : '']],
+    },
     {
       step: 4,
       rows:

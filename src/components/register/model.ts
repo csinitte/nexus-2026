@@ -137,7 +137,8 @@ const required = (errors: Errors, key: string, value: string, label: string) => 
 
 export function validateAbstract(file: File | null): string | null {
   if (!file) return 'Upload your project abstract as a PDF.';
-  if (!file.name.toLowerCase().endsWith('.pdf') || (file.type && file.type !== 'application/pdf')) return 'The abstract must be a PDF file.';
+  if (!file.name.toLowerCase().endsWith('.pdf') || (file.type && file.type !== 'application/pdf'))
+    return 'The abstract must be a PDF file.';
   if (file.size === 0) return 'This file is empty. Choose another PDF.';
   if (file.size > MAX_ABSTRACT_BYTES) return `The abstract must be ${Math.round(MAX_ABSTRACT_BYTES / 1024 / 1024)} MB or smaller.`;
   return null;
@@ -161,7 +162,8 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
     case 'delegation': {
       const total = Number(state.totalRepresentatives);
       if (!total) e.totalRepresentatives = 'Choose the total number of representatives.';
-      else if (total > MAX_TOTAL_REPRESENTATIVES) e.totalRepresentatives = `A delegation can have at most ${MAX_TOTAL_REPRESENTATIVES} representatives.`;
+      else if (total > MAX_TOTAL_REPRESENTATIVES)
+        e.totalRepresentatives = `A delegation can have at most ${MAX_TOTAL_REPRESENTATIVES} representatives.`;
       else if (count < 1) e.totalRepresentatives = 'Include at least one student to present the Chapter Showcase.';
       const emails = new Map<string, number>();
       const names = new Map<string, number>();
@@ -182,16 +184,19 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
       break;
     }
     case 'showcase':
-      if (state.presenterIndex === null || !state.students[state.presenterIndex]) e.presenterIndex = 'Choose who will present your chapter.';
+      if (state.presenterIndex === null || !state.students[state.presenterIndex])
+        e.presenterIndex = 'Choose who will present your chapter.';
       break;
     case 'expo':
       if (!state.participatingInExpo) e.participatingInExpo = 'Tell us whether your college is participating in the Expo.';
       if (state.participatingInExpo === 'yes') {
-        if (count < MIN_EXPO_TEAM_MEMBERS) e.participatingInExpo = `An Expo team needs at least ${MIN_EXPO_TEAM_MEMBERS} student representatives.`;
+        if (count < MIN_EXPO_TEAM_MEMBERS)
+          e.participatingInExpo = `An Expo team needs at least ${MIN_EXPO_TEAM_MEMBERS} student representatives.`;
         required(e, 'projectTitle', state.projectTitle, 'the project or product title');
         if (!EXPO_PROJECT_CATEGORIES.includes(state.category as never)) e.category = 'Choose a project category.';
         required(e, 'description', state.description, 'a brief project description');
-        if (state.description.length > MAX_DESCRIPTION_LENGTH) e.description = `Keep the description under ${MAX_DESCRIPTION_LENGTH} characters.`;
+        if (state.description.length > MAX_DESCRIPTION_LENGTH)
+          e.description = `Keep the description under ${MAX_DESCRIPTION_LENGTH} characters.`;
         const abstractError = validateAbstract(abstract);
         if (abstractError) e.abstract = abstractError;
         const team = state.teamIndexes.length;

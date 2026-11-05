@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useReducer, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import {
   STEPS,
   buildPayload,
@@ -39,7 +39,8 @@ function reducer(state: FormState, action: Action): FormState {
 
 type ServerProblem = { message: string; step: number };
 
-export function RegisterForm() {
+/** `intro` is shown above the form and hidden once registration succeeds. */
+export function RegisterForm({ intro }: { intro?: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [step, setStep] = useState(0);
   const [visited, setVisited] = useState(0);
@@ -211,109 +212,112 @@ export function RegisterForm() {
   const errorCount = Object.keys(errors).length;
 
   return (
-    <div className="register" ref={formTopRef}>
-      <nav className="stepper-nav" aria-label="Registration progress">
-        <p className="stepper-count">
-          Step {step + 1} of {STEPS.length}
-          <span> · {current.label}</span>
-        </p>
-        <div className="progress-bar" aria-hidden="true">
-          <span style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
-        </div>
-        <ol>
-          {STEPS.map((s, i) => {
-            const status = i === step ? 'current' : i <= visited ? 'done' : 'todo';
-            return (
-              <li key={s.id} className={`is-${status}`}>
-                <button
-                  type="button"
-                  onClick={() => goTo(i)}
-                  disabled={i > visited}
-                  aria-current={i === step ? 'step' : undefined}
-                >
-                  <span>{String(i + 1).padStart(2, '0')}</span>
-                  {s.label}
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
-
-      {draftRestored && step === 0 && (
-        <div className="draft-banner" role="status">
-          <span>We restored the details you entered earlier on this device.</span>
-          <button type="button" className="link-button" onClick={startOver}>
-            Start over
-          </button>
-        </div>
-      )}
-
-      <form className="step-form" onSubmit={submit} noValidate>
-        <header className="step-header">
-          <p className="eyebrow">Section {String(step + 1).padStart(2, '0')}</p>
-          <h2 ref={headingRef} tabIndex={-1}>
-            {current.title}
-          </h2>
-        </header>
-
-        {errorCount > 0 && (
-          <div className="form-alert" role="alert">
-            {errorCount === 1 ? 'One field needs attention.' : `${errorCount} fields need attention.`} Check the highlighted fields below.
+    <>
+      {intro}
+      <div className="register" ref={formTopRef}>
+        <nav className="stepper-nav" aria-label="Registration progress">
+          <p className="stepper-count">
+            Step {step + 1} of {STEPS.length}
+            <span> · {current.label}</span>
+          </p>
+          <div className="progress-bar" aria-hidden="true">
+            <span style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
           </div>
-        )}
-
-        <Step
-          state={state}
-          errors={errors}
-          update={update}
-          updateStudent={updateStudent}
-          abstract={abstract}
-          setAbstract={(file) => {
-            setAbstract(file);
-            setErrors(({ abstract: _removed, ...rest }) => rest);
-          }}
-          goTo={goTo}
-        />
-
-        {problems.length > 0 && (
-          <div className="form-alert server" role="alert">
-            <strong>We couldn’t submit your registration yet.</strong>
-            <ul>
-              {problems.map((p) => (
-                <li key={p.message}>
-                  {p.message}{' '}
-                  {p.step !== step && (
-                    <button type="button" className="link-button" onClick={() => goTo(p.step)}>
-                      Go to {STEPS[p.step].label}
-                    </button>
-                  )}
+          <ol>
+            {STEPS.map((s, i) => {
+              const status = i === step ? 'current' : i <= visited ? 'done' : 'todo';
+              return (
+                <li key={s.id} className={`is-${status}`}>
+                  <button type="button" onClick={() => goTo(i)} disabled={i > visited} aria-current={i === step ? 'step' : undefined}>
+                    <span>{String(i + 1).padStart(2, '0')}</span>
+                    {s.label}
+                  </button>
                 </li>
-              ))}
-            </ul>
+              );
+            })}
+          </ol>
+        </nav>
+
+        {draftRestored && step === 0 && (
+          <div className="draft-banner" role="status">
+            <span>We restored the details you entered earlier on this device.</span>
+            <button type="button" className="link-button" onClick={startOver}>
+              Start over
+            </button>
           </div>
         )}
 
-        <div className="step-actions">
-          {step > 0 ? (
-            <button type="button" className="button outline" onClick={() => goTo(step - 1)}>
-              <span aria-hidden="true">←</span> Back
-            </button>
-          ) : (
-            <span />
+        <form className="step-form" onSubmit={submit} noValidate>
+          <header className="step-header">
+            <p className="eyebrow">Section {String(step + 1).padStart(2, '0')}</p>
+            <h2 ref={headingRef} tabIndex={-1}>
+              {current.title}
+            </h2>
+          </header>
+
+          {errorCount > 0 && (
+            <div className="form-alert" role="alert">
+              {errorCount === 1 ? 'One field needs attention.' : `${errorCount} fields need attention.`} Check the highlighted fields below.
+            </div>
           )}
-          <button type="submit" className="button" disabled={submitting} aria-busy={submitting || undefined}>
-            {isLast ? (submitting ? 'Submitting…' : 'Submit registration') : `Continue to ${STEPS[step + 1].label}`}
-            <span aria-hidden="true">{isLast ? '↗' : '→'}</span>
-          </button>
-        </div>
-      </form>
-    </div>
+
+          <Step
+            state={state}
+            errors={errors}
+            update={update}
+            updateStudent={updateStudent}
+            abstract={abstract}
+            setAbstract={(file) => {
+              setAbstract(file);
+              setErrors((prev) => {
+                const next = { ...prev };
+                delete next.abstract;
+                return next;
+              });
+            }}
+            goTo={goTo}
+          />
+
+          {problems.length > 0 && (
+            <div className="form-alert server" role="alert">
+              <strong>We couldn’t submit your registration yet.</strong>
+              <ul>
+                {problems.map((p) => (
+                  <li key={p.message}>
+                    {p.message}{' '}
+                    {p.step !== step && (
+                      <button type="button" className="link-button" onClick={() => goTo(p.step)}>
+                        Go to {STEPS[p.step].label}
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="step-actions">
+            {step > 0 ? (
+              <button type="button" className="button outline" onClick={() => goTo(step - 1)}>
+                <span aria-hidden="true">←</span> Back
+              </button>
+            ) : (
+              <span />
+            )}
+            <button type="submit" className="button" disabled={submitting} aria-busy={submitting || undefined}>
+              {isLast ? (submitting ? 'Submitting…' : 'Submit registration') : `Continue to ${STEPS[step + 1].label}`}
+              <span aria-hidden="true">{isLast ? '↗' : '→'}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }
 
 function friendly(message: string, status: number): string {
-  if (status === 409) return 'This college and faculty coordinator are already registered. Contact the organising team if you need to make changes.';
+  if (status === 409)
+    return 'This college and faculty coordinator are already registered. Contact the organising team if you need to make changes.';
   const map: [RegExp, string][] = [
     [/collegeName is required/i, 'Enter your college name.'],
     [/csiChapterName is required/i, 'Enter your CSI chapter name.'],

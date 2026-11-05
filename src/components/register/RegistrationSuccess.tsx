@@ -135,7 +135,9 @@ export function RegistrationSuccess({ result, coordinatorEmail }: { result: Regi
       </section>
 
       <ul className="notice-list">
-        {s.accommodationRequired && <li>Accommodation is subject to availability. Submitting a request does not guarantee accommodation.</li>}
+        {s.accommodationRequired && (
+          <li>Accommodation is subject to availability. Submitting a request does not guarantee accommodation.</li>
+        )}
         {result.expo && (
           <li>
             Your Expo abstract has been received. Abstracts are reviewed for theme relevance; this is not jury approval of the project.

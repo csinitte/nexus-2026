@@ -32,6 +32,7 @@ export function SiteFooter() {
         <span>
           <time dateTime={EVENT.eventDateIso}>{EVENT.eventDateDisplay}</time> · {EVENT.venueShort}
         </span>
+        <Link href="/?intro=1">Replay intro ↻</Link>
       </div>
     </footer>
   );

@@ -1,5 +1,25 @@
-'use client';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-type Detail={registration:{registrationCode:string;collegeName:string;facultyCoordinatorName:string;totalRepresentatives:number;chapterShowcasePresenter:string};participants:{id:string;fullName:string;participantType:string}[];expoProject:{projectTitle:string;category:string}|null};
-export default function Summary(){const [detail,setDetail]=useState<Detail|null>(null);const [error,setError]=useState('');useEffect(()=>{const [code,token]=window.location.hash.slice(1).split(':').map(decodeURIComponent);if(!code||!token){Promise.resolve().then(()=>setError('This summary link is incomplete.'));return}fetch(`/api/registrations/${encodeURIComponent(code)}/summary`,{headers:{Authorization:`Bearer ${token}`}}).then(async response=>{if(!response.ok)throw new Error('This link is invalid or has expired.');setDetail(await response.json())}).catch((e:Error)=>setError(e.message));},[]);return <main className="form-shell"><div className="form-top"><Link className="wordmark" href="/">NEXUS<span> / 26</span></Link><Link className="back-link" href="/">← BACK TO THE SUMMIT</Link></div><div className="success"><p className="eyebrow">REGISTRATION SUMMARY</p>{error?<><h1>Link unavailable<span>.</span></h1><p role="alert">{error}</p></>:detail?<><h1>Your place<br/><em>at NEXUS.</em></h1><div className="code">{detail.registration.registrationCode}</div><div className="confirmation-summary"><h2>{detail.registration.collegeName}</h2><p>Coordinator: {detail.registration.facultyCoordinatorName}<br/>Delegation size: {detail.registration.totalRepresentatives}<br/>Showcase presenter: {detail.registration.chapterShowcasePresenter}</p><p>Students: {detail.participants.filter(p=>p.participantType==='student').map(p=>p.fullName).join(', ')}</p>{detail.expoProject&&<p>Expo: {detail.expoProject.projectTitle} · {detail.expoProject.category}</p>}</div><button className="button" onClick={()=>window.print()}>PRINT SUMMARY ↓</button></>:<p>Loading your summary…</p>}</div></main>}
+import { SummaryView } from '@/components/summary/SummaryView';
+import { Wordmark } from '@/components/site/Wordmark';
+
+export const metadata: Metadata = {
+  title: 'Registration summary',
+  robots: { index: false, follow: false },
+};
+
+export default function SummaryPage() {
+  return (
+    <div className="form-shell">
+      <header className="form-top no-print">
+        <Wordmark />
+        <Link className="back-link" href="/">
+          <span aria-hidden="true">←</span> Back to the summit
+        </Link>
+      </header>
+      <main id="main" tabIndex={-1}>
+        <SummaryView />
+      </main>
+    </div>
+  );
+}

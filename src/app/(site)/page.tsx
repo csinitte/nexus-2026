@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { NextPage, SectionLabel } from '@/components/site/PageParts';
 import { Parallax } from '@/components/site/Parallax';
 import { ABOUT, EVENT, HOSTS, NAV_ITEMS } from '@/content/nexus';
-import robot from '../../../public/asset_robo_nobg.png';
+import { IntroGate } from '@/components/intro/IntroGate';
 
 const EXPLORE = [
   { href: '/schedule', label: 'The day at NEXUS', text: 'Eight moments, from inauguration to valedictory.' },
@@ -15,64 +15,69 @@ const EXPLORE = [
 export default function HomePage() {
   return (
     <>
-      <section className="hero" aria-labelledby="hero-title">
-        <Parallax className="hero-art" strength={0.1}>
-          <Image src={robot} alt="" priority sizes="(max-width: 760px) 120vw, 55vw" placeholder="blur" />
-        </Parallax>
-        <div className="hero-shade" aria-hidden="true" />
-
-        <div className="hero-top">
-          <span>
-            CSI Student Summit on
-            <br />
-            Innovation &amp; Technology
-          </span>
+      <IntroGate />
+      <section className="nx-hero" aria-labelledby="hero-title">
+        <div className="nx-stage">
+          <div className="nx-logo">
+            <div className="nx-halo" aria-hidden="true" />
+            <Orbit layer="back" />
+            <h1 id="hero-title">
+              <Image
+                src="/brand/nexus-wordmark.png"
+                alt={`NEXUS 2026 — ${EVENT.subtitle}`}
+                width={1708}
+                height={290}
+                priority
+                sizes="70vw"
+              />
+            </h1>
+            <Orbit layer="front" />
+          </div>
+          <Parallax className="nx-robot" strength={-0.06}>
+            <Image src="/brand/robot.png" alt="" width={772} height={841} priority sizes="(max-width: 700px) 78vw, 36vw" />
+            <Image className="nx-pulse" src="/brand/robot-glow.png" alt="" width={772} height={841} sizes="(max-width: 700px) 78vw, 36vw" />
+          </Parallax>
         </div>
 
-        <div className="hero-main">
-          <p className="eyebrow">
-            <span className="dot" aria-hidden="true" /> {EVENT.dateCompact} · {EVENT.venueShort}
-          </p>
-          <h1 id="hero-title">
-            NEXUS
-            <span className="sr-only"> 2026 — {EVENT.subtitle}</span>
-          </h1>
-          <p className="hero-subtitle" aria-hidden="true">
-            CSI Student Summit on Innovation &amp; Technology
-          </p>
-          <p className="hero-tagline">
-            Connecting chapters. <em>Inspiring innovation.</em>
-          </p>
-          <div className="hero-ctas">
-            <Link className="button" href="/register">
-              Register now <span aria-hidden="true">↗</span>
-            </Link>
-            <a className="button outline" href="#about">
-              Explore NEXUS <span aria-hidden="true">↓</span>
-            </a>
+        <div className="hero-band">
+          <div className="hero-copy">
+            <p className="eyebrow">
+              <span className="dot" aria-hidden="true" /> {EVENT.dateCompact} · {EVENT.venueShort}
+            </p>
+            <p className="hero-subtitle">CSI Student Summit on Innovation &amp; Technology</p>
+            <p className="hero-tagline">
+              Connecting chapters. <em>Inspiring innovation.</em>
+            </p>
+            <div className="hero-ctas">
+              <Link className="button" href="/register">
+                Register now <span aria-hidden="true">↗</span>
+              </Link>
+              <a className="button outline" href="#about">
+                Explore NEXUS <span aria-hidden="true">↓</span>
+              </a>
+            </div>
           </div>
+          <dl className="hero-bottom">
+            <div>
+              <dt>The date</dt>
+              <dd>
+                <time dateTime={EVENT.eventDateIso}>{EVENT.dateCompact}</time>
+              </dd>
+            </div>
+            <div>
+              <dt>The venue</dt>
+              <dd>{EVENT.hostInstitution}</dd>
+            </div>
+            <div>
+              <dt>Hosted by</dt>
+              <dd>{EVENT.organiser}</dd>
+            </div>
+            <div className="hero-logos">
+              <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAMIT" width={1628} height={278} sizes="160px" />
+              <Image src="/csi.jpeg" alt="Computer Society of India" width={1140} height={1141} sizes="48px" />
+            </div>
+          </dl>
         </div>
-
-        <dl className="hero-bottom">
-          <div>
-            <dt>The date</dt>
-            <dd>
-              <time dateTime={EVENT.eventDateIso}>{EVENT.dateCompact}</time>
-            </dd>
-          </div>
-          <div>
-            <dt>The venue</dt>
-            <dd>{EVENT.hostInstitution}</dd>
-          </div>
-          <div>
-            <dt>Hosted by</dt>
-            <dd>{EVENT.organiser}</dd>
-          </div>
-          <div className="hero-logos">
-            <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAMIT" width={1628} height={278} sizes="160px" />
-            <Image src="/csi.jpeg" alt="Computer Society of India" width={1140} height={1141} sizes="48px" />
-          </div>
-        </dl>
       </section>
 
       <div className="ticker" aria-hidden="true">
@@ -160,5 +165,34 @@ export default function HomePage() {
         <NextPage current="/" />
       </section>
     </>
+  );
+}
+
+/** Elliptical orbit around the wordmark, split into back and front halves so it passes behind and in front. */
+function Orbit({ layer }: { layer: 'back' | 'front' }) {
+  const id = `nx-orbit-${layer}`;
+  const path = 'M40,230 a560,150 0 1,1 1120,0 a560,150 0 1,1 -1120,0';
+  return (
+    <svg className={`nx-orbit nx-orbit-${layer}`} aria-hidden="true" viewBox="0 0 1200 460">
+      <defs>
+        <clipPath id={`${id}-clip`}>
+          {layer === 'back' ? <rect x="-200" y="-260" width="1600" height="490" /> : <rect x="-200" y="230" width="1600" height="500" />}
+        </clipPath>
+        <linearGradient id={`${id}-grad`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#8cea5a" stopOpacity="0.15" />
+          <stop offset="0.5" stopColor="#e8e8e8" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#8cea5a" stopOpacity="0.15" />
+        </linearGradient>
+      </defs>
+      <g transform="rotate(-7 600 230)" clipPath={`url(#${id}-clip)`}>
+        <path d={path} fill="none" stroke="#8cea5a" strokeWidth="7" opacity="0.1" className="nx-orbit-blur" />
+        <path d={path} fill="none" stroke={`url(#${id}-grad)`} strokeWidth="1.4" />
+        <g className="nx-orbit-dot">
+          <animateMotion path={path} dur="9s" repeatCount="indefinite" />
+          <circle r="16" fill="#9cff6a" opacity="0.35" className="nx-orbit-blur" />
+          <circle r="5.5" fill="#d8ffc4" />
+        </g>
+      </g>
+    </svg>
   );
 }

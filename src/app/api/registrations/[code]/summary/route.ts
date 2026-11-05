@@ -1,0 +1,6 @@
+import { eq } from 'drizzle-orm';
+import { getDb } from '@/db';
+import { collegeRegistrations } from '@/db/schema';
+import { registrationDetail } from '@/lib/nexus/registration-service';
+import { safeEqual } from '@/lib/nexus/admin-auth';
+export async function GET(req:Request,{params}:{params:Promise<{code:string}>}){const {code}=await params;const db=await getDb();const [r]=await db.select().from(collegeRegistrations).where(eq(collegeRegistrations.registrationCode,code));const email=req.headers.get('x-coordinator-email')||'';if(!r||!email||!safeEqual(email.trim().toLowerCase(),r.facultyCoordinatorEmail.toLowerCase()))return Response.json({error:'Not found or unauthorized'},{status:404});const detail=await registrationDetail(r.id);if(detail?.expoProject){const {abstractStorageKey: _key,internalRemarks: _remarks,...publicProject}=detail.expoProject;void _key;void _remarks;detail.expoProject={...publicProject,abstractStorageKey:'',internalRemarks:null};}if(new URL(req.url).searchParams.get('format')==='txt')return new Response(JSON.stringify(detail,null,2),{headers:{'Content-Type':'text/plain; charset=utf-8','Content-Disposition':`attachment; filename="${code}.txt"`}});return Response.json(detail,{headers:{'Cache-Control':'no-store'}});}

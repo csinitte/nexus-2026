@@ -1,0 +1,592 @@
+{
+  "id": "c7b0183e-3e47-456d-afe1-9c35cc55b5c1",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.admin_users": {
+      "name": "admin_users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'admin'"
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "last_login_at": {
+          "name": "last_login_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "admin_users_email_unique": {
+          "name": "admin_users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.college_registrations": {
+      "name": "college_registrations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "registration_code": {
+          "name": "registration_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "college_name": {
+          "name": "college_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "csi_chapter_name": {
+          "name": "csi_chapter_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "csi_chapter_id": {
+          "name": "csi_chapter_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "faculty_coordinator_name": {
+          "name": "faculty_coordinator_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "faculty_coordinator_email": {
+          "name": "faculty_coordinator_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "faculty_coordinator_contact": {
+          "name": "faculty_coordinator_contact",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "faculty_accompanying": {
+          "name": "faculty_accompanying",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_representatives": {
+          "name": "total_representatives",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chapter_showcase_presenter": {
+          "name": "chapter_showcase_presenter",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "participating_in_expo": {
+          "name": "participating_in_expo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accommodation_required": {
+          "name": "accommodation_required",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "arrival_plan": {
+          "name": "arrival_plan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "male_accommodation_count": {
+          "name": "male_accommodation_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "female_accommodation_count": {
+          "name": "female_accommodation_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "accommodation_participant_names": {
+          "name": "accommodation_participant_names",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "declaration_accepted": {
+          "name": "declaration_accepted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "registration_status": {
+          "name": "registration_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'submitted'"
+        },
+        "confirmation_email_sent_at": {
+          "name": "confirmation_email_sent_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "active_college_coordinator_unique": {
+          "name": "active_college_coordinator_unique",
+          "columns": [
+            {
+              "expression": "lower(trim(\"college_name\"))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lower(trim(\"faculty_coordinator_email\"))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"college_registrations\".\"registration_status\" <> 'cancelled'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "college_registrations_registration_code_unique": {
+          "name": "college_registrations_registration_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "registration_code"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "representative_count": {
+          "name": "representative_count",
+          "value": "\"college_registrations\".\"total_representatives\" between 1 and 5"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.expo_projects": {
+      "name": "expo_projects",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "registration_id": {
+          "name": "registration_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_title": {
+          "name": "project_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "abstract_storage_provider": {
+          "name": "abstract_storage_provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "abstract_storage_key": {
+          "name": "abstract_storage_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "abstract_file_name": {
+          "name": "abstract_file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "abstract_mime_type": {
+          "name": "abstract_mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "abstract_size_bytes": {
+          "name": "abstract_size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "abstract_sha256": {
+          "name": "abstract_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "review_status": {
+          "name": "review_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Not Reviewed'"
+        },
+        "internal_remarks": {
+          "name": "internal_remarks",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "expo_projects_registration_id_college_registrations_id_fk": {
+          "name": "expo_projects_registration_id_college_registrations_id_fk",
+          "tableFrom": "expo_projects",
+          "tableTo": "college_registrations",
+          "columnsFrom": [
+            "registration_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "expo_projects_registration_id_unique": {
+          "name": "expo_projects_registration_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "registration_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.expo_team_members": {
+      "name": "expo_team_members",
+      "schema": "",
+      "columns": {
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "participant_id": {
+          "name": "participant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "expo_team_members_project_id_expo_projects_id_fk": {
+          "name": "expo_team_members_project_id_expo_projects_id_fk",
+          "tableFrom": "expo_team_members",
+          "tableTo": "expo_projects",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "expo_team_members_participant_id_participants_id_fk": {
+          "name": "expo_team_members_participant_id_participants_id_fk",
+          "tableFrom": "expo_team_members",
+          "tableTo": "participants",
+          "columnsFrom": [
+            "participant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "expo_team_members_project_id_participant_id_pk": {
+          "name": "expo_team_members_project_id_participant_id_pk",
+          "columns": [
+            "project_id",
+            "participant_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.participants": {
+      "name": "participants",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "registration_id": {
+          "name": "registration_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "participant_index": {
+          "name": "participant_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "department": {
+          "name": "department",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contact_number": {
+          "name": "contact_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "participant_type": {
+          "name": "participant_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_showcase_presenter": {
+          "name": "is_showcase_presenter",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "requires_accommodation": {
+          "name": "requires_accommodation",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "participants_registration_id_college_registrations_id_fk": {
+          "name": "participants_registration_id_college_registrations_id_fk",
+          "tableFrom": "participants",
+          "tableTo": "college_registrations",
+          "columnsFrom": [
+            "registration_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

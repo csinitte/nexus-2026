@@ -96,6 +96,8 @@ export function LogoStory() {
 
     /** Animated page value: 0 = hero, 1–3 = chapters. Moves at a fixed speed toward the current page. */
     let v = -1;
+    /** Page a glide is heading to; drives the animation while the scroll is still moving. */
+    let intent: number | null = null;
     let lastNow = 0;
     const segmentMs = (seg: number) => (seg < 1 ? 1800 : 1200);
     const step = (target: number, now: number) => {
@@ -242,7 +244,8 @@ export function LogoStory() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (!shapes.length) return;
 
-      step(pageFor(y, targets()), now);
+      const T = targets();
+      step(intent ?? pageFor(y, T), now);
       const { pA, f } = phases();
       const { cx, cy, B, clipRight } = box();
       const floatY = reduced ? 0 : Math.sin(now / 1700) * 4;
@@ -311,11 +314,13 @@ export function LogoStory() {
     const goto = (dest: number) => {
       locked = true;
       gestureUsed = true;
+      intent = pageFor(dest, targets()); // start the transition with the scroll, not halfway through it
       window.scrollTo({ top: dest, behavior: 'smooth' });
       window.clearTimeout(unlockTimer);
       const unlock = () => {
         window.clearTimeout(unlockTimer);
         window.removeEventListener('scrollend', unlock);
+        intent = null;
         unlockTimer = window.setTimeout(() => (locked = false), 120);
       };
       window.addEventListener('scrollend', unlock, { once: true });

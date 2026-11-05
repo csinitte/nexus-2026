@@ -4,6 +4,8 @@ import { NextPage, SectionLabel } from '@/components/site/PageParts';
 import { Parallax } from '@/components/site/Parallax';
 import { ABOUT, EVENT, HOSTS, NAV_ITEMS } from '@/content/nexus';
 import { IntroGate } from '@/components/intro/IntroGate';
+import { LogoStory } from '@/components/story/LogoStory';
+import { OBJECTS } from '@/components/story/shapes';
 
 const EXPLORE = [
   { href: '/schedule', label: 'The day at NEXUS', text: 'Eight moments, from inauguration to valedictory.' },
@@ -90,79 +92,92 @@ export default function HomePage() {
         </div>
       </div>
 
-      <section id="about" className="section about" aria-labelledby="about-title">
-        <SectionLabel index={1} left="The summit" right="About NEXUS" />
-        <div className="split">
-          <h2 id="about-title" data-reveal>
-            About <em>NEXUS.</em>
-          </h2>
-          <div className="prose" data-reveal>
-            <p className="lead">{ABOUT.paragraphs[0]}</p>
-            {ABOUT.paragraphs.slice(1).map((p) => (
-              <p key={p}>{p}</p>
+      <section className="story" aria-label="About NEXUS and its hosts">
+        <div className="story-stage" data-story-stage aria-hidden="true">
+          <ol className="story-captions">
+            {OBJECTS.map((o, i) => (
+              <li key={o.id} data-index={i}>
+                <span>/{String(i + 1).padStart(2, '0')}</span> {o.label}
+              </li>
             ))}
-            <p className="signature">Connecting Chapters. Inspiring Innovation.</p>
-          </div>
+          </ol>
         </div>
-        <ul className="stats" aria-label="Participation highlights">
-          {ABOUT.stats.map((s) => (
-            <li key={s.label} data-reveal>
-              <strong>{s.value}</strong>
-              <span>{s.label}</span>
-              <small>{s.note}</small>
-            </li>
-          ))}
-        </ul>
-        <p className="footnote">{ABOUT.statsNote}</p>
-      </section>
 
-      <section id="hosts" className="section hosts" aria-labelledby="hosts-title">
-        <SectionLabel index={2} left="The hosts" right="Hosted by CSI Student Branch, NMAMIT" />
-        <h2 id="hosts-title" data-reveal>
-          About the <em>hosts.</em>
-        </h2>
-        <div className="host-grid">
-          {HOSTS.map((host) => (
-            <article key={host.id} className="host-card" aria-labelledby={`host-${host.id}`} data-reveal>
-              <div className={`host-logo host-logo-${host.id}`}>
-                <Image src={host.logo.src} alt={host.logo.alt} width={host.logo.width} height={host.logo.height} sizes="240px" />
-              </div>
-              <p className="eyebrow">{host.eyebrow}</p>
-              <h3 id={`host-${host.id}`}>About {host.name}</h3>
-              {host.paragraphs.map((p) => (
+        <div className="story-chapters">
+          <article id="about" className="story-chapter" data-chapter="0" aria-labelledby="about-title">
+            <SectionLabel index={1} left="The summit" right="About NEXUS" />
+            <h2 id="about-title" data-reveal>
+              About <em>NEXUS.</em>
+            </h2>
+            <div className="prose" data-reveal>
+              <p className="lead">{ABOUT.paragraphs[0]}</p>
+              {ABOUT.paragraphs.slice(1).map((p) => (
                 <p key={p}>{p}</p>
               ))}
-              <dl className="host-facts">
-                {host.facts.map((f) => (
-                  <div key={f.label}>
-                    <dt>{f.label}</dt>
-                    <dd>{f.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </article>
-          ))}
-        </div>
-      </section>
+              <p className="signature">Connecting Chapters. Inspiring Innovation.</p>
+            </div>
+            <ul className="stats" aria-label="Participation highlights">
+              {ABOUT.stats.map((s) => (
+                <li key={s.label} data-reveal>
+                  <strong>{s.value}</strong>
+                  <span>{s.label}</span>
+                  <small>{s.note}</small>
+                </li>
+              ))}
+            </ul>
+            <p className="footnote">{ABOUT.statsNote}</p>
+          </article>
 
-      <section className="section explore" aria-labelledby="explore-title">
-        <SectionLabel index={3} left="Explore" right={`${NAV_ITEMS.length - 1} pages · 1 day`} />
-        <h2 id="explore-title" data-reveal>
-          One day of <em>innovation.</em>
-        </h2>
-        <ul className="explore-grid">
-          {EXPLORE.map((item, i) => (
-            <li key={item.href} data-reveal>
-              <Link href={item.href}>
-                <span>{String(i + 1).padStart(2, '0')}</span>
-                <strong>{item.label}</strong>
-                <p>{item.text}</p>
-                <i aria-hidden="true">↗</i>
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <NextPage current="/" />
+          <article id="hosts" className="story-chapter" data-chapter="1" aria-labelledby="hosts-title">
+            <SectionLabel index={2} left="The hosts" right="CSI Student Branch, NMAMIT" />
+            <h2 id="hosts-title" data-reveal>
+              About the <em>hosts.</em>
+            </h2>
+            <div className="host-grid">
+              {HOSTS.map((host) => (
+                <article key={host.id} className="host-card" aria-labelledby={`host-${host.id}`} data-reveal>
+                  <div className={`host-logo host-logo-${host.id}`}>
+                    <Image src={host.logo.src} alt={host.logo.alt} width={host.logo.width} height={host.logo.height} sizes="240px" />
+                  </div>
+                  <p className="eyebrow">{host.eyebrow}</p>
+                  <h3 id={`host-${host.id}`}>About {host.name}</h3>
+                  {host.paragraphs.map((p) => (
+                    <p key={p}>{p}</p>
+                  ))}
+                  <dl className="host-facts">
+                    {host.facts.map((f) => (
+                      <div key={f.label}>
+                        <dt>{f.label}</dt>
+                        <dd>{f.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </article>
+              ))}
+            </div>
+          </article>
+
+          <article className="story-chapter" data-chapter="2" aria-labelledby="explore-title">
+            <SectionLabel index={3} left="Explore" right={`${NAV_ITEMS.length - 1} pages · 1 day`} />
+            <h2 id="explore-title" data-reveal>
+              One day of <em>innovation.</em>
+            </h2>
+            <ul className="explore-grid">
+              {EXPLORE.map((item, i) => (
+                <li key={item.href} data-reveal>
+                  <Link href={item.href}>
+                    <span>{String(i + 1).padStart(2, '0')}</span>
+                    <strong>{item.label}</strong>
+                    <p>{item.text}</p>
+                    <i aria-hidden="true">↗</i>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <NextPage current="/" />
+          </article>
+        </div>
+        <LogoStory />
       </section>
     </>
   );

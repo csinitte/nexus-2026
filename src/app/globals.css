@@ -762,6 +762,101 @@ html.menu-open .site-header {
   object-fit: cover;
 }
 
+/* ---------- Home scroll story: the N becomes one object per chapter ---------- */
+.story {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(24px, 5vw, 80px);
+  max-width: calc(var(--max) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+.story-stage {
+  position: sticky;
+  top: var(--header-h);
+  height: calc(100vh - var(--header-h));
+  height: calc(100svh - var(--header-h));
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 28px;
+}
+.story-captions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.story-captions li {
+  grid-area: 1 / 1;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.4s var(--ease),
+    transform 0.4s var(--ease);
+}
+.story-captions span {
+  color: var(--accent);
+}
+.story-stage[data-active="0"] li[data-index="0"],
+.story-stage[data-active="1"] li[data-index="1"],
+.story-stage[data-active="2"] li[data-index="2"] {
+  opacity: 1;
+  transform: none;
+}
+.story-chapters {
+  display: grid;
+}
+.story-chapter {
+  min-height: 100vh;
+  padding: clamp(72px, 9vw, 120px) 0;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.story-chapter h2 {
+  font-size: clamp(28px, 3.4vw, 46px);
+  line-height: 1.12;
+  margin-bottom: 28px;
+}
+.story-chapter .stats,
+.story-chapter .explore-grid {
+  grid-template-columns: 1fr 1fr;
+}
+.story-chapter .host-grid {
+  grid-template-columns: 1fr;
+}
+.story-chapter .explore-grid a {
+  min-height: 200px;
+}
+.story-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.hero-band {
+  z-index: 5;
+}
+/* Hand the hero wordmark over to the canvas once scrolling starts. */
+.story-ready .nx-logo h1 img {
+  opacity: calc(1 - var(--story-handoff, 0));
+}
+.story-ready .nx-orbit,
+.story-ready .nx-halo {
+  opacity: calc(1 - var(--story-a, 0) * 3);
+}
+
 /* ---------- Ticker ---------- */
 .ticker {
   overflow: hidden;
@@ -2547,6 +2642,22 @@ html.menu-open .site-header {
   }
 }
 @media (max-width: 860px) {
+  .story {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .story-stage {
+    z-index: 3;
+    height: 36vh;
+    height: 36svh;
+    margin: 0 calc(-1 * var(--gutter));
+    padding-bottom: 10px;
+    background: linear-gradient(180deg, rgba(18, 18, 18, 0.97) 82%, rgba(18, 18, 18, 0));
+  }
+  .story-chapter {
+    min-height: 0;
+    padding: 48px 0 72px;
+  }
   .split,
   .host-grid,
   .phases,

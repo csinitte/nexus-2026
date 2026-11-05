@@ -1,0 +1,4 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
+function signature(value:string){const secret=process.env.NEXUS_SESSION_SECRET;if(!secret||secret.length<32)return null;return createHmac('sha256',secret).update(`confirmation:${value}`).digest('base64url');}
+export function createConfirmationToken(code:string){const body=Buffer.from(JSON.stringify({code,exp:Date.now()+30*86400000})).toString('base64url');const mac=signature(body);return mac?`${body}.${mac}`:null;}
+export function verifyConfirmationToken(token:string,code:string){try{const [body,mac,...extra]=token.split('.');if(!body||!mac||extra.length)return false;const expected=signature(body);if(!expected)return false;const a=Buffer.from(mac),b=Buffer.from(expected);if(a.length!==b.length||!timingSafeEqual(a,b))return false;const payload=JSON.parse(Buffer.from(body,'base64url').toString());return payload.code===code&&typeof payload.exp==='number'&&payload.exp>Date.now();}catch{return false;}}

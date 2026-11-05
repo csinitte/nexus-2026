@@ -1,185 +1,226 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { NextPage, SectionLabel } from '@/components/site/PageParts';
-import { Parallax } from '@/components/site/Parallax';
-import { ABOUT, EVENT, HOSTS, NAV_ITEMS } from '@/content/nexus';
 import { IntroGate } from '@/components/intro/IntroGate';
 import { LogoStory } from '@/components/story/LogoStory';
 import { OBJECTS } from '@/components/story/shapes';
+import { ABOUT, EVENT, HOSTS } from '@/content/nexus';
+
+/*
+ * The home page is a deck of four full-screen pages: the hero, then About,
+ * Hosts and Innovation. A small scroll moves one page and plays the whole
+ * transition (see LogoStory). Each page fits one screen; copy here is a
+ * condensed version of the approved text in src/content/nexus.ts.
+ */
 
 const EXPLORE = [
-  { href: '/schedule', label: 'The day at NEXUS', text: 'Eight moments, from inauguration to valedictory.' },
+  { href: '/schedule', label: 'Event Schedule', text: 'Eight sessions, from inauguration to valedictory.' },
   { href: '/panel', label: 'Industry Panel', text: 'From skills to startups with industry voices.' },
   { href: '/showcase', label: 'Chapter Showcase', text: 'Five minutes to share your chapter’s journey.' },
   { href: '/expo', label: 'Project Expo', text: 'Technology for a sustainable, smarter future.' },
 ];
 
+const HOST_SUMMARY: Record<string, string> = {
+  nmamit:
+    'Established in 1986, NMAMIT, Nitte is a constituent college of Nitte (Deemed to be University), Mangaluru, fostering academic excellence, innovation, research and industry engagement.',
+  csi: 'Since 2007, the CSI Student Branch, NMAMIT has grown to 700+ members and 350+ technical events, winning the Best Accredited and Largest Student Branch Awards (2017–19).',
+};
+
 export default function HomePage() {
   return (
     <>
       <IntroGate />
-      <section className="nx-hero" aria-labelledby="hero-title">
-        <div className="nx-stage">
-          <div className="nx-logo">
-            <div className="nx-halo" aria-hidden="true" />
-            <Orbit layer="back" />
-            <h1 id="hero-title">
-              <Image
-                src="/brand/nexus-wordmark.png"
-                alt={`NEXUS 2026 — ${EVENT.subtitle}`}
-                width={1708}
-                height={290}
-                priority
-                sizes="70vw"
-              />
-            </h1>
-            <Orbit layer="front" />
-          </div>
-          <Parallax className="nx-robot" strength={-0.06}>
-            <Image src="/brand/robot.png" alt="" width={772} height={841} priority sizes="(max-width: 700px) 78vw, 36vw" />
-            <Image className="nx-pulse" src="/brand/robot-glow.png" alt="" width={772} height={841} sizes="(max-width: 700px) 78vw, 36vw" />
-          </Parallax>
-        </div>
-
-        <div className="hero-band">
-          <div className="hero-copy">
-            <p className="eyebrow">
-              <span className="dot" aria-hidden="true" /> {EVENT.dateCompact} · {EVENT.venueShort}
-            </p>
-            <p className="hero-subtitle">CSI Student Summit on Innovation &amp; Technology</p>
-            <p className="hero-tagline">
-              Connecting chapters. <em>Inspiring innovation.</em>
-            </p>
-            <div className="hero-ctas">
-              <Link className="button" href="/register">
-                Register now <span aria-hidden="true">↗</span>
-              </Link>
-              <a className="button outline" href="#about">
-                Explore NEXUS <span aria-hidden="true">↓</span>
-              </a>
+      <section className="deck" data-deck aria-label="NEXUS 2026">
+        {/* Page 0 — hero */}
+        <div className="deck-hero is-active" data-deck-page="0" aria-labelledby="hero-title">
+          <div className="nx-stage">
+            <div className="nx-stage-inner">
+              <div className="nx-logo">
+                <div className="nx-halo" aria-hidden="true" />
+                <Orbit layer="back" />
+                <h1 id="hero-title">
+                  <Image
+                    src="/brand/nexus-wordmark.png"
+                    alt={`NEXUS 2026 — ${EVENT.subtitle}`}
+                    width={1708}
+                    height={290}
+                    priority
+                    sizes="70vw"
+                  />
+                </h1>
+                <Orbit layer="front" />
+              </div>
+              <div className="nx-robot">
+                <Image src="/brand/robot.png" alt="" width={772} height={841} priority sizes="(max-width: 700px) 70vw, 36vw" />
+                <Image
+                  className="nx-pulse"
+                  src="/brand/robot-glow.png"
+                  alt=""
+                  width={772}
+                  height={841}
+                  sizes="(max-width: 700px) 70vw, 36vw"
+                />
+              </div>
             </div>
           </div>
-          <dl className="hero-bottom">
-            <div>
-              <dt>The date</dt>
-              <dd>
-                <time dateTime={EVENT.eventDateIso}>{EVENT.dateCompact}</time>
-              </dd>
-            </div>
-            <div>
-              <dt>The venue</dt>
-              <dd>{EVENT.hostInstitution}</dd>
-            </div>
-            <div>
-              <dt>Hosted by</dt>
-              <dd>{EVENT.organiser}</dd>
-            </div>
-            <div className="hero-logos">
-              <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAMIT" width={1628} height={278} sizes="160px" />
-              <Image src="/csi.jpeg" alt="Computer Society of India" width={1140} height={1141} sizes="48px" />
-            </div>
-          </dl>
-        </div>
-      </section>
 
-      <div className="ticker" aria-hidden="true">
-        <div className="ticker-track">
-          {Array.from({ length: 2 }, (_, n) => (
-            <span key={n}>
-              Connect <i>✳</i> Collaborate <i>✳</i> Create impact <i>✳</i> Connecting chapters <i>✳</i> Inspiring innovation <i>✳</i>{' '}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <section className="story" aria-label="About NEXUS and its hosts">
-        <div className="story-stage" data-story-stage aria-hidden="true">
-          <ol className="story-captions">
-            {OBJECTS.map((o, i) => (
-              <li key={o.id} data-index={i}>
-                <span>/{String(i + 1).padStart(2, '0')}</span> {o.label}
-              </li>
-            ))}
-          </ol>
+          <div className="hero-band">
+            <div className="hero-copy">
+              <p className="eyebrow">
+                <span className="dot" aria-hidden="true" /> {EVENT.dateCompact} · {EVENT.venueShort}
+              </p>
+              <p className="hero-subtitle">CSI Student Summit on Innovation &amp; Technology</p>
+              <p className="hero-tagline">
+                Connecting chapters. <em>Inspiring innovation.</em>
+              </p>
+              <div className="hero-ctas">
+                <Link className="button" href="/register">
+                  Register now <span aria-hidden="true">↗</span>
+                </Link>
+                <a className="button outline" href="#about" data-deck-go="1">
+                  Explore NEXUS <span aria-hidden="true">↓</span>
+                </a>
+              </div>
+            </div>
+            <dl className="hero-bottom">
+              <div>
+                <dt>The date</dt>
+                <dd>
+                  <time dateTime={EVENT.eventDateIso}>{EVENT.dateCompact}</time>
+                </dd>
+              </div>
+              <div>
+                <dt>The venue</dt>
+                <dd>{EVENT.hostInstitution}</dd>
+              </div>
+              <div>
+                <dt>Hosted by</dt>
+                <dd>{EVENT.organiser}</dd>
+              </div>
+              <div className="hero-logos">
+                <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAMIT" width={1628} height={278} sizes="160px" />
+                <Image src="/csi.jpeg" alt="Computer Society of India" width={1140} height={1141} sizes="48px" />
+              </div>
+            </dl>
+          </div>
         </div>
 
-        <div className="story-chapters">
-          <article id="about" className="story-chapter" data-chapter="0" aria-labelledby="about-title">
-            <SectionLabel index={1} left="The summit" right="About NEXUS" />
-            <h2 id="about-title" data-reveal>
+        {/* Page 1 — About NEXUS */}
+        <article id="about" className="deck-page" data-deck-page="1" aria-labelledby="about-title">
+          <div className="deck-side left">
+            <p className="eyebrow">01 / The summit</p>
+            <h2 id="about-title">
               About <em>NEXUS.</em>
             </h2>
-            <div className="prose" data-reveal>
-              <p className="lead">{ABOUT.paragraphs[0]}</p>
-              {ABOUT.paragraphs.slice(1).map((p) => (
-                <p key={p}>{p}</p>
-              ))}
-              <p className="signature">Connecting Chapters. Inspiring Innovation.</p>
-            </div>
-            <ul className="stats" aria-label="Participation highlights">
+            <p className="lead">
+              A flagship summit by the CSI Student Chapter, NMAMIT, bringing together CSI student chapters from across Karnataka with
+              faculty members and industry professionals.
+            </p>
+            <p className="signature">Connecting Chapters. Inspiring Innovation.</p>
+          </div>
+          <DeckCenter index={0} />
+          <div className="deck-side right">
+            <p className="deck-text">
+              A common platform to exchange ideas, showcase innovation, build leadership and explore emerging technologies — through
+              industry interactions, chapter presentations and project exhibitions.
+            </p>
+            <ul className="deck-stats" aria-label="Participation highlights">
               {ABOUT.stats.map((s) => (
-                <li key={s.label} data-reveal>
+                <li key={s.label}>
                   <strong>{s.value}</strong>
                   <span>{s.label}</span>
-                  <small>{s.note}</small>
                 </li>
               ))}
             </ul>
-            <p className="footnote">{ABOUT.statsNote}</p>
-          </article>
+            <p className="footnote">Proposed participation targets, not confirmed attendance.</p>
+          </div>
+        </article>
 
-          <article id="hosts" className="story-chapter" data-chapter="1" aria-labelledby="hosts-title">
-            <SectionLabel index={2} left="The hosts" right="CSI Student Branch, NMAMIT" />
-            <h2 id="hosts-title" data-reveal>
-              About the <em>hosts.</em>
-            </h2>
-            <div className="host-grid">
-              {HOSTS.map((host) => (
-                <article key={host.id} className="host-card" aria-labelledby={`host-${host.id}`} data-reveal>
-                  <div className={`host-logo host-logo-${host.id}`}>
-                    <Image src={host.logo.src} alt={host.logo.alt} width={host.logo.width} height={host.logo.height} sizes="240px" />
+        {/* Page 2 — About the hosts */}
+        <article id="hosts" className="deck-page" data-deck-page="2" aria-labelledby="hosts-title">
+          <h2 id="hosts-title" className="sr-only">
+            About the hosts
+          </h2>
+          {HOSTS.map((host, i) => (
+            <div key={host.id} className={`deck-side ${i === 0 ? 'left' : 'right'}`}>
+              <p className="eyebrow">{i === 0 ? '02 / Host institution' : '02 / Organising chapter'}</p>
+              <div className={`host-logo host-logo-${host.id}`}>
+                <Image src={host.logo.src} alt={host.logo.alt} width={host.logo.width} height={host.logo.height} sizes="200px" />
+              </div>
+              <h3>About {host.name}</h3>
+              <p className="deck-text">{HOST_SUMMARY[host.id]}</p>
+              <dl className="host-facts">
+                {host.facts.map((f) => (
+                  <div key={f.label}>
+                    <dt>{f.label}</dt>
+                    <dd>{f.value}</dd>
                   </div>
-                  <p className="eyebrow">{host.eyebrow}</p>
-                  <h3 id={`host-${host.id}`}>About {host.name}</h3>
-                  {host.paragraphs.map((p) => (
-                    <p key={p}>{p}</p>
-                  ))}
-                  <dl className="host-facts">
-                    {host.facts.map((f) => (
-                      <div key={f.label}>
-                        <dt>{f.label}</dt>
-                        <dd>{f.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </article>
-              ))}
+                ))}
+              </dl>
             </div>
-          </article>
+          ))}
+          <DeckCenter index={1} />
+        </article>
 
-          <article className="story-chapter" data-chapter="2" aria-labelledby="explore-title">
-            <SectionLabel index={3} left="Explore" right={`${NAV_ITEMS.length - 1} pages · 1 day`} />
-            <h2 id="explore-title" data-reveal>
+        {/* Page 3 — One day of innovation */}
+        <article id="explore" className="deck-page" data-deck-page="3" aria-labelledby="explore-title">
+          <div className="deck-side left">
+            <p className="eyebrow">03 / Explore</p>
+            <h2 id="explore-title">
               One day of <em>innovation.</em>
             </h2>
-            <ul className="explore-grid">
-              {EXPLORE.map((item, i) => (
-                <li key={item.href} data-reveal>
-                  <Link href={item.href}>
-                    <span>{String(i + 1).padStart(2, '0')}</span>
-                    <strong>{item.label}</strong>
-                    <p>{item.text}</p>
-                    <i aria-hidden="true">↗</i>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <NextPage current="/" />
-          </article>
-        </div>
+            <DeckLinks items={EXPLORE.slice(0, 2)} start={1} />
+          </div>
+          <DeckCenter index={2} />
+          <div className="deck-side right">
+            <DeckLinks items={EXPLORE.slice(2)} start={3} />
+            <Link className="button" href="/register">
+              Register now <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+        </article>
+
+        <nav className="deck-dots" aria-label="Home sections">
+          {['Home', 'About NEXUS', 'The hosts', 'Explore'].map((label, i) => (
+            <button key={label} type="button" data-deck-go={i} aria-label={label}>
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+        <p className="deck-hint" aria-hidden="true">
+          Scroll <span>↓</span>
+        </p>
         <LogoStory />
       </section>
     </>
+  );
+}
+
+/** Centre column: the canvas draws the object here; the caption names it. */
+function DeckCenter({ index }: { index: number }) {
+  const o = OBJECTS[index];
+  return (
+    <div className="deck-center" data-deck-center aria-hidden="true">
+      <p className="deck-caption">
+        <span>/{String(index + 1).padStart(2, '0')}</span> {o.label}
+      </p>
+    </div>
+  );
+}
+
+function DeckLinks({ items, start }: { items: typeof EXPLORE; start: number }) {
+  return (
+    <ul className="deck-links">
+      {items.map((item, i) => (
+        <li key={item.href}>
+          <Link href={item.href}>
+            <span>/{String(start + i).padStart(2, '0')}</span>
+            <strong>{item.label}</strong>
+            <small>{item.text}</small>
+            <i aria-hidden="true">↗</i>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
 

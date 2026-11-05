@@ -63,10 +63,23 @@ export default function HomePage() {
             </div>
           </div>
 
+          <div className="hero-corners">
+            <p>
+              Hosted by
+              <strong>{EVENT.organiser}</strong>
+            </p>
+            <div className="hero-logos">
+              <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAMIT" width={1628} height={278} sizes="160px" />
+              <Image src="/csi.jpeg" alt="Computer Society of India" width={1140} height={1141} sizes="48px" />
+            </div>
+          </div>
+
           <div className="hero-band">
             <div className="hero-copy">
               <p className="eyebrow">
-                <span className="dot" aria-hidden="true" /> {EVENT.dateCompact} · {EVENT.venueShort}
+                <span className="dot" aria-hidden="true" />
+                <time dateTime={EVENT.eventDateIso}>{EVENT.dateCompact}</time> · <span className="venue-full">{EVENT.hostInstitution}</span>
+                <span className="venue-short">{EVENT.venueShort}</span>
               </p>
               <p className="hero-subtitle">CSI Student Summit on Innovation &amp; Technology</p>
               <p className="hero-tagline">
@@ -81,26 +94,6 @@ export default function HomePage() {
                 </a>
               </div>
             </div>
-            <dl className="hero-bottom">
-              <div>
-                <dt>The date</dt>
-                <dd>
-                  <time dateTime={EVENT.eventDateIso}>{EVENT.dateCompact}</time>
-                </dd>
-              </div>
-              <div>
-                <dt>The venue</dt>
-                <dd>{EVENT.hostInstitution}</dd>
-              </div>
-              <div>
-                <dt>Hosted by</dt>
-                <dd>{EVENT.organiser}</dd>
-              </div>
-              <div className="hero-logos">
-                <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAMIT" width={1628} height={278} sizes="160px" />
-                <Image src="/csi.jpeg" alt="Computer Society of India" width={1140} height={1141} sizes="48px" />
-              </div>
-            </dl>
           </div>
         </div>
 

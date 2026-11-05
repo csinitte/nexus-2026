@@ -62,8 +62,12 @@ export function LogoStory() {
 
     const measure = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(window.innerWidth * dpr);
-      canvas.height = Math.round(window.innerHeight * dpr);
+      const w = Math.round(window.innerWidth * dpr);
+      const h = Math.round(window.innerHeight * dpr);
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
       const r = heroImg.getBoundingClientRect();
       start = { x: r.left, y: r.top + window.scrollY, w: r.width, h: r.height };
     };
@@ -96,7 +100,8 @@ export function LogoStory() {
       page = next;
       // Info enters after the object has formed; the hero returns after the logo is back.
       deck.style.setProperty('--enter-delay', from === 0 && next > 0 && animate ? '2.15s' : '0.75s');
-      deck.style.setProperty('--hero-delay', next === 0 && from > 0 && animate ? '1.9s' : '0s');
+      // Returning home: the robot, orbit and text arrive only once the logo has settled back into place.
+      deck.style.setProperty('--hero-delay', next === 0 && from > 0 && animate ? `${segmentMs(0) / 1000 - 0.05}s` : '0s');
       deck.dataset.page = String(next);
       pages.forEach((p, i) => {
         p.classList.toggle('is-active', i === next);
@@ -210,13 +215,19 @@ export function LogoStory() {
       step(now);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       root.style.setProperty('--story-handoff', v > 0.001 ? '1' : '0');
-      if (!shapes.length || v <= 0.001) return;
-      if (deck.getBoundingClientRect().bottom < 0) return;
+      if (v <= 0.001) {
+        // Keep the hero logo's position fresh so the hand-over back to it is exact.
+        if (page === 0) measure();
+        return;
+      }
+      if (!shapes.length || deck.getBoundingClientRect().bottom < 0) return;
 
       const { cx, cy, B } = box();
-      const floatY = reduced ? 0 : Math.sin(now / 1700) * 3;
+      // The gentle float fades in as the N settles, so there is no jump between phases.
+      const floatY = reduced ? 0 : Math.sin(now / 1700) * 3 * ease(clamp((v - 0.4) / 0.3));
       if (v < 0.6) {
-        drawLogo(clamp(v / 0.3), clamp((v - 0.3) / 0.3), cx, cy, B);
+        // Overlapping phases make the logo's path one continuous motion in both directions.
+        drawLogo(clamp(v / 0.34), clamp((v - 0.22) / 0.38), cx, cy + floatY, B);
         return;
       }
       halo(cx, cy + floatY, B, 1);

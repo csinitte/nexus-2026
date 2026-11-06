@@ -284,6 +284,15 @@ export function ExpoStep({ state, errors, update, abstract, setAbstract }: StepP
           </aside>
           <div className="fields">
             <TextField
+              id="teamName"
+              label="Team name"
+              value={state.teamName}
+              onChange={(teamName) => update({ teamName })}
+              error={errors.teamName}
+              maxLength={160}
+              wide
+            />
+            <TextField
               id="projectTitle"
               label="Project / product title"
               value={state.projectTitle}
@@ -496,6 +505,7 @@ export function ReviewStep({ state, errors, update, abstract, goTo }: StepProps)
       rows:
         state.participatingInExpo === 'yes'
           ? [
+              ['Team name', state.teamName],
               ['Project', `${state.projectTitle} · ${state.category}`],
               ['Team', state.teamIndexes.map((i) => state.students[i]?.fullName).join(', ')],
               ['Abstract', abstract?.name ?? 'Not selected'],

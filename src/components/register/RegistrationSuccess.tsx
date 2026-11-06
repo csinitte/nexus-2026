@@ -22,7 +22,7 @@ export type RegistrationResult = {
     arrivalPlan: string | null;
   };
   participants: { fullName: string; department: string; year: number }[];
-  expo: { projectTitle: string; category: string } | null;
+  expo: { teamName: string; projectTitle: string; category: string } | null;
 };
 
 const ARRIVAL: Record<string, string> = {
@@ -121,7 +121,7 @@ export function RegistrationSuccess({ result, coordinatorEmail }: { result: Regi
           </div>
           <div>
             <dt>Project Expo</dt>
-            <dd>{result.expo ? `${result.expo.projectTitle} · ${result.expo.category}` : 'Not participating'}</dd>
+            <dd>{result.expo ? `${result.expo.teamName} · ${result.expo.projectTitle} · ${result.expo.category}` : 'Not participating'}</dd>
           </div>
           <div>
             <dt>Accommodation</dt>

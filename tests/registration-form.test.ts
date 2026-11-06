@@ -35,6 +35,7 @@ function completeState(overrides: Partial<FormState> = {}): FormState {
     ],
     presenterIndex: 0,
     participatingInExpo: 'yes',
+    teamName: 'Grid Pioneers',
     projectTitle: 'Smart Grid',
     category: 'Energy & Resource Management',
     description: 'Leak detection for campus water lines.',
@@ -93,6 +94,14 @@ describe('step validation', () => {
     expect(errors.abstract).toBeDefined();
   });
 
+  test('Expo team name is required only for participating teams', async () => {
+    const withoutName = completeState({ teamName: '   ' });
+    expect(validateStep(step('expo'), withoutName, pdf()).teamName).toBeDefined();
+    const payload = buildPayload(withoutName);
+    await expect(validateRegistration({ ...payload, expo: { ...payload.expo!, abstract: pdf() } })).rejects.toThrow('Expo team name');
+    expect(validateStep(step('expo'), completeState({ participatingInExpo: 'no', teamName: '' }), null).teamName).toBeUndefined();
+  });
+
   test('accommodation counts must equal the people selected', () => {
     const errors = validateStep(step('accommodation'), completeState({ maleAccommodationCount: '2' }), pdf());
     expect(errors.accommodationCounts).toContain('must equal');
@@ -127,6 +136,7 @@ describe('payload contract with the server', () => {
     const parsed = await validateRegistration({ ...payload, expo: { ...payload.expo!, abstract: pdf() } });
     expect(parsed.students).toHaveLength(3);
     expect(parsed.chapterShowcasePresenter).toBe('Asha');
+    expect(parsed.expo?.teamName).toBe('Grid Pioneers');
     expect(parsed.expo?.teamMembers).toEqual([0, 1]);
     expect(parsed.accommodationParticipantNames).toEqual(['Asha', 'Dr. Rao']);
   });

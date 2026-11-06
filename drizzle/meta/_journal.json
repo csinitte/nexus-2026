@@ -8,6 +8,13 @@
       "when": 1793874440950,
       "tag": "0000_pink_firebrand",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793976440206,
+      "tag": "0001_parched_captain_flint",
+      "breakpoints": true
     }
   ]
 }

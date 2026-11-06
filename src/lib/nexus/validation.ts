@@ -1,7 +1,7 @@
 import { ARRIVAL_PLANS, EXPO_PROJECT_CATEGORIES, getMaxAbstractBytes } from './constants';
 export class ValidationError extends Error { constructor(public issues: string[]) { super(issues.join('; ')); } }
 export type Student = { fullName:string; department:string; year:number; contactNumber:string; email:string };
-export type RegistrationInput = { collegeName:string; csiChapterName:string; csiChapterId?:string; city:string; facultyCoordinatorName:string; facultyCoordinatorEmail:string; facultyCoordinatorContact:string; facultyAccompanying:boolean; totalRepresentatives:number; students:Student[]; chapterShowcasePresenter:string; participatingInExpo:boolean; expo?:{projectTitle:string;category:string;description:string;teamMembers:(string|number)[];abstract?:File}; accommodationRequired:boolean; arrivalPlan?:string; maleAccommodationCount:number; femaleAccommodationCount:number; accommodationParticipantNames:string[]; declarationAccepted:boolean };
+export type RegistrationInput = { collegeName:string; csiChapterName:string; csiChapterId?:string; city:string; facultyCoordinatorName:string; facultyCoordinatorEmail:string; facultyCoordinatorContact:string; facultyAccompanying:boolean; totalRepresentatives:number; students:Student[]; chapterShowcasePresenter:string; participatingInExpo:boolean; expo?:{teamName:string;projectTitle:string;category:string;description:string;teamMembers:(string|number)[];abstract?:File}; accommodationRequired:boolean; arrivalPlan?:string; maleAccommodationCount:number; femaleAccommodationCount:number; accommodationParticipantNames:string[]; declarationAccepted:boolean };
 const str = (v:unknown) => typeof v === 'string' ? v.trim() : '';
 const bool = (v:unknown) => v === true || v === 'true';
 const list = (v:unknown): unknown[] => Array.isArray(v) ? v : [];
@@ -31,10 +31,11 @@ export async function validateRegistration(raw:Record<string, unknown>):Promise<
  if(data.participatingInExpo) {
   const x=(raw.expo || {}) as Record<string,unknown>; const members=list(x.teamMembers) as (string|number)[]; const indexes=members.map(m=>typeof m==='number'?m:students.findIndex(s=>match(String(m),s)));
   const encoded=x.abstract as {fileName?:unknown;mimeType?:unknown;base64?:unknown}|undefined; const file=x.abstract instanceof File?x.abstract:(encoded && typeof encoded.base64==='string' && typeof encoded.fileName==='string' && typeof encoded.mimeType==='string' ? new File([Buffer.from(encoded.base64,'base64')],encoded.fileName,{type:encoded.mimeType}) : undefined);
+  if(!str(x.teamName)||str(x.teamName).length>160) errors.push('Expo team name is required and must be at most 160 characters');
   if(!str(x.projectTitle)||!str(x.description)||!EXPO_PROJECT_CATEGORIES.includes(str(x.category) as never)) errors.push('Expo title, category and description are required');
   if(indexes.length<2||indexes.length>4||new Set(indexes).size!==indexes.length||indexes.some(i=>!Number.isInteger(i)||i<0||i>=students.length)) errors.push('Expo team must contain 2–4 distinct registered students');
   if(!file || !file.name.toLowerCase().endsWith('.pdf') || file.type !== 'application/pdf' || file.size===0 || file.size>getMaxAbstractBytes() || Buffer.from(await file.slice(0,5).arrayBuffer()).toString()!=='%PDF-') errors.push('A valid PDF abstract within the size limit is required');
-  data.expo={projectTitle:str(x.projectTitle),category:str(x.category),description:str(x.description),teamMembers:indexes,abstract:file};
+  data.expo={teamName:str(x.teamName),projectTitle:str(x.projectTitle),category:str(x.category),description:str(x.description),teamMembers:indexes,abstract:file};
  }
  if(data.accommodationRequired) {
   const count=data.maleAccommodationCount+data.femaleAccommodationCount; const names=[...students.map(s=>s.fullName),...(data.facultyAccompanying?[data.facultyCoordinatorName]:[])].map(x=>x.toLowerCase());

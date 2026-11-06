@@ -19,7 +19,7 @@ type Detail = {
     registrationStatus: string;
   };
   participants: { id: string; fullName: string; department: string; year: number; participantType: string }[];
-  expoProject: { projectTitle: string; category: string; reviewStatus: string } | null;
+  expoProject: { teamName: string | null; projectTitle: string; category: string; reviewStatus: string } | null;
 };
 
 /** Reads `#CODE:TOKEN` from the confirmation link and loads the signed summary. */
@@ -122,7 +122,7 @@ export function SummaryView() {
           </div>
           <div>
             <dt>Project Expo</dt>
-            <dd>{detail.expoProject ? `${detail.expoProject.projectTitle} · ${detail.expoProject.category}` : 'Not participating'}</dd>
+            <dd>{detail.expoProject ? `${detail.expoProject.teamName ? `${detail.expoProject.teamName} · ` : ''}${detail.expoProject.projectTitle} · ${detail.expoProject.category}` : 'Not participating'}</dd>
           </div>
           <div>
             <dt>Accommodation</dt>

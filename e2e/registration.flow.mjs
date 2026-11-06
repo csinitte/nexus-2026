@@ -75,6 +75,7 @@ await page.getByRole('radio', { name: /Asha Rao/ }).check();
 await step('Expo');
 
 await page.getByRole('radio', { name: /^Yes/ }).check();
+await page.getByLabel('Team name').fill('Water Innovators');
 await page.getByLabel('Project / product title').fill('Smart Water Grid');
 await page.getByLabel('Project category').selectOption('Energy & Resource Management');
 await page.getByLabel('Brief project description').fill('IoT sensors that detect leaks in campus water lines.');

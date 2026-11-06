@@ -156,6 +156,7 @@ export function RegistrationDetailPanel({
           <p>
             <strong>{detail.expoProject.projectTitle}</strong>
             <br />
+            {detail.expoProject.teamName && <>Team: {detail.expoProject.teamName}<br /></>}
             {detail.expoProject.category} · Review: {detail.expoProject.reviewStatus}
           </p>
           <p className="muted">{detail.expoProject.description}</p>

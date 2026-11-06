@@ -1,0 +1,1 @@
+ALTER TABLE "expo_projects" ADD COLUMN "team_name" text;

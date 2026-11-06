@@ -37,6 +37,7 @@ export type FormState = {
   /** Index into `students`, kept as an index so renaming a student keeps the choice. */
   presenterIndex: number | null;
   participatingInExpo: YesNo;
+  teamName: string;
   projectTitle: string;
   category: string;
   description: string;
@@ -85,6 +86,7 @@ export const initialState: FormState = {
   students: [],
   presenterIndex: null,
   participatingInExpo: '',
+  teamName: '',
   projectTitle: '',
   category: '',
   description: '',
@@ -192,6 +194,8 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
       if (state.participatingInExpo === 'yes') {
         if (count < MIN_EXPO_TEAM_MEMBERS)
           e.participatingInExpo = `An Expo team needs at least ${MIN_EXPO_TEAM_MEMBERS} student representatives.`;
+        required(e, 'teamName', state.teamName, 'the Expo team name');
+        if (state.teamName.trim().length > 160) e.teamName = 'Keep the team name under 160 characters.';
         required(e, 'projectTitle', state.projectTitle, 'the project or product title');
         if (!EXPO_PROJECT_CATEGORIES.includes(state.category as never)) e.category = 'Choose a project category.';
         required(e, 'description', state.description, 'a brief project description');
@@ -256,6 +260,7 @@ export function buildPayload(state: FormState) {
     participatingInExpo: expo,
     expo: expo
       ? {
+          teamName: state.teamName.trim(),
           projectTitle: state.projectTitle.trim(),
           category: state.category,
           description: state.description.trim(),

@@ -36,6 +36,7 @@ export type Participant = {
 export type ExpoProject = {
   id: string;
   registrationId: string;
+  teamName: string | null;
   projectTitle: string;
   category: string;
   description: string;

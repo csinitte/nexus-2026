@@ -402,6 +402,7 @@ function ExpoTable({
                 <div>
                   <p className="eyebrow">{p.category}</p>
                   <h3>{p.projectTitle}</h3>
+                  {p.teamName && <p className="muted">Team: {p.teamName}</p>}
                   <p className="muted">
                     {college ? `${college.collegeName} · ${college.registrationCode}` : 'Unknown college'}
                     {college && (

@@ -50,15 +50,7 @@ export default function HomePage() {
                 <Orbit layer="front" />
               </div>
               <div className="nx-robot">
-                <Image src="/brand/robot.png" alt="" width={772} height={841} priority sizes="(max-width: 700px) 70vw, 36vw" />
-                <Image
-                  className="nx-pulse"
-                  src="/brand/robot-glow.png"
-                  alt=""
-                  width={772}
-                  height={841}
-                  sizes="(max-width: 700px) 70vw, 36vw"
-                />
+                <Image src="/asset_robo_nobg.png" alt="" width={1054} height={1492} priority sizes="(max-width: 700px) 70vw, 36vw" />
               </div>
             </div>
           </div>

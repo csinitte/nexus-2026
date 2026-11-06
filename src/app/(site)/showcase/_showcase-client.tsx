@@ -1,137 +1,188 @@
-'use client';
+﻿'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NextPage, PageIntro } from '@/components/site/PageParts';
 import { EVENT, SHOWCASE } from '@/content/nexus';
 
-function ShowcaseNetwork() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+/* --------------------------------------------------------------------------
+   Hero network illustration — collaboration between student chapters.
+   Rendered as a dedicated visual area on the right of the hero, separated
+   from the heading and description so it never competes with the text.
+   -------------------------------------------------------------------------- */
+function ShowcaseHeroVisual() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [nodes, setNodes] = useState<{ x: number; y: number; r: number }[]>([]);
+  const [links, setLinks] = useState<{ x: number; y: number; w: number; a: number; o: number }[]>([]);
+
   useEffect(() => {
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext('2d')!;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let width = 0, height = 0, dpr = 1, raf = 0;
-    const nodes: { x: number; y: number; angle: number; speed: number; r: number }[] = [];
-    const nodeCount = 18;
-    function resize() {
-      const rect = canvas.parentElement!.getBoundingClientRect();
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = rect.width; height = rect.height;
-      canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
-      canvas.style.width = `${width}px`; canvas.style.height = `${height}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      nodes.length = 0;
-      for (let i = 0; i < nodeCount; i++) {
-        const angle = (i / nodeCount) * Math.PI * 2;
-        nodes.push({ x: 0, y: 0, angle, speed: 0.0005 + Math.random() * 0.0015, r: 1.5 + Math.random() * 2 });
+    const root = ref.current!;
+    function compute() {
+      const rect = root.getBoundingClientRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const radius = Math.min(rect.width, rect.height) * 0.44;
+      const count = 7;
+      const arr: { x: number; y: number; r: number }[] = [];
+      const lnk: { x: number; y: number; w: number; a: number; o: number }[] = [];
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2;
+        const pulse = 62 + Math.sin(i) * 14;
+        arr.push({ x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius, r: 5 + (i % 3) * 3 });
       }
+      for (let i = 0; i < count; i++) {
+        const j = (i + 1) % count;
+        const a = arr[i], b = arr[j];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        lnk.push({ x: a.x, y: a.y, w: Math.hypot(dx, dy), a: (Math.atan2(dy, dx) * 180) / Math.PI, o: 0.22 });
+      }
+      setNodes(arr);
+      setLinks(lnk);
     }
-    function draw() {
-      ctx.clearRect(0, 0, width, height);
-      const centerX = width / 2, centerY = height / 2;
-      for (const n of nodes) {
-        ctx.beginPath(); ctx.moveTo(centerX + n.x, centerY + n.y); ctx.lineTo(centerX, centerY);
-        ctx.strokeStyle = 'rgba(140, 234, 90, 0.08)'; ctx.lineWidth = 1; ctx.stroke();
-      }
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const a = nodes[i], b = nodes[j];
-          const dx = a.x - b.x, dy = a.y - b.y, d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 160) {
-            ctx.beginPath(); ctx.moveTo(centerX + a.x, centerY + a.y); ctx.lineTo(centerX + b.x, centerY + b.y);
-            ctx.strokeStyle = `rgba(140, 234, 90, ${(1 - d / 160) * 0.15})`;
-            ctx.lineWidth = 0.8; ctx.stroke();
-          }
-        }
-      }
-      ctx.beginPath(); ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
-      ctx.fillStyle = '#8cea5a'; ctx.fill();
-      ctx.beginPath(); ctx.arc(centerX, centerY, 16, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(140, 234, 90, 0.35)'; ctx.lineWidth = 2; ctx.stroke();
-      for (const n of nodes) {
-        ctx.beginPath(); ctx.arc(centerX + n.x, centerY + n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = '#8cea5a'; ctx.fill();
-        ctx.beginPath(); ctx.arc(centerX + n.x, centerY + n.y, n.r + 5, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(140, 234, 90, 0.2)'; ctx.lineWidth = 1; ctx.stroke();
-      }
-      if (!reduced) {
-        const now = Date.now() * 0.001;
-        for (const n of nodes) {
-          n.angle += n.speed;
-          const pulse = 60 + Math.sin(now + n.angle) * 10;
-          n.x = Math.cos(n.angle) * pulse;
-          n.y = Math.sin(n.angle) * pulse;
-        }
-      }
-      raf = requestAnimationFrame(draw);
-    }
-    window.addEventListener('resize', resize);
-    resize(); draw();
-    return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(raf); };
+    compute();
+    window.addEventListener('resize', compute);
+    return () => window.removeEventListener('resize', compute);
   }, []);
-  return <canvas ref={canvasRef} className="showcase-network" aria-hidden="true" />;
+
+  return (
+    <div className="showcase-hero-visual" ref={ref} aria-hidden="true">
+      <div className="hero-network">
+        <div className="network-ring" />
+        <div className="network-ring" style={{ animationDuration: '16s', animationDirection: 'reverse', borderStyle: 'dashed' }} />
+        {links.map((l, i) => (
+          <div key={`link-${i}`} className="network-line" style={{ left: l.x, top: l.y, width: l.w, height: 1, transform: `rotate(${l.a}deg)`, opacity: l.o }} />
+        ))}
+        {nodes.map((n, i) => (
+          <div key={`node-${i}`} className="network-node" style={{ left: n.x - n.r, top: n.y - n.r, width: n.r * 2, height: n.r * 2 }} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
-function ShowcaseStage({ index, item }: { index: number; item: { title: string; text: string } }) {
+/* Minimal icon drawn with CSS — no extra image assets required. */
+function CardIcon({ kind }: { kind: 'overview' | 'activities' | 'achievements' }) {
   return (
-    <article className="showcase-stage" data-reveal>
-      <span className="stage-number">{String(index + 1).padStart(2, '0')}</span>
-      <div className="stage-body"><strong>{item.title}</strong><span>{item.text}</span></div>
+    <div className={`card-icon card-icon--${kind}`} aria-hidden="true">
+      <div className="icon-ring" />
+      {kind === 'overview' && <div className="icon-node" />}
+      {kind === 'activities' && <div className="icon-spark" />}
+      {kind === 'achievements' && <div className="icon-star" />}
+    </div>
+  );
+}
+
+function ShowcaseCard({ index, item }: { index: number; item: { title: string; text: string } }) {
+  const kind = ['overview', 'activities', 'achievements'][index] ?? 'overview';
+  return (
+    <article className="showcase-card" data-reveal>
+      <div className="card-number">{String(index + 1).padStart(2, '0')}</div>
+      <CardIcon kind={kind as any} />
+      <div className="card-body">
+        <h3 className="card-title">{item.title}</h3>
+        <p className="card-text">{item.text}</p>
+      </div>
     </article>
+  );
+}
+
+/* Event-format info block: label + prominent value + minimal icon. */
+function FormatStat({ label, value }: { label: string; value: string }) {
+  const icons: Record<string, React.ReactNode> = {
+    Duration: <span className="format-icon format-icon--clock" aria-hidden="true" />,
+    Format: <span className="format-icon format-icon--doc" aria-hidden="true" />,
+    'Q&A': <span className="format-icon format-icon--chat" aria-hidden="true" />,
+  };
+  return (
+    <div className="format-block" data-reveal>
+      <div className="format-symbol">{icons[label]}</div>
+      <div className="format-label">{label}</div>
+      <div className="format-value">{value}</div>
+    </div>
+  );
+}
+
+/* CSS preview of the standardised presentation template (no extra asset). */
+function TemplatePreview() {
+  return (
+    <div className="template-preview" aria-hidden="true">
+      <div className="template-device">
+        <div className="template-screen">
+          <div className="template-bar" />
+          <div className="template-slide">
+            <div className="template-title-line" />
+            <div className="template-divider" />
+            <div className="template-body">
+              <div className="template-line template-line--long" />
+              <div className="template-line template-line--short" />
+              <div className="template-line template-line--short" />
+              <div className="template-line template-line--micro" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
 interface ShowcaseClientProps { slot: { start: string; end: string } | undefined; }
 
 export default function ShowcaseClient({ slot }: ShowcaseClientProps) {
+  const timeText = slot ? `${slot.start} – ${slot.end}` : undefined;
   return (
     <section className="section page showcase-page">
       <div className="showcase-hero">
-        <ShowcaseNetwork />
         <div className="showcase-hero-content">
           <PageIntro
             index={4}
-            label="Chapters in focus"
-            meta={slot ? `${slot.start} – ${slot.end}` : undefined}
+            label="CHAPTERS IN FOCUS"
+            meta={timeText}
             eyebrow={SHOWCASE.tagline}
             title="CSI Chapter"
-            accent="Showcase."
-          >
+            accent="Showcase"
+          />
+          <div className="showcase-intro">
             {SHOWCASE.description.map((p) => (
               <p key={p}>{p}</p>
             ))}
-          </PageIntro>
+          </div>
+        </div>
+        <ShowcaseHeroVisual />
+      </div>
+
+      <div className="showcase-requirements" data-reveal>
+        <h2 className="list-title">What each chapter will present</h2>
+        <div className="requirement-grid">
+          {SHOWCASE.areas.map((a, i) => (
+            <ShowcaseCard key={a.title} index={i} item={a} />
+          ))}
         </div>
       </div>
 
-      <dl className="showcase-format" data-reveal>
-        {SHOWCASE.details.map((d) => (
-          <div key={d.label} className="format-item">
-            <dt>{d.label}</dt>
-            <dd>{d.value}</dd>
-          </div>
-        ))}
-      </dl>
-
-      <div className="showcase-pathway" data-reveal>
-        <h2 className="list-title">What each chapter will present</h2>
-        <div className="pathway-grid">
-          {SHOWCASE.areas.map((a, i) => (
-            <ShowcaseStage key={a.title} index={i} item={a} />
+      <div className="showcase-event-format" data-reveal>
+        <h2 className="list-title">Event format</h2>
+        <div className="format-strip">
+          {SHOWCASE.details.map((d) => (
+            <FormatStat key={d.label} label={d.label} value={d.value} />
           ))}
         </div>
-        <div className="pathway-connections" aria-hidden="true" />
       </div>
 
       <div className="showcase-download" data-reveal>
-        <div className="download-content">
-          <p className="eyebrow">Standardised format</p>
-          <p>Every registered chapter presents. Prepare your five minutes with the official template.</p>
+        <div className="download-layout">
+          <div className="download-info">
+            <p className="eyebrow">Standardised format</p>
+            <h3 className="download-heading">Standardised presentation template</h3>
+            <p className="download-desc">Every registered chapter presents. Prepare your five minutes with the official template.</p>
+          </div>
+          <div className="download-preview">
+            <TemplatePreview />
+          </div>
+          <a className="button download-button" href={EVENT.showcaseTemplateUrl} download>
+            <span aria-hidden="true">↓</span> Download presentation template
+          </a>
         </div>
-        <a className="button download-button" href={EVENT.showcaseTemplateUrl} download>
-          Download presentation template <span aria-hidden="true">↓</span>
-        </a>
       </div>
+
       <NextPage current="/showcase" />
     </section>
   );

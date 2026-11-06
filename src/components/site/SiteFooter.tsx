@@ -9,6 +9,23 @@ export function SiteFooter() {
         <div>
           <Wordmark />
           <p>{EVENT.subtitle}</p>
+          <a
+            className="footer-location"
+            href="https://www.google.com/maps/search/?api=1&query=NMAM+Institute+of+Technology+Nitte+Karnataka"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="NMAMIT location on Google Maps"
+          >
+            <svg className="footer-location-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span>
+              <strong>NMAM Institute of Technology (NMAMIT)</strong>
+              <br />
+              Nitte, Karkala, Udupi District, Karnataka, India
+            </span>
+          </a>
         </div>
         <nav aria-label="Footer">
           {NAV_ITEMS.map((item) => (

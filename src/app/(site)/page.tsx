@@ -4,6 +4,7 @@ import { IntroGate } from '@/components/intro/IntroGate';
 import { LogoStory } from '@/components/story/LogoStory';
 import { OBJECTS } from '@/components/story/shapes';
 import { ABOUT, EVENT, HOSTS } from '@/content/nexus';
+import { PrizePool } from '@/components/prize/PrizePool';
 
 /*
  * The home page is a deck of four full-screen pages: the hero, then About,
@@ -181,6 +182,9 @@ export default function HomePage() {
         </p>
         <LogoStory />
       </section>
+
+      {/* Prize Pool section â€” shared <PrizePool /> component */}
+      <PrizePool />
     </>
   );
 }

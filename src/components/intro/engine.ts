@@ -106,7 +106,7 @@ export class IntroEngine {
 
   constructor(options: IntroOptions) {
     this.o = options;
-    this.T = timeline(options.wallMs ?? 2500, options.dissolveMs ?? 1400, options.formMs ?? 600);
+    this.T = timeline(options.wallMs ?? 500, options.dissolveMs ?? 1400, options.formMs ?? 600);
     const hex = options.accent.replace('#', '');
     const n = parseInt(hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex, 16);
     this.rgb = [(n >> 16) & 255, (n >> 8) & 255, n & 255];

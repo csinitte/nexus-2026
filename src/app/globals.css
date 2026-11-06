@@ -668,10 +668,10 @@ html.menu-open .site-header {
 }
 .nx-robot {
   position: absolute;
-  left: 28%;
-  top: 8%;
-  width: 44%;
-  aspect-ratio: 1054 / 1492;
+  left: 31.5%;
+  top: 27%;
+  width: 36.1%;
+  aspect-ratio: 772 / 841;
   z-index: 2;
 }
 .nx-robot img {
@@ -681,23 +681,41 @@ html.menu-open .site-header {
   height: 100%;
   display: block;
 }
+.nx-pulse {
+  animation: nx-pulse 3.6s ease-in-out infinite;
+}
+@keyframes nx-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  18% {
+    opacity: 0.55;
+  }
+  38% {
+    opacity: 1;
+  }
+  43% {
+    opacity: 0.62;
+  }
+  47% {
+    opacity: 1;
+  }
+  66% {
+    opacity: 0.82;
+  }
+  84% {
+    opacity: 0.45;
+  }
+}
 .hero-band {
   position: relative;
   z-index: 5;
-  isolation: isolate;
   display: grid;
   width: 100%;
   max-width: calc(var(--max) + 2 * var(--gutter));
   margin: 0 auto;
   padding: 0 var(--gutter) clamp(30px, 5vh, 50px);
-}
-.hero-band::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: -55px 0 0;
-  background: linear-gradient(to bottom, transparent, rgba(9, 11, 10, 0.86) 45%);
-  pointer-events: none;
 }
 .hero-copy {
   display: grid;
@@ -1901,6 +1919,9 @@ html:not(.deck-ready) .deck-hint {
   .nx-intro,
   .nx-orbit-dot {
     display: none !important;
+  }
+  .nx-pulse {
+    opacity: 0.7;
   }
 }
 
@@ -3218,9 +3239,9 @@ html:not(.deck-ready) .deck-hint {
     top: 8%;
   }
   .nx-robot {
-    width: 88%;
-    left: 6%;
-    top: 2%;
+    width: 76%;
+    left: 12%;
+    top: 13%;
   }
   .hero-corners {
     top: auto;

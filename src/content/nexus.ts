@@ -69,7 +69,7 @@ export const HOSTS = [
     id: 'csi',
     eyebrow: 'Organising chapter',
     name: 'CSI NMAMIT',
-    logo: { src: '/csi.jpeg', alt: 'Computer Society of India', width: 1140, height: 1141 },
+    logo: { src: '/csi-bangalore.png', alt: 'Computer Society of India — Bangalore Chapter', width: 1908, height: 559 },
     paragraphs: [
       'Established in 2007, the Computer Society of India (CSI) Student Branch, NMAMIT, has grown into a vibrant technical community with over 700 student members and 350+ technical events.',
       'Through hackathons, coding competitions, workshops and industry interactions, the chapter promotes technical learning, practical skills and innovation.',

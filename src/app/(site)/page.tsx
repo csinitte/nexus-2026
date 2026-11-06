@@ -69,8 +69,22 @@ export default function HomePage() {
               <strong>{EVENT.organiser}</strong>
             </p>
             <div className="hero-logos">
-              <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAMIT" width={1628} height={278} sizes="160px" />
-              <Image src="/csi.jpeg" alt="Computer Society of India" width={1140} height={1141} sizes="48px" />
+              <Image
+                className="logo-nitte"
+                src="/nitte_white.png"
+                alt="Nitte (Deemed to be University) — NMAMIT"
+                width={1628}
+                height={278}
+                sizes="160px"
+              />
+              <Image
+                className="logo-csi"
+                src="/csi-bangalore.png"
+                alt="Computer Society of India — Bangalore Chapter"
+                width={1908}
+                height={559}
+                sizes="160px"
+              />
             </div>
           </div>
 

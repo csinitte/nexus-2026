@@ -784,15 +784,13 @@ html.menu-open .site-header {
   align-items: center;
   gap: 16px;
 }
-.hero-logos img:first-child {
+.hero-logos .logo-nitte {
   width: clamp(100px, 11vw, 150px);
   height: auto;
 }
-.hero-logos img:last-child {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
+.hero-logos .logo-csi {
+  width: auto;
+  height: clamp(32px, 4.4vh, 42px);
 }
 
 /* The hero logo hands over to the canvas; everything else fades for a blank page. */
@@ -1214,9 +1212,6 @@ html:not(.deck-ready) .deck-hint {
 .host-logo img {
   height: 100%;
   width: auto;
-}
-.host-logo-csi img {
-  border-radius: 50%;
 }
 .host-facts {
   display: flex;
@@ -3009,12 +3004,11 @@ html:not(.deck-ready) .deck-hint {
   .hero-corners strong {
     font-size: 11px;
   }
-  .hero-logos img:first-child {
-    width: 96px;
+  .hero-logos .logo-nitte {
+    width: 92px;
   }
-  .hero-logos img:last-child {
-    width: 30px;
-    height: 30px;
+  .hero-logos .logo-csi {
+    height: 28px;
   }
   .hero-band {
     padding-bottom: 84px;

@@ -42,6 +42,9 @@ export function LogoStory() {
       p: Math.random() * Math.PI * 2,
     }));
     const colorCache = new Map<number, string>();
+    const offsetX = new Float32Array(count);
+    const offsetY = new Float32Array(count);
+    const pointer = { x: 0, y: 0, active: false };
     let shapes: ShapePoints[] = [];
     let raf = 0;
     let dpr = 1;
@@ -149,8 +152,26 @@ export function LogoStory() {
         const r = from.r[k] + (to.r[k] - from.r[k]) * e;
         const g = from.g[k] + (to.g[k] - from.g[k]) * e;
         const b = from.b[k] + (to.b[k] - from.b[k]) * e;
-        const px = (cx + (x - 0.5) * B) * dpr;
-        const py = (cy + (y - 0.5) * B) * dpr;
+        const baseX = cx + (x - 0.5) * B;
+        const baseY = cy + (y - 0.5) * B;
+        let pushX = 0;
+        let pushY = 0;
+        if (!reduced && pointer.active) {
+          const dx = baseX - pointer.x;
+          const dy = baseY - pointer.y;
+          const distance = Math.hypot(dx, dy);
+          const radius = 100;
+          if (distance < radius) {
+            const strength = (1 - distance / radius) ** 2 * 55;
+            const angle = distance > 0.01 ? Math.atan2(dy, dx) : sd.p;
+            pushX = Math.cos(angle) * strength;
+            pushY = Math.sin(angle) * strength;
+          }
+        }
+        offsetX[k] += (pushX - offsetX[k]) * 0.16;
+        offsetY[k] += (pushY - offsetY[k]) * 0.16;
+        const px = (baseX + offsetX[k]) * dpr;
+        const py = (baseY + offsetY[k]) * dpr;
         ctx.fillStyle = color(r | 0, g | 0, b | 0);
         ctx.fillRect(px, py, size, size);
         if (g > r + 50) glow.push(px, py);
@@ -255,6 +276,7 @@ export function LogoStory() {
     let lastWheel = 0;
     let gestureUsed = false;
     const busy = () => root.classList.contains('intro-playing') || root.classList.contains('menu-open');
+    const transitioning = () => Math.abs(v - page) > 0.001;
 
     const go = (next: number) => {
       if (next === page || next < 0 || next > LAST) return;
@@ -277,6 +299,12 @@ export function LogoStory() {
       const now = performance.now();
       if (now - lastWheel > 200) gestureUsed = false;
       lastWheel = now;
+      // Keep a gesture inside the deck until its transition has finished.
+      // In particular, the last page becomes active before its animation ends.
+      if (!busy() && window.scrollY <= 2 && (transitioning() || (e.deltaY > 0 && page === LAST && (locked || gestureUsed)))) {
+        e.preventDefault();
+        return;
+      }
       const next = target(e.deltaY > 0 ? 1 : -1);
       if (next === null) return;
       e.preventDefault();
@@ -292,6 +320,10 @@ export function LogoStory() {
     const onTouchMove = (e: TouchEvent) => {
       const dy = touchY - e.touches[0].clientY;
       if (Math.abs(dy) < 8) return;
+      if (!busy() && window.scrollY <= 2 && (transitioning() || (dy > 0 && page === LAST && (locked || touchUsed)))) {
+        e.preventDefault();
+        return;
+      }
       const next = target(dy > 0 ? 1 : -1);
       if (next === null) return;
       e.preventDefault();
@@ -308,6 +340,10 @@ export function LogoStory() {
       const down = e.key === 'ArrowDown' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey && t?.tagName !== 'BUTTON');
       const up = e.key === 'ArrowUp' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey);
       if (!down && !up) return;
+      if (!busy() && window.scrollY <= 2 && transitioning()) {
+        e.preventDefault();
+        return;
+      }
       const next = target(down ? 1 : -1);
       if (next === null) return;
       e.preventDefault();
@@ -330,6 +366,17 @@ export function LogoStory() {
       }
     };
 
+    const onPointerMove = (event: PointerEvent) => {
+      if (reduced || event.pointerType !== 'mouse') return;
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      pointer.active = true;
+    };
+    const clearPointer = () => { pointer.active = false; };
+    const onPointerOut = (event: PointerEvent) => {
+      if (!event.relatedTarget) clearPointer();
+    };
+
     /* ---------- Start ---------- */
     root.classList.add('deck-ready');
     const restoration = history.scrollRestoration;
@@ -348,6 +395,9 @@ export function LogoStory() {
     window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('keydown', onKey);
     window.addEventListener('hashchange', onHash);
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('blur', clearPointer);
+    document.addEventListener('pointerout', onPointerOut, { passive: true });
     deck.addEventListener('click', onClick);
 
     const ready = () => {
@@ -366,6 +416,9 @@ export function LogoStory() {
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('hashchange', onHash);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('blur', clearPointer);
+      document.removeEventListener('pointerout', onPointerOut);
       deck.removeEventListener('click', onClick);
       root.classList.remove('deck-ready');
       history.scrollRestoration = restoration;

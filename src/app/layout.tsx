@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono, Unbounded } from 'next/font/google';
 import { EVENT } from '@/content/nexus';
+import { CursorGlow } from '@/components/site/CursorGlow';
 import './globals.css';
 
 /* Typography from the NEXUS landing design: Unbounded display, Inter body, JetBrains Mono labels. */
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a className="skip-link" href="#main">
           Skip to content
         </a>
+        <CursorGlow />
         {children}
       </body>
     </html>

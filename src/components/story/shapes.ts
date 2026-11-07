@@ -177,9 +177,27 @@ function lightbulb(ctx: CanvasRenderingContext2D) {
   }
 }
 
+/** Expo rewards — a trophy with a bright central star. */
+function trophy(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = silver(ctx, 45, 360);
+  ctx.beginPath();
+  ctx.moveTo(95, 55); ctx.lineTo(305, 55); ctx.lineTo(292, 160);
+  ctx.quadraticCurveTo(280, 240, 215, 255); ctx.lineTo(215, 303);
+  ctx.lineTo(260, 303); ctx.lineTo(270, 340); ctx.lineTo(130, 340);
+  ctx.lineTo(140, 303); ctx.lineTo(185, 303); ctx.lineTo(185, 255);
+  ctx.quadraticCurveTo(120, 240, 108, 160); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = ACCENT; ctx.lineWidth = 12; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(100, 88); ctx.lineTo(57, 88); ctx.quadraticCurveTo(50, 175, 120, 185);
+  ctx.moveTo(300, 88); ctx.lineTo(343, 88); ctx.quadraticCurveTo(350, 175, 280, 185); ctx.stroke();
+  ctx.fillStyle = ACCENT; ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5; const r = i % 2 ? 20 : 44; const x = 200 + Math.cos(a) * r; const y = 145 + Math.sin(a) * r; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+  ctx.closePath(); ctx.fill();
+}
+
 export const OBJECTS = [
   { id: 'network', label: 'Connecting chapters', draw: network },
   { id: 'institution', label: 'Hosted at NMAMIT', draw: institution },
+  { id: 'trophy', label: 'Celebrating innovation', draw: trophy },
   { id: 'lightbulb', label: 'One day of innovation', draw: lightbulb },
 ] as const;
 

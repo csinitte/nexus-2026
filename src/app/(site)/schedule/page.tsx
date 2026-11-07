@@ -22,6 +22,10 @@ export default function SchedulePage() {
         <p>A clear overview of the summit, from the morning welcome to the closing ceremony. All times are IST.</p>
       </PageIntro>
 
+      <div className="schedule-timeline-intro">
+        <div><p className="eyebrow">The programme · {EVENT.dateCompact}</p><h2>One day. <em>Many possibilities.</em></h2></div>
+        <p><strong>{String(SCHEDULE.length).padStart(2, '0')}</strong> sessions <span aria-hidden="true">/</span> All times IST</p>
+      </div>
       <ol className="timeline" aria-label={`Schedule for ${EVENT.eventDateDisplay}`}>
         {SCHEDULE.map((item, i) => (
           <li key={item.iso} className={item.href ? 'is-feature' : undefined} data-reveal>

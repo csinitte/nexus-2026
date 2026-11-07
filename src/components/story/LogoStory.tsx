@@ -4,18 +4,18 @@ import { useEffect, useRef } from 'react';
 import { OBJECTS, SIZE, WORDMARK, drawN, nFit, sampleShape, sourceScale, type ShapePoints } from './shapes';
 
 /**
- * Controller for the home page deck ([data-deck]): four full-screen pages —
- * hero (0), About (1), Hosts (2), Innovation (3). Nothing scrolls inside a
- * page; a small scroll, swipe, arrow/Page key or page dot moves one page and
+ * Controller for the home page deck ([data-deck]): five sections —
+ * hero (0), About (1), Hosts (2), Rewards (3), Innovation (4).
+ * A scroll, swipe, arrow/Page key or page dot moves one page and
  * the whole transition plays on its own timing:
  *
  *   0 → 1  The hero fades and the whole NEXUS logo comes down onto the blank
  *          page; the N moves to the centre while E·X·U·S slide into it; the
  *          N breaks into particles and becomes the first object; the page's
  *          info slides in from the left and right.
- *   1 → 2 → 3  Info slides out, the object morphs, the next info slides in.
+ *   1 → 2 → 3 → 4  Info slides out, the object morphs, the next info slides in.
  *
- * Going back reverses it. Below page 3 the document scrolls normally to the
+ * Going back reverses it. Below page 4 the document scrolls normally to the
  * footer. Reduced motion: same paging, no transitions.
  */
 export function LogoStory() {
@@ -34,7 +34,7 @@ export function LogoStory() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const root = document.documentElement;
     const LAST = pages.length - 1;
-    const HASHES = ['', '#about', '#hosts', '#explore'];
+    const HASHES = ['', '#about', '#hosts', '#rewards', '#explore'];
     const count = window.innerWidth < 760 ? 1400 : 2600;
     const seed = Array.from({ length: count }, () => ({
       d: Math.random() * 0.35,
@@ -92,7 +92,7 @@ export function LogoStory() {
 
     /* ---------- Page state ---------- */
     let page = 0;
-    /** Animated page value: 0 = hero … 3 = Innovation. */
+    /** Animated page value: 0 = hero … 4 = Innovation. */
     let v = 0;
     let lastNow = 0;
     const segmentMs = (seg: number) => (seg < 1 ? 2600 : 1300);
@@ -295,7 +295,7 @@ export function LogoStory() {
     };
 
     const canScrollHosts = (eventTarget: EventTarget | null, direction: number) => {
-      const hostPage = eventTarget instanceof Element ? eventTarget.closest<HTMLElement>('#hosts') : null;
+      const hostPage = eventTarget instanceof Element ? eventTarget.closest<HTMLElement>('#hosts, #rewards') : null;
       if (!hostPage || hostPage.scrollHeight <= hostPage.clientHeight + 1) return false;
       return direction > 0
         ? hostPage.scrollTop + hostPage.clientHeight < hostPage.scrollHeight - 1

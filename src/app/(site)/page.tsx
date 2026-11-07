@@ -4,11 +4,11 @@ import { IntroGate } from '@/components/intro/IntroGate';
 import { LogoStory } from '@/components/story/LogoStory';
 import { OBJECTS } from '@/components/story/shapes';
 import { ABOUT, EVENT, HOSTS, getWhatsappLink } from '@/content/nexus';
-import { PrizePool } from '@/components/prize/PrizePool';
+import { PRIZE_PARTS, PRIZE_TOTAL, formatRupees } from '@/data/prizes';
 
 /*
- * The home page is a deck of four full-screen pages: the hero, then About,
- * Hosts and Innovation. A small scroll moves one page and plays the whole
+ * The home page is a deck of five full-screen pages: the hero, then About,
+ * Hosts, Rewards and Innovation. A small scroll moves one page and plays the whole
  * transition (see LogoStory). Each page fits one screen; copy here is a
  * condensed version of the approved text in src/content/nexus.ts.
  */
@@ -165,16 +165,34 @@ export default function HomePage() {
           <DeckCenter index={1} />
         </article>
 
-        {/* Page 3 — One day of innovation */}
-        <article id="explore" className="deck-page" data-deck-page="3" aria-labelledby="explore-title">
+        {/* Page 3 — Rewards */}
+        <article id="rewards" className="deck-page deck-rewards" data-deck-page="3" aria-labelledby="rewards-title" tabIndex={0}>
           <div className="deck-side left">
-            <p className="eyebrow">03 / Explore</p>
+            <p className="eyebrow">03 / Project Expo awards</p>
+            <h2 id="rewards-title">Big ideas.<br /><em>Real rewards.</em></h2>
+            <p className="deck-rewards-label">Total prize pool</p>
+            <p className="deck-rewards-total">{formatRupees(PRIZE_TOTAL)}</p>
+            <Link href="/expo" className="deck-rewards-link">Explore the Project Expo <span aria-hidden="true">↗</span></Link>
+          </div>
+          <DeckCenter index={2} />
+          <div className="deck-side right">
+            <p className="deck-rewards-list-label">The awards</p>
+            <dl className="deck-rewards-list">
+              {PRIZE_PARTS.map((prize) => <div key={prize.rank}><dt>{prize.rank}</dt><dd>{formatRupees(prize.amount)}</dd></div>)}
+            </dl>
+          </div>
+        </article>
+
+        {/* Page 4 — One day of innovation */}
+        <article id="explore" className="deck-page" data-deck-page="4" aria-labelledby="explore-title">
+          <div className="deck-side left">
+            <p className="eyebrow">04 / Explore</p>
             <h2 id="explore-title">
               One day of <em>innovation.</em>
             </h2>
             <DeckLinks items={EXPLORE.slice(0, 2)} start={1} />
           </div>
-          <DeckCenter index={2} />
+          <DeckCenter index={3} />
           <div className="deck-side right">
             <DeckLinks items={EXPLORE.slice(2)} start={3} />
             <Link className="button" href="/register">
@@ -184,7 +202,7 @@ export default function HomePage() {
         </article>
 
         <nav className="deck-dots" aria-label="Home sections">
-          {['Home', 'About NEXUS', 'The hosts', 'Explore'].map((label, i) => (
+          {['Home', 'About NEXUS', 'The hosts', 'Rewards', 'Explore'].map((label, i) => (
             <button key={label} type="button" data-deck-go={i} aria-label={label}>
               <span>{label}</span>
             </button>
@@ -196,8 +214,6 @@ export default function HomePage() {
         <LogoStory />
       </section>
 
-      {/* Prize Pool section â€” shared <PrizePool /> component */}
-      <PrizePool />
     </>
   );
 }

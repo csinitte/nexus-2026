@@ -21,6 +21,14 @@ export function SiteFooter() {
               <span>NMAM Institute of Technology<br />Nitte, Karnataka</span>
             </a>
           </div>
+          <div className="footer-map">
+            <iframe
+              title="Map showing NMAM Institute of Technology, Nitte"
+              src="https://www.google.com/maps?q=13.1834702%2C74.9339913&z=16&output=embed"
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          </div>
           <div className="footer-socials" aria-label="Social links">
             <a href={EVENT.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label={`Instagram ${EVENT.instagram}`}>
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r=".8" fill="currentColor" stroke="none" /></svg>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CountUp } from './CountUp';
 import {
   PRIZE_TOTAL,
@@ -16,10 +16,11 @@ export function PrizePool({ className }: { className?: string }) {
 
   useEffect(() => {
     const mq = matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
+    let active = true;
+    queueMicrotask(() => { if (active) setReducedMotion(mq.matches); });
     const handler = () => setReducedMotion(mq.matches);
     mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
+    return () => { active = false; mq.removeEventListener('change', handler); };
   }, []);
 
   useEffect(() => {
@@ -31,6 +32,8 @@ export function PrizePool({ className }: { className?: string }) {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    const frames = rafs.current;
+    const timers: ReturnType<typeof setTimeout>[] = [];
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -38,15 +41,15 @@ export function PrizePool({ className }: { className?: string }) {
         const count = PRIZE_PARTS.length + 1;
         const delays = Array.from({ length: count }, (_, i) => i * 80);
         delays.forEach((delay, i) => {
-          rafs.current.push(
+          frames.push(
             requestAnimationFrame(() => {
-              setTimeout(() => {
+              timers.push(setTimeout(() => {
                 setVisibleCards((prev) => {
                   const next = [...prev];
                   next[i] = true;
                   return next;
                 });
-              }, delay);
+              }, delay));
             })
           );
         });
@@ -57,17 +60,11 @@ export function PrizePool({ className }: { className?: string }) {
     observer.observe(el);
     return () => {
       observer.disconnect();
-      rafs.current.forEach((id) => cancelAnimationFrame(id));
+      frames.forEach((id) => cancelAnimationFrame(id));
+      timers.forEach(clearTimeout);
     };
   }, []);
 
-  useEffect(() => {
-    return () => {
-      rafs.current.forEach((id) => cancelAnimationFrame(id));
-    };
-  }, []);
-
-  const totalCardVisible = visibleCards[0] ?? false;
   const cardVisible = (index: number) => visibleCards[index + 1] ?? false;
 
   const numMain = PRIZE_PARTS.filter((p) => !p.special).length;

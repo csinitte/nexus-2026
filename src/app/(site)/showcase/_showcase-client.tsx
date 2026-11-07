@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { NextPage, PageIntro } from '@/components/site/PageParts';
@@ -26,7 +26,6 @@ function ShowcaseHeroVisual() {
       const lnk: { x: number; y: number; w: number; a: number; o: number }[] = [];
       for (let i = 0; i < count; i++) {
         const angle = (i / count) * Math.PI * 2;
-        const pulse = 62 + Math.sin(i) * 14;
         arr.push({ x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius, r: 5 + (i % 3) * 3 });
       }
       for (let i = 0; i < count; i++) {
@@ -72,11 +71,11 @@ function CardIcon({ kind }: { kind: 'overview' | 'activities' | 'achievements' }
 }
 
 function ShowcaseCard({ index, item }: { index: number; item: { title: string; text: string } }) {
-  const kind = ['overview', 'activities', 'achievements'][index] ?? 'overview';
+  const kind = (['overview', 'activities', 'achievements'] as const)[index] ?? 'overview';
   return (
     <article className="showcase-card" data-reveal>
       <div className="card-number">{String(index + 1).padStart(2, '0')}</div>
-      <CardIcon kind={kind as any} />
+      <CardIcon kind={kind} />
       <div className="card-body">
         <h3 className="card-title">{item.title}</h3>
         <p className="card-text">{item.text}</p>

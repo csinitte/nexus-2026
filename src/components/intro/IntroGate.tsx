@@ -2,16 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { IntroEngine, type BootState } from './engine';
+import { INTRO_SEEN_KEY, INTRO_SKIP_STYLE_ID } from './config';
 
-const SEEN_KEY = 'nexus26-intro';
 const ACCENT = '#8cea5a';
-
-/**
- * Hides the overlay before first paint when the intro was already seen this
- * session (or `?intro=0`), so returning visitors never see a black flash.
- * `?intro=1` forces a replay. Injected into <head> to avoid touching React-owned nodes.
- */
-const PRE_PAINT = `try{var q=location.search;if((sessionStorage.getItem('${SEEN_KEY}')==='seen'&&q.indexOf('intro=1')<0)||q.indexOf('intro=0')>-1){var s=document.createElement('style');s.textContent='.nx-intro{display:none!important}';document.head.appendChild(s)}}catch(e){}`;
 
 type Phase = 'pending' | 'playing' | 'revealing' | 'done';
 
@@ -28,7 +21,7 @@ export function IntroGate() {
     engineRef.current?.destroy();
     engineRef.current = null;
     try {
-      sessionStorage.setItem(SEEN_KEY, 'seen');
+      sessionStorage.setItem(INTRO_SEEN_KEY, 'seen');
     } catch {
       /* storage unavailable */
     }
@@ -41,15 +34,20 @@ export function IntroGate() {
     const params = new URLSearchParams(window.location.search);
     let seen = false;
     try {
-      seen = sessionStorage.getItem(SEEN_KEY) === 'seen';
+      seen = sessionStorage.getItem(INTRO_SEEN_KEY) === 'seen';
     } catch {
       seen = true;
     }
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const force = params.get('intro') === '1';
     const skip = params.get('intro') === '0' || reduced || (seen && !force);
+    if (!skip) document.getElementById(INTRO_SKIP_STYLE_ID)?.remove();
     queueMicrotask(() => setPhase(skip ? 'done' : 'playing'));
   }, []);
+
+  useEffect(() => {
+    if (phase === 'done') document.getElementById(INTRO_SKIP_STYLE_ID)?.remove();
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== 'playing' || !canvasRef.current) return;
@@ -82,7 +80,6 @@ export function IntroGate() {
 
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: PRE_PAINT }} />
       <div className={`nx-intro${phase === 'revealing' ? ' is-revealing' : ''}`} role="presentation">
         <div className="nx-intro-boot" aria-hidden="true">
           {boot.showBoot && (

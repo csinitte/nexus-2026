@@ -11,7 +11,7 @@ export function SiteFooter() {
           <p>{EVENT.subtitle}</p>
           <a
             className="footer-location"
-            href="https://www.google.com/maps/search/?api=1&query=NMAM+Institute+of+Technology+Nitte+Karnataka"
+            href="https://maps.app.goo.gl/TDpwqpZGjC46MM8s9"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="NMAMIT location on Google Maps"
@@ -22,10 +22,18 @@ export function SiteFooter() {
             </svg>
             <span>
               <strong>NMAM Institute of Technology (NMAMIT)</strong>
-              <br />
               Nitte, Karkala, Udupi District, Karnataka, India
+              <span className="footer-location-action">View on Google Maps ↗</span>
             </span>
           </a>
+          <div className="footer-map">
+            <iframe
+              title="Map showing NMAM Institute of Technology, Nitte"
+              src="https://www.google.com/maps?q=13.1834702%2C74.9339913&z=16&output=embed"
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          </div>
         </div>
         <nav aria-label="Footer">
           {NAV_ITEMS.map((item) => (
@@ -49,7 +57,9 @@ export function SiteFooter() {
         <span>
           <time dateTime={EVENT.eventDateIso}>{EVENT.eventDateDisplay}</time> · {EVENT.venueShort}
         </span>
-        <Link href="/?intro=1">Replay intro ↻</Link>
+        {/* Reload so the intro remounts even when already on the homepage. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a href="/?intro=1">Replay intro ↻</a>
       </div>
     </footer>
   );

@@ -553,6 +553,27 @@ html.menu-open .site-header {
   font-size: 12.5px;
   margin-bottom: 2px;
 }
+.footer-location-action {
+  display: block;
+  margin-top: 6px;
+  color: var(--accent);
+  font-size: 12px;
+}
+.footer-map {
+  overflow: hidden;
+  width: 100%;
+  max-width: 360px;
+  height: 150px;
+  margin-top: 18px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-solid);
+}
+.footer-map iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
 .footer-top nav,
 .footer-links {
   display: grid;

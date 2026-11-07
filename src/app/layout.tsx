@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
+import { INTRO_PRE_PAINT } from '@/components/intro/config';
 import { Inter, JetBrains_Mono, Unbounded } from 'next/font/google';
 import { EVENT } from '@/content/nexus';
 import { CursorGlow } from '@/components/site/CursorGlow';
@@ -52,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" data-scroll-behavior="smooth" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
       <body>
+        <Script id="nexus-intro-prepaint-script" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: INTRO_PRE_PAINT }} />
         <a className="skip-link" href="#main">
           Skip to content
         </a>

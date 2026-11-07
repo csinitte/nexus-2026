@@ -34,50 +34,6 @@ export function CountUp({ value }: { value: number }) {
     []
   );
 
-  // Start count-up when the element enters the viewport
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || animatedElements.has(el)) return;
-
-    const prefersReduced =
-      typeof matchMedia !== 'undefined' &&
-      matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    // Fallbacks: show final value immediately
-    if (!('IntersectionObserver' in window) || prefersReduced) {
-      setDisplayValue(value);
-      setAnimating(false);
-      animatedElements.add(el);
-      return;
-    }
-
-    // Check if already visible on load
-    const rect = el.getBoundingClientRect();
-    const alreadyVisible =
-      rect.top < window.innerHeight && rect.bottom > 0;
-
-    if (alreadyVisible) {
-      setDisplayValue(value);
-      setAnimating(false);
-      animatedElements.add(el);
-      return;
-    }
-
-    // Otherwise: observe and count up on entry
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (!entry.isIntersecting || animatedElements.has(el)) return;
-        animatedElements.add(el);
-        startCountUp();
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [value]);
-
   const startCountUp = useCallback(() => {
     setAnimating(true);
     const start = performance.now();
@@ -103,6 +59,46 @@ export function CountUp({ value }: { value: number }) {
 
     rafRef.current = requestAnimationFrame(tick);
   }, [value]);
+
+  // Start count-up when the element enters the viewport
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || animatedElements.has(el)) return;
+
+    const prefersReduced =
+      typeof matchMedia !== 'undefined' &&
+      matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Fallbacks: show final value immediately
+    if (!('IntersectionObserver' in window) || prefersReduced) {
+      animatedElements.add(el);
+      return;
+    }
+
+    // Check if already visible on load
+    const rect = el.getBoundingClientRect();
+    const alreadyVisible =
+      rect.top < window.innerHeight && rect.bottom > 0;
+
+    if (alreadyVisible) {
+      animatedElements.add(el);
+      return;
+    }
+
+    // Otherwise: observe and count up on entry
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry.isIntersecting || animatedElements.has(el)) return;
+        animatedElements.add(el);
+        startCountUp();
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [value, startCountUp]);
 
   // Cancel animation on unmount
   useEffect(() => {

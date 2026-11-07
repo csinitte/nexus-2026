@@ -87,7 +87,7 @@ export function SummaryView() {
             </dd>
           </div>
           <div>
-            <dt>CSI chapter</dt>
+            <dt>CSI branch</dt>
             <dd>{r.csiChapterName}</dd>
           </div>
           <div>
@@ -148,3 +148,4 @@ export function SummaryView() {
     </div>
   );
 }
+

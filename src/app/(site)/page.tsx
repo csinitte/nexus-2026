@@ -70,7 +70,7 @@ export default function HomePage() {
               <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAM Institute of Technology" width={1628} height={278} sizes="(max-width: 700px) 45vw, (max-width: 1400px) 25vw, 350px" />
             </div>
             <div className="hero-host-logo hero-host-chapter">
-              <Image src="/csi-bangalore.png" alt="CSI Student Chapter, NMAMIT — Computer Society of India Bangalore Chapter" width={1908} height={559} sizes="(max-width: 700px) 34vw, 220px" />
+              <Image src="/csi-bangalore.png" alt="CSI Student Branch, NMAMIT — Computer Society of India Bangalore Chapter" width={1908} height={559} sizes="(max-width: 700px) 34vw, 220px" />
             </div>
           </div>
 
@@ -116,7 +116,7 @@ export default function HomePage() {
               About <em>NEXUS.</em>
             </h2>
             <p className="lead">
-              A flagship summit by the CSI Student Chapter, NMAMIT, bringing together CSI student chapters from across Karnataka with
+              A flagship summit by the CSI Student Branch, NMAMIT, bringing together CSI student branches from across Karnataka with
               faculty members and industry professionals.
             </p>
             <p className="signature">Connecting Chapters. Inspiring Innovation.</p>
@@ -275,3 +275,5 @@ function Orbit({ layer }: { layer: 'back' | 'front' }) {
     </svg>
   );
 }
+
+

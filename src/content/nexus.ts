@@ -39,12 +39,12 @@ export const NAV_ITEMS: NavItem[] = [
 
 export const ABOUT = {
   paragraphs: [
-    'NEXUS — CSI Student Summit on Innovation & Technology is a flagship initiative by the CSI Student Chapter, NMAMIT, bringing together students from CSI student chapters across Karnataka, along with faculty members and industry professionals.',
+    'NEXUS — CSI Student Summit on Innovation & Technology is a flagship initiative by the CSI Student Branch, NMAMIT, bringing together students from CSI student branches across Karnataka, along with faculty members and industry professionals.',
     'The summit provides a common platform for students to exchange ideas, showcase innovation, develop leadership skills and explore emerging technologies.',
     'Through industry interactions, chapter presentations and project exhibitions, NEXUS aims to strengthen connections between student communities, encourage interdisciplinary collaboration and create opportunities for future partnerships.',
   ],
   stats: [
-    { value: '30+', label: 'CSI Student Chapters', note: 'Target participation' },
+    { value: '30+', label: 'CSI Student Branches', note: 'Target participation' },
     { value: '100+', label: 'Students', note: 'Expected participation' },
     { value: 'Industry', label: 'Professionals', note: 'Panel & interactions' },
     { value: 'One', label: 'Day', note: 'Of innovation and collaboration' },
@@ -89,7 +89,7 @@ export const SCHEDULE = [
   { start: '9:00 AM', end: '9:30 AM', iso: '09:00', title: 'Registration & Breakfast', href: null },
   { start: '9:30 AM', end: '10:30 AM', iso: '09:30', title: 'Inauguration & Keynote', href: null },
   { start: '10:30 AM', end: '11:30 AM', iso: '10:30', title: 'Industry Panel Discussion', href: '/panel' },
-  { start: '11:30 AM', end: '1:00 PM', iso: '11:30', title: 'CSI Chapter Showcase', href: '/showcase' },
+  { start: '11:30 AM', end: '1:00 PM', iso: '11:30', title: 'CSI Branch Showcase', href: '/showcase' },
   { start: '1:00 PM', end: '2:00 PM', iso: '13:00', title: 'Lunch & Networking', href: null },
   { start: '2:00 PM', end: '4:00 PM', iso: '14:00', title: 'Student Project Expo', href: '/expo' },
   { start: '4:00 PM', end: '4:30 PM', iso: '16:00', title: 'Snacks', href: null },
@@ -115,7 +115,7 @@ export const PANEL = {
 export const SHOWCASE = {
   tagline: 'One Community. Many Journeys. Shared Impact.',
   description: [
-    'The CSI Chapter Showcase provides a platform for student chapters from across Karnataka to present their journeys, achievements and contributions to the technical community.',
+    'The CSI Branch Showcase provides a platform for student chapters from across Karnataka to present their journeys, achievements and contributions to the technical community.',
     'It celebrates student-led initiatives, encourages the exchange of ideas and creates opportunities for collaboration between chapters.',
   ],
   areas: [
@@ -189,3 +189,6 @@ export const ABSTRACT_INSTRUCTIONS = [
   'All eligible registered teams proceed to the exhibition.',
   'Abstracts are reviewed for theme relevance, not shortlisting.',
 ];
+
+
+

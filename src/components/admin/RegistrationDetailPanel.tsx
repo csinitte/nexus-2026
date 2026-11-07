@@ -5,8 +5,8 @@ import { api, ARRIVAL_LABELS, type RegistrationDetail } from './types';
 
 const TEXT_FIELDS = [
   ['collegeName', 'College name'],
-  ['csiChapterName', 'CSI chapter name'],
-  ['csiChapterId', 'CSI chapter ID'],
+  ['csiChapterName', 'CSI branch name'],
+  ['csiChapterId', 'CSI branch ID'],
   ['city', 'City'],
   ['facultyCoordinatorName', 'Coordinator name'],
   ['facultyCoordinatorEmail', 'Coordinator email'],
@@ -267,3 +267,5 @@ export function RegistrationDetailPanel({
     </aside>
   );
 }
+
+

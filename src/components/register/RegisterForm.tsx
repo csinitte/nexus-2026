@@ -320,7 +320,7 @@ function friendly(message: string, status: number): string {
     return 'This college and faculty coordinator are already registered. Contact the organising team if you need to make changes.';
   const map: [RegExp, string][] = [
     [/collegeName is required/i, 'Enter your college name.'],
-    [/csiChapterName is required/i, 'Enter your CSI chapter name.'],
+    [/csiChapterName is required/i, 'Enter your CSI branch name.'],
     [/city is required/i, 'Enter your city.'],
     [/facultyCoordinatorName is required/i, 'Enter the faculty coordinator’s name.'],
     [/facultyCoordinatorContact is required/i, 'Enter the faculty coordinator’s contact number.'],
@@ -329,3 +329,4 @@ function friendly(message: string, status: number): string {
   ];
   return map.find(([re]) => re.test(message))?.[1] ?? message;
 }
+

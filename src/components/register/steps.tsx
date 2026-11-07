@@ -53,14 +53,14 @@ export function CollegeStep({ state, errors, update }: StepProps) {
       />
       <TextField
         id="csiChapterName"
-        label="CSI student chapter name"
+        label="CSI student branch name"
         value={state.csiChapterName}
         onChange={(csiChapterName) => update({ csiChapterName })}
         error={errors.csiChapterName}
       />
       <TextField
         id="csiChapterId"
-        label="CSI chapter ID"
+        label="CSI branch ID"
         optional
         value={state.csiChapterId}
         onChange={(csiChapterId) => update({ csiChapterId })}
@@ -229,11 +229,11 @@ export function ShowcaseStep({ state, errors, update }: StepProps) {
   return (
     <>
       <p className="step-note">
-        Every registered CSI chapter takes part in the Chapter Showcase with a five-minute presentation using the standard template.
+        Every registered CSI branch takes part in the Chapter Showcase with a five-minute presentation using the standard template.
       </p>
       <ChoiceGroup
         id="presenterIndex"
-        legend="Who will be presenting your CSI Chapter Showcase presentation?"
+        legend="Who will be presenting your CSI Branch Showcase presentation?"
         hint="Choose the student representative who will deliver the five-minute chapter presentation."
         value={state.presenterIndex === null ? '' : String(state.presenterIndex)}
         onChange={(v) => update({ presenterIndex: Number(v) })}
@@ -477,7 +477,7 @@ export function ReviewStep({ state, errors, update, abstract, goTo }: StepProps)
       step: 0,
       rows: [
         ['College', state.collegeName],
-        ['CSI chapter', `${state.csiChapterName}${state.csiChapterId ? ` (ID ${state.csiChapterId})` : ''}`],
+        ['CSI branch', `${state.csiChapterName}${state.csiChapterId ? ` (ID ${state.csiChapterId})` : ''}`],
         ['City', state.city],
       ],
     },
@@ -568,3 +568,8 @@ export function ReviewStep({ state, errors, update, abstract, goTo }: StepProps)
 }
 
 export const STEP_COMPONENTS = [CollegeStep, FacultyStep, DelegationStep, ShowcaseStep, ExpoStep, AccommodationStep, ReviewStep];
+
+
+
+
+

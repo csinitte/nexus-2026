@@ -152,7 +152,7 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
   switch (STEPS[step]?.id) {
     case 'college':
       required(e, 'collegeName', state.collegeName, 'your college name');
-      required(e, 'csiChapterName', state.csiChapterName, 'your CSI student chapter name');
+      required(e, 'csiChapterName', state.csiChapterName, 'your CSI student branch name');
       required(e, 'city', state.city, 'your city');
       break;
     case 'faculty':
@@ -288,3 +288,5 @@ export function stepForServerError(message: string): number {
   if (m.includes('accommodation')) return 5;
   return STEPS.length - 1;
 }
+
+

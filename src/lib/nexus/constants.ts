@@ -2,7 +2,7 @@ export const NEXUS_EVENT = {
   name: "NEXUS 2026",
   subtitle: "CSI Student Summit on Innovation & Technology",
   tagline: "Connecting Chapters. Inspiring Innovation.",
-  organiser: "CSI Student Chapter, NMAMIT",
+  organiser: "CSI Student Branch, NMAMIT",
   hostInstitution: "NMAM Institute of Technology, Nitte",
   venue: "NMAM Institute of Technology (NMAMIT), Nitte, Karnataka",
   eventDateIso: "2026-11-25",
@@ -89,3 +89,4 @@ export function getMaxAbstractBytes(): number {
 
 export const DECLARATION_TEXT =
   "I confirm that the information provided is accurate and that our college understands the NEXUS 2026 participation guidelines, including the delegation limit and Student Project Expo requirements, wherever applicable.";
+

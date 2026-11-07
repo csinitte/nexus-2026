@@ -89,7 +89,7 @@ export function RegistrationSuccess({ result, coordinatorEmail }: { result: Regi
             </dd>
           </div>
           <div>
-            <dt>CSI chapter</dt>
+            <dt>CSI branch</dt>
             <dd>{s.csiChapterName}</dd>
           </div>
           <div>
@@ -154,3 +154,4 @@ export function RegistrationSuccess({ result, coordinatorEmail }: { result: Regi
     </div>
   );
 }
+

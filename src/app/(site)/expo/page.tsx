@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { NextPage, PageIntro } from '@/components/site/PageParts';
 import { EVENT, EXPO } from '@/content/nexus';
 import { PrizePool } from '@/components/prize/PrizePool';
+import { TrackGallery } from '@/components/expo/TrackGallery';
 
 export const metadata: Metadata = {
   title: 'Student Project Expo',
@@ -25,8 +26,7 @@ export default function ExpoPage() {
           {EXPO.theme}
         </p>
         <p className="lead">{EXPO.intro}</p>
-        <p>{EXPO.eligibility}</p>
-        <p className="muted">{EXPO.alignment}</p>
+        <p>Bring an existing project, prototype, software or hardware idea. All projects should fit the event theme.</p>
       </PageIntro>
 
       <dl className="detail-strip" data-reveal>
@@ -46,66 +46,25 @@ export default function ExpoPage() {
         </div>
       </dl>
 
-      <h2 className="list-title" data-reveal>
-        Project categories
-      </h2>
-      <ol className="card-grid three">
-        {EXPO.categories.map((c, i) => (
-          <li key={c.title} data-reveal>
-            <span>{String(i + 1).padStart(2, '0')}</span>
-            <strong>{c.title}</strong>
-            <p>{c.text}</p>
-          </li>
-        ))}
-      </ol>
+      <TrackGallery tracks={EXPO.categories} />
 
-      <h2 className="list-title" data-reveal>
-        Expo process
-      </h2>
-      <div className="phases">
-        <article className="phase" data-reveal>
-          <p className="eyebrow">Phase 01</p>
-          <h3>Abstract submission</h3>
-          <p className="phase-date">
-            Deadline <strong>{EVENT.abstractDeadlineDisplay}</strong>
-          </p>
-          <p>Submit your project abstract in PDF format through the NEXUS registration portal. It should cover:</p>
-          <ul className="check-list">
-            {EXPO.abstractRequirements.map((r) => (
-              <li key={r}>{r}</li>
-            ))}
-          </ul>
-          <p className="muted">
-            Team size: {EXPO.teamSize}. All eligible registered teams proceed to the exhibition. Abstracts are reviewed for theme relevance,
-            not shortlisting.
-          </p>
-        </article>
-        <article className="phase" data-reveal>
-          <p className="eyebrow">Phase 02</p>
-          <h3>On-campus project exhibition</h3>
-          <p className="phase-date">
-            <strong>{EVENT.eventDateDisplay}</strong> · {EVENT.venueShort}
-          </p>
-          <p>All eligible teams present and demonstrate their projects before the jury.</p>
-          <dl className="minutes">
-            {EXPO.presentation.map((p) => (
-              <div key={p.label}>
-                <dt>{p.minutes} min</dt>
-                <dd>{p.label}</dd>
-              </div>
-            ))}
-          </dl>
-        </article>
-      </div>
+      <section className="expo-journey" data-reveal aria-labelledby="expo-journey-title">
+        <div className="expo-journey-heading"><p className="eyebrow">From idea to exhibition</p><h2 id="expo-journey-title">Two steps to <em>the expo.</em></h2></div>
+        <div className="expo-journey-steps">
+          <article className="expo-step">
+            <span className="expo-step-number">01</span><div><span className="expo-step-label">BY {EVENT.abstractDeadlineDisplay.toUpperCase()}</span><h3>Submit your abstract</h3><p>Register your team and upload a PDF about your project.</p><span className="expo-step-note">{EXPO.teamSize} per team · Reviewed for theme relevance</span></div>
+          </article>
+          <article className="expo-step">
+            <span className="expo-step-number">02</span><div><span className="expo-step-label">{EVENT.eventDateDisplay.toUpperCase()} · {EVENT.venueShort.toUpperCase()}</span><h3>Show it at NEXUS</h3><p>Present your project and demonstrate it to the jury at NMAMIT.</p><span className="expo-step-note">7 min presentation & demo · 3 min jury Q&amp;A</span></div>
+          </article>
+        </div>
+        <p className="expo-journey-footnote">All eligible registered teams proceed to the exhibition; abstracts are not used for shortlisting.</p>
+      </section>
 
-      <div className="guidelines" data-reveal>
-        <h2 className="list-title">Exhibition guidelines</h2>
-        <ul className="check-list">
-          {EXPO.guidelines.map((g) => (
-            <li key={g}>{g}</li>
-          ))}
-        </ul>
-      </div>
+      <details className="expo-details">
+        <summary>What to include & bring <span aria-hidden="true">+</span></summary>
+        <div className="expo-details-content"><div><h3>Your abstract</h3><ul>{EXPO.abstractRequirements.map(item => <li key={item}>{item}</li>)}</ul></div><div><h3>At the exhibition</h3><ul>{EXPO.guidelines.map(item => <li key={item}>{item}</li>)}</ul></div></div>
+      </details>
 
       {/* Prize Pool â€” shared <PrizePool /> component */}
       <PrizePool />

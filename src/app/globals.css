@@ -362,6 +362,11 @@ em {
 }
 .site-nav a {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  text-align: center;
   padding: 8px 0;
   transition: color 0.2s;
 }
@@ -4787,3 +4792,17 @@ a.hero-whatsapp:hover { background: var(--accent); color: #101510; }
   .site-footer .footer-brand { grid-column: 1 / -1; }
   .site-footer .footer-bottom { flex-direction: column; gap: 10px; }
 }
+
+/* Project expo: a swipeable track gallery and a concise two-step journey. */
+.expo-page .expo-tracks,.expo-page .expo-journey{margin-top:clamp(75px,10vw,140px)}
+.expo-tracks-header{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:30px}
+.expo-tracks-header h2,.expo-journey-heading h2{margin:12px 0;font-family:var(--font-display),sans-serif;font-size:clamp(36px,5vw,66px);font-weight:500;line-height:1.04;letter-spacing:-.035em;color:var(--heading)}
+.expo-tracks-header h2 span,.expo-journey-heading em{color:var(--accent);font-style:normal}.expo-tracks-header>div>p:last-child{margin:0;color:var(--muted);font-size:15px}
+.expo-track-controls{display:flex;align-items:center;gap:8px;flex-shrink:0}.expo-track-controls>span{margin-right:12px;color:var(--muted);font:11px var(--font-mono),monospace}.expo-track-controls button{width:44px;height:44px;border:1px solid var(--line-strong);background:transparent;color:var(--fg);font-size:20px;cursor:pointer;transition:background .2s,color .2s}.expo-track-controls button:hover:not(:disabled){background:var(--accent);color:#101510}.expo-track-controls button:disabled{opacity:.3;cursor:default}.expo-track-controls button:focus-visible,.expo-track-list:focus-visible,.expo-details summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.expo-track-list{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 32px)/3);gap:16px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:var(--accent) transparent;list-style:none;margin:0;padding:0 0 14px}
+.expo-track-card{display:flex;flex-direction:column;min-width:0;min-height:350px;scroll-snap-align:start;background:#111511;border:1px solid var(--line-strong);padding:24px}.expo-track-card-top{display:flex;justify-content:space-between;color:var(--accent);font:10px var(--font-mono),monospace;letter-spacing:.1em}.expo-track-card-top span:last-child{font-size:18px}.expo-track-art{position:relative;display:flex;align-items:center;justify-content:center;height:130px;margin:16px 0 22px;overflow:hidden;background:#182019}.expo-track-art span{font:500 64px var(--font-display),sans-serif;color:var(--accent);position:relative;z-index:1;opacity:.85}.expo-track-art i{position:absolute;width:150px;height:150px;border:1px solid rgba(140,234,90,.2);border-radius:50%}.expo-track-art i:nth-of-type(2){width:105px;height:105px}.expo-track-art i:nth-of-type(3){width:210px;height:210px}.expo-track-card:nth-child(even) .expo-track-art{background:#17201c}.expo-track-card h3{margin:0 0 12px;color:var(--heading);font-family:var(--font-display),sans-serif;font-size:clamp(20px,2vw,26px);line-height:1.15}.expo-track-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}.expo-track-hint{margin:12px 0 0;color:var(--dim);font:10px var(--font-mono),monospace;letter-spacing:.1em}.expo-track-hint span{color:var(--accent)}
+.expo-journey-heading{max-width:650px;margin-bottom:36px}.expo-journey-steps{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line-strong);border-bottom:1px solid var(--line-strong)}.expo-step{display:grid;grid-template-columns:72px 1fr;gap:24px;padding:36px 28px 38px 0}.expo-step+.expo-step{border-left:1px solid var(--line-strong);padding-left:35px}.expo-step-number{font:500 clamp(45px,6vw,72px)/1 var(--font-display),sans-serif;color:var(--accent)}.expo-step-label{font:10px var(--font-mono),monospace;letter-spacing:.08em;color:var(--accent)}.expo-step h3{font:500 clamp(23px,2.6vw,32px)/1.15 var(--font-display),sans-serif;color:var(--heading);margin:16px 0 12px}.expo-step p{margin:0;color:var(--muted);font-size:15px;line-height:1.6}.expo-step-note{display:block;color:var(--fg);font-size:12px;line-height:1.6;margin-top:22px}.expo-journey-footnote{color:var(--dim);font-size:12px;line-height:1.6;margin-top:18px}
+.expo-details{margin:45px 0 0;border-top:1px solid var(--line-strong);border-bottom:1px solid var(--line-strong)}.expo-details summary{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:20px 0;cursor:pointer;list-style:none;color:var(--fg);font-weight:600}.expo-details summary::-webkit-details-marker{display:none}.expo-details summary span{font-size:24px;color:var(--accent)}.expo-details[open] summary span{transform:rotate(45deg)}.expo-details-content{display:grid;grid-template-columns:1fr 1fr;gap:35px;padding:0 0 26px}.expo-details-content h3{font-size:15px;color:var(--heading);margin:0 0 12px}.expo-details-content ul{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.8}
+@media(max-width:860px){.expo-track-list{grid-auto-columns:calc((100% - 16px)/2)}.expo-step{grid-template-columns:55px 1fr;gap:14px}.expo-step+.expo-step{padding-left:22px}}
+@media(max-width:600px){.expo-tracks-header{align-items:start}.expo-track-controls>span{display:none}.expo-track-controls button{width:40px;height:40px}.expo-track-list{grid-auto-columns:85%;gap:12px}.expo-track-card{min-height:320px;padding:20px}.expo-track-art{height:110px}.expo-journey-steps{grid-template-columns:1fr}.expo-step,.expo-step+.expo-step{padding:25px 0;grid-template-columns:55px 1fr;gap:15px;border-left:0}.expo-step+.expo-step{border-top:1px solid var(--line-strong)}.expo-step h3{margin:12px 0 8px}.expo-step-note{margin-top:14px}.expo-details-content{grid-template-columns:1fr;gap:24px}}
+@media(prefers-reduced-motion:reduce){.expo-track-list{scroll-behavior:auto}}

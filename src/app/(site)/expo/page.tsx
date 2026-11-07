@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { NextPage, PageIntro } from '@/components/site/PageParts';
 import { EVENT, EXPO } from '@/content/nexus';
+import { PrizePool } from '@/components/prize/PrizePool';
 
 export const metadata: Metadata = {
   title: 'Student Project Expo',
@@ -105,6 +106,9 @@ export default function ExpoPage() {
           ))}
         </ul>
       </div>
+
+      {/* Prize Pool â€” shared <PrizePool /> component */}
+      <PrizePool />
 
       <div className="callout" data-reveal>
         <div>

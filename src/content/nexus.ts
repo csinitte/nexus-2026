@@ -16,6 +16,8 @@ export const EVENT = {
   websiteUrl: 'https://csinmamit.in',
   /** Replace the PDF in /public (same name) to update the template without code changes. */
   showcaseTemplateUrl: '/Chapter_Showcase_Template.pdf',
+  /** Replace the PDF in /public (same name) to update the brochure. */
+  brochureUrl: '/Nexus_Brochure.pdf' as string | null,
 } as const;
 
 /** WhatsApp group link supplied by the organising team via WHATSAPP_COMMUNITY_LINK. */

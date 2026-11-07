@@ -1076,6 +1076,15 @@ html.menu-open .site-header {
   justify-content: center;
   gap: 12px;
 }
+.hero-brochure {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+a.hero-brochure:hover {
+  color: var(--accent);
+}
 .venue-short {
   display: none;
 }

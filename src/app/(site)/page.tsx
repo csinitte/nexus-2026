@@ -105,6 +105,13 @@ export default function HomePage() {
                   Explore NEXUS <span aria-hidden="true">↓</span>
                 </a>
               </div>
+              {EVENT.brochureUrl ? (
+                <a className="hero-brochure" href={EVENT.brochureUrl} download>
+                  Download brochure <span aria-hidden="true">↓</span>
+                </a>
+              ) : (
+                <p className="hero-brochure hero-brochure-pending">Brochure coming soon</p>
+              )}
             </div>
           </div>
         </div>

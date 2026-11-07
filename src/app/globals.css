@@ -4882,3 +4882,5 @@ a.hero-whatsapp:hover { background: var(--accent); color: #101510; }
   .hero-corners { top: calc(var(--header-h) + 12px); bottom: auto; align-items: flex-start; }
   .hero-band { padding-bottom: 30px; }
 }
+.hero-copy .eyebrow time { font-size: clamp(14px, 1.2vw, 18px); font-weight: 600; }
+@media (max-width: 900px) { #hosts { align-content: safe center; } }

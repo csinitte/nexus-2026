@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { IntroGate } from '@/components/intro/IntroGate';
 import { LogoStory } from '@/components/story/LogoStory';
 import { OBJECTS } from '@/components/story/shapes';
-import { ABOUT, EVENT, HOSTS } from '@/content/nexus';
+import { ABOUT, EVENT, HOSTS, getWhatsappLink } from '@/content/nexus';
 import { PrizePool } from '@/components/prize/PrizePool';
 
 /*
@@ -27,6 +27,7 @@ const HOST_SUMMARY: Record<string, string> = {
 };
 
 export default function HomePage() {
+  const whatsapp = getWhatsappLink();
   return (
     <>
       <IntroGate />
@@ -105,6 +106,14 @@ export default function HomePage() {
                   Explore NEXUS <span aria-hidden="true">↓</span>
                 </a>
               </div>
+              {whatsapp ? (
+                <a className="hero-whatsapp" href={whatsapp} target="_blank" rel="noopener noreferrer">
+                  <span className="hero-whatsapp-dot" aria-hidden="true" />
+                  Join the NEXUS WhatsApp group <span aria-hidden="true">↗</span>
+                </a>
+              ) : (
+                <p className="hero-whatsapp hero-whatsapp-pending">WhatsApp group link coming soon</p>
+              )}
               {EVENT.brochureUrl ? (
                 <a className="hero-brochure" href={EVENT.brochureUrl} download>
                   Download brochure <span aria-hidden="true">↓</span>

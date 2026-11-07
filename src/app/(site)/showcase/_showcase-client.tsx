@@ -84,45 +84,6 @@ function ShowcaseCard({ index, item }: { index: number; item: { title: string; t
   );
 }
 
-/* Event-format info block: label + prominent value + minimal icon. */
-function FormatStat({ label, value }: { label: string; value: string }) {
-  const icons: Record<string, React.ReactNode> = {
-    Duration: <span className="format-icon format-icon--clock" aria-hidden="true" />,
-    Format: <span className="format-icon format-icon--doc" aria-hidden="true" />,
-    'Q&A': <span className="format-icon format-icon--chat" aria-hidden="true" />,
-  };
-  return (
-    <div className="format-block" data-reveal>
-      <div className="format-symbol">{icons[label]}</div>
-      <div className="format-label">{label}</div>
-      <div className="format-value">{value}</div>
-    </div>
-  );
-}
-
-/* CSS preview of the standardised presentation template (no extra asset). */
-function TemplatePreview() {
-  return (
-    <div className="template-preview" aria-hidden="true">
-      <div className="template-device">
-        <div className="template-screen">
-          <div className="template-bar" />
-          <div className="template-slide">
-            <div className="template-title-line" />
-            <div className="template-divider" />
-            <div className="template-body">
-              <div className="template-line template-line--long" />
-              <div className="template-line template-line--short" />
-              <div className="template-line template-line--short" />
-              <div className="template-line template-line--micro" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 interface ShowcaseClientProps { slot: { start: string; end: string } | undefined; }
 
 export default function ShowcaseClient({ slot }: ShowcaseClientProps) {
@@ -157,24 +118,12 @@ export default function ShowcaseClient({ slot }: ShowcaseClientProps) {
         </div>
       </div>
 
-      <div className="showcase-event-format" data-reveal>
-        <h2 className="list-title">Event format</h2>
-        <div className="format-strip">
-          {SHOWCASE.details.map((d) => (
-            <FormatStat key={d.label} label={d.label} value={d.value} />
-          ))}
-        </div>
-      </div>
-
       <div className="showcase-download" data-reveal>
         <div className="download-layout">
           <div className="download-info">
             <p className="eyebrow">Standardised format</p>
-            <h3 className="download-heading">Standardised presentation template</h3>
-            <p className="download-desc">Every registered chapter presents. Prepare your five minutes with the official template.</p>
-          </div>
-          <div className="download-preview">
-            <TemplatePreview />
+            <h2 className="download-heading">Follow the standard template</h2>
+            <p className="download-desc">Every chapter will have 5 minutes to present. Download the template to prepare your presentation.</p>
           </div>
           <a className="button download-button" href={EVENT.showcaseTemplateUrl} download>
             <span aria-hidden="true">↓</span> Download presentation template

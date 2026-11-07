@@ -20,9 +20,9 @@ export const EVENT = {
   brochureUrl: '/Nexus_Brochure.pdf' as string | null,
 } as const;
 
-/** WhatsApp group link supplied by the organising team via WHATSAPP_COMMUNITY_LINK. */
+/** The environment can override the organising team’s public group invite. */
 export function getWhatsappLink(): string | null {
-  return process.env.WHATSAPP_COMMUNITY_LINK || null;
+  return process.env.WHATSAPP_COMMUNITY_LINK || 'https://chat.whatsapp.com/KY7YHJFzDt2GrVFpEisjxQ';
 }
 
 export type NavItem = { href: string; label: string; short: string };

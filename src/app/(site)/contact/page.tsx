@@ -22,6 +22,20 @@ export default function ContactPage() {
         <p>{CONTACT.intro}</p>
       </PageIntro>
 
+      <div className="contact-whatsapp" data-reveal>
+        <div>
+          <h2>Join the NEXUS 2026 WhatsApp group</h2>
+          <p>Stay connected with the NEXUS community.</p>
+        </div>
+        {whatsapp ? (
+          <a href={whatsapp} target="_blank" rel="noopener noreferrer">
+            Join the group <span aria-hidden="true">↗</span>
+          </a>
+        ) : (
+          <span>Group link coming soon.</span>
+        )}
+      </div>
+
       <div className="contact-grid">
         <div data-reveal>
           <h2 className="list-title">Organising team</h2>
@@ -29,7 +43,6 @@ export default function ContactPage() {
             {CONTACT.people.map((p) => (
               <li key={p.tel}>
                 <strong>{p.name}</strong>
-                <span>{p.role}</span>
                 <a href={`tel:${p.tel}`}>
                   {p.phone} <span aria-hidden="true">↗</span>
                 </a>
@@ -51,16 +64,6 @@ export default function ContactPage() {
               <a href={EVENT.websiteUrl} target="_blank" rel="noopener noreferrer">
                 {EVENT.website} <span aria-hidden="true">↗</span>
               </a>
-            </li>
-            <li>
-              <strong>NEXUS 2026 WhatsApp Group</strong>
-              {whatsapp ? (
-                <a href={whatsapp} target="_blank" rel="noopener noreferrer">
-                  Join the group <span aria-hidden="true">↗</span>
-                </a>
-              ) : (
-                <span>Link shared after registration.</span>
-              )}
             </li>
           </ul>
         </div>

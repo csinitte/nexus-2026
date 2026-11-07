@@ -67,24 +67,27 @@ export default function HomePage() {
 
           <div className="hero-corners" aria-label="Event hosts">
             <div className="hero-host-logo hero-host-institution">
-              <span>Host institution</span>
               <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAM Institute of Technology" width={1628} height={278} sizes="(max-width: 700px) 38vw, 240px" />
             </div>
             <div className="hero-host-logo hero-host-chapter">
-              <span>Organised by</span>
               <Image src="/csi-bangalore.png" alt="CSI Student Chapter, NMAMIT — Computer Society of India Bangalore Chapter" width={1908} height={559} sizes="(max-width: 700px) 34vw, 220px" />
-              <strong>{EVENT.organiser}</strong>
             </div>
           </div>
 
           <div className="hero-band">
             <div className="hero-copy">
+              <p className="hero-subtitle">CSI Student Summit on Innovation &amp; Technology</p>
               <p className="eyebrow">
                 <span className="dot" aria-hidden="true" />
-                <time dateTime={EVENT.eventDateIso}>{EVENT.dateCompact}</time> · <span className="venue-full">{EVENT.hostInstitution}</span>
-                <span className="venue-short">{EVENT.venueShort}</span>
+                <time dateTime={EVENT.eventDateIso}>{EVENT.dateCompact}</time>
               </p>
-              <p className="hero-subtitle">CSI Student Summit on Innovation &amp; Technology</p>
+              {EVENT.brochureUrl ? (
+                <a className="hero-brochure" href={EVENT.brochureUrl} download>
+                  Download brochure <span aria-hidden="true">↓</span>
+                </a>
+              ) : (
+                <p className="hero-brochure hero-brochure-pending">Brochure coming soon</p>
+              )}
               <div className="hero-ctas">
                 <Link className="button" href="/register">
                   Register now <span aria-hidden="true">↗</span>
@@ -100,13 +103,6 @@ export default function HomePage() {
                 </a>
               ) : (
                 <p className="hero-whatsapp hero-whatsapp-pending">WhatsApp group link coming soon</p>
-              )}
-              {EVENT.brochureUrl ? (
-                <a className="hero-brochure" href={EVENT.brochureUrl} download>
-                  Download brochure <span aria-hidden="true">↓</span>
-                </a>
-              ) : (
-                <p className="hero-brochure hero-brochure-pending">Brochure coming soon</p>
               )}
             </div>
           </div>

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { NAV_ITEMS } from '@/content/nexus';
+import { EVENT, NAV_ITEMS } from '@/content/nexus';
 import { Wordmark } from './Wordmark';
 
 export function SiteHeader() {
@@ -38,9 +38,13 @@ export function SiteHeader() {
         ))}
       </nav>
       <div className="header-actions">
-        <Link className="cta-register" href="/register">
-          Register now <span aria-hidden="true">↗</span>
-        </Link>
+        {EVENT.brochureUrl ? (
+          <a className="cta-register" href={EVENT.brochureUrl} download>
+            Brochure <span aria-hidden="true">↓</span>
+          </a>
+        ) : (
+          <span className="cta-register" aria-disabled="true">Brochure coming soon</span>
+        )}
         <button
           type="button"
           className="menu-toggle"

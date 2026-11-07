@@ -4869,3 +4869,16 @@ a.hero-whatsapp:hover { background: var(--accent); color: #101510; }
   .hero-corners .hero-host-chapter { width: min(26vw, 120px); }
   .hero-band { padding-bottom: 85px; }
 }
+
+/* Hero hierarchy follows the event artwork, date, brochure and actions. */
+.hero-copy .hero-subtitle { margin-bottom: clamp(8px, 1.4vh, 14px); }
+.hero-copy .eyebrow { margin-bottom: 0; }
+.hero-copy .hero-brochure { margin: 9px 0 14px; }
+@media (max-width: 700px) {
+  .hero-corners { top: calc(var(--header-h) + 12px); bottom: auto; align-items: flex-start; }
+  .hero-band { padding-bottom: 30px; }
+}
+@media (max-aspect-ratio: 4/5) {
+  .hero-corners { top: calc(var(--header-h) + 12px); bottom: auto; align-items: flex-start; }
+  .hero-band { padding-bottom: 30px; }
+}

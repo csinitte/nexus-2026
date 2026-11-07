@@ -294,8 +294,17 @@ export function LogoStory() {
       return page > 0 ? page - 1 : null;
     };
 
+    const canScrollHosts = (eventTarget: EventTarget | null, direction: number) => {
+      const hostPage = eventTarget instanceof Element ? eventTarget.closest<HTMLElement>('#hosts') : null;
+      if (!hostPage || hostPage.scrollHeight <= hostPage.clientHeight + 1) return false;
+      return direction > 0
+        ? hostPage.scrollTop + hostPage.clientHeight < hostPage.scrollHeight - 1
+        : hostPage.scrollTop > 0;
+    };
+
     const onWheel = (e: WheelEvent) => {
       if (e.ctrlKey || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+      if (canScrollHosts(e.target, e.deltaY)) return;
       const now = performance.now();
       if (now - lastWheel > 200) gestureUsed = false;
       lastWheel = now;
@@ -320,6 +329,7 @@ export function LogoStory() {
     const onTouchMove = (e: TouchEvent) => {
       const dy = touchY - e.touches[0].clientY;
       if (Math.abs(dy) < 8) return;
+      if (canScrollHosts(e.target, dy)) return;
       if (!busy() && window.scrollY <= 2 && (transitioning() || (dy > 0 && page === LAST && (locked || touchUsed)))) {
         e.preventDefault();
         return;
@@ -340,6 +350,7 @@ export function LogoStory() {
       const down = e.key === 'ArrowDown' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey && t?.tagName !== 'BUTTON');
       const up = e.key === 'ArrowUp' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey);
       if (!down && !up) return;
+      if (canScrollHosts(e.target, down ? 1 : -1)) return;
       if (!busy() && window.scrollY <= 2 && transitioning()) {
         e.preventDefault();
         return;

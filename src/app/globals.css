@@ -4317,6 +4317,17 @@ html:not(.deck-ready) .deck-hint {
   .deck-center {
     min-height: 0;
   }
+  #hosts {
+    grid-template-rows: auto auto;
+    grid-template-areas: 'left' 'right';
+    align-content: start;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-top: 20px;
+  }
+  #hosts .deck-center {
+    display: none;
+  }
   .deck-caption {
     font-size: 11px;
   }
@@ -4405,7 +4416,6 @@ html:not(.deck-ready) .deck-hint {
 }
 /* Short phones: trim secondary text so each page still fits one screen. */
 @media (max-width: 900px) and (max-height: 720px) {
-  #hosts .deck-text,
   .deck-hint {
     display: none;
   }

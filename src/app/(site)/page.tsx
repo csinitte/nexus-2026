@@ -22,8 +22,8 @@ const EXPLORE = [
 
 const HOST_SUMMARY: Record<string, string> = {
   nmamit:
-    'Established in 1986, NMAM Institute of Technology (NMAMIT), Nitte, is a constituent college of Nitte (Deemed to be University), Mangaluru. The university holds an A+ NAAC Grade and Category A status from the Ministry of Education. NMAMIT is ranked in the 151–200 band in NIRF 2024 for engineering institutions, with NBA Tier-I accreditation for eligible undergraduate programmes. With 6,000+ students and a 125-acre green campus, NMAMIT promotes academic excellence, research and innovation.',
-  csi: 'The CSI Student Branch, NMAMIT (Branch ID: I00655), operates under the CSI Bangalore Chapter. Established in 2007, it has grown to 700+ student members and 350+ technical events, earning the Best Accredited Student Branch and Largest Student Branch Awards (2017–19).',
+    'A Nitte university college in Karnataka, NMAMIT brings together 6,000+ students across engineering, research and innovation.',
+  csi: 'The CSI Student Branch at NMAMIT connects a community of 700+ members through technical events, learning and collaboration.',
 };
 
 export default function HomePage() {
@@ -65,28 +65,15 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="hero-corners">
-            <p>
-              Hosted by
+          <div className="hero-corners" aria-label="Event hosts">
+            <div className="hero-host-logo hero-host-institution">
+              <span>Host institution</span>
+              <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAM Institute of Technology" width={1628} height={278} sizes="(max-width: 700px) 38vw, 240px" />
+            </div>
+            <div className="hero-host-logo hero-host-chapter">
+              <span>Organised by</span>
+              <Image src="/csi-bangalore.png" alt="CSI Student Chapter, NMAMIT — Computer Society of India Bangalore Chapter" width={1908} height={559} sizes="(max-width: 700px) 34vw, 220px" />
               <strong>{EVENT.organiser}</strong>
-            </p>
-            <div className="hero-logos">
-              <Image
-                className="logo-nitte"
-                src="/nitte_white.png"
-                alt="Nitte (Deemed to be University) — NMAMIT"
-                width={1628}
-                height={278}
-                sizes="160px"
-              />
-              <Image
-                className="logo-csi"
-                src="/csi-bangalore.png"
-                alt="Computer Society of India — Bangalore Chapter"
-                width={1908}
-                height={559}
-                sizes="160px"
-              />
             </div>
           </div>
 

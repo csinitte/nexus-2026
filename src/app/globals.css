@@ -4806,3 +4806,66 @@ a.hero-whatsapp:hover { background: var(--accent); color: #101510; }
 @media(max-width:860px){.expo-track-list{grid-auto-columns:calc((100% - 16px)/2)}.expo-step{grid-template-columns:55px 1fr;gap:14px}.expo-step+.expo-step{padding-left:22px}}
 @media(max-width:600px){.expo-tracks-header{align-items:start}.expo-track-controls>span{display:none}.expo-track-controls button{width:40px;height:40px}.expo-track-list{grid-auto-columns:85%;gap:12px}.expo-track-card{min-height:320px;padding:20px}.expo-track-art{height:110px}.expo-journey-steps{grid-template-columns:1fr}.expo-step,.expo-step+.expo-step{padding:25px 0;grid-template-columns:55px 1fr;gap:15px;border-left:0}.expo-step+.expo-step{border-top:1px solid var(--line-strong)}.expo-step h3{margin:12px 0 8px}.expo-step-note{margin-top:14px}.expo-details-content{grid-template-columns:1fr;gap:24px}}
 @media(prefers-reduced-motion:reduce){.expo-track-list{scroll-behavior:auto}}
+
+/* Give the host profiles room to breathe on phones and tablets. */
+@media (max-width: 900px) {
+  #hosts {
+    align-content: center;
+    gap: 14px;
+    padding: 24px calc(var(--gutter) + 24px) 56px var(--gutter);
+  }
+  #hosts .deck-side {
+    width: 100%;
+    max-width: 640px;
+    margin-inline: auto;
+    padding: 20px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 16px;
+    border: 1px solid var(--line);
+    background: var(--surface-solid);
+  }
+  #hosts .deck-side .eyebrow {
+    display: block;
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 10px;
+  }
+  #hosts .deck-side .host-logo {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    justify-content: flex-end;
+    max-width: 160px;
+    height: 32px;
+  }
+  #hosts .deck-side .host-logo img { max-width: 100%; object-fit: contain; object-position: right center; }
+  #hosts .deck-side h3 { grid-column: 1; grid-row: 2; margin: 0; font-size: 19px; line-height: 1.2; }
+  #hosts .deck-side .deck-text { grid-column: 1 / -1; font-size: 14px; line-height: 1.55; }
+  #hosts .deck-side .host-facts { grid-column: 1 / -1; gap: 12px 24px; padding-top: 12px; }
+  #hosts .host-facts dd { font-size: 17px; }
+}
+@media (max-width: 430px) {
+  #hosts { padding-right: calc(var(--gutter) + 14px); }
+  #hosts .deck-side { padding: 16px; }
+  #hosts .deck-side .host-logo { max-width: 110px; height: 26px; }
+  #hosts .deck-side h3 { font-size: 17px; }
+  #hosts .deck-side .deck-text { font-size: 13px; }
+}
+
+/* Balance the two host identities around the central NEXUS artwork. */
+.hero-corners .hero-host-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: clamp(155px, 19vw, 260px); }
+.hero-corners .hero-host-logo > span { font: 10px var(--font-mono), monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.hero-corners .hero-host-logo img { display: block; width: 100%; height: auto; object-fit: contain; }
+.hero-corners .hero-host-chapter { align-items: flex-end; text-align: right; width: clamp(145px, 15vw, 210px); }
+.hero-corners .hero-host-chapter strong { max-width: 22ch; font-size: 11px; line-height: 1.4; }
+@media (max-width: 700px) {
+  .hero-corners .hero-host-logo { width: min(38vw, 190px); gap: 6px; }
+  .hero-corners .hero-host-chapter { width: min(31vw, 145px); }
+  .hero-corners .hero-host-logo > span { font-size: 8px; }
+  .hero-corners .hero-host-chapter strong { font-size: 8px; }
+  .hero-band { padding-bottom: 105px; }
+}
+@media (max-height: 680px) and (max-width: 700px) {
+  .hero-corners .hero-host-logo { width: min(32vw, 150px); }
+  .hero-corners .hero-host-chapter { width: min(26vw, 120px); }
+  .hero-band { padding-bottom: 85px; }
+}

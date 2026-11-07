@@ -313,7 +313,7 @@ export function ExpoStep({ state, errors, update, abstract, setAbstract }: StepP
             />
             <TextArea
               id="description"
-              label="Brief project description"
+              label="Brief project description (optional)"
               hint="Two or three sentences are enough. The full detail belongs in your abstract."
               value={state.description}
               onChange={(description) => update({ description })}

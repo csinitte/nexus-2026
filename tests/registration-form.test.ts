@@ -94,6 +94,16 @@ describe('step validation', () => {
     expect(errors.abstract).toBeDefined();
   });
 
+  test('Expo description can be blank or omitted', async () => {
+    const state = completeState({ description: '   ' });
+    expect(validateStep(step('expo'), state, pdf()).description).toBeUndefined();
+    const payload = buildPayload(state);
+    const { description, ...expoWithoutDescription } = payload.expo!;
+    expect(description).toBe('');
+    const parsed = await validateRegistration({ ...payload, expo: { ...expoWithoutDescription, abstract: pdf() } });
+    expect(parsed.expo?.description).toBe('');
+  });
+
   test('Expo team name is required only for participating teams', async () => {
     const withoutName = completeState({ teamName: '   ' });
     expect(validateStep(step('expo'), withoutName, pdf()).teamName).toBeDefined();

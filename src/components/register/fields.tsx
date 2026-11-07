@@ -96,7 +96,6 @@ export function TextArea({
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, hint ?? true, error)}
-        aria-required
       />
       <p className="field-hint" id={`${id}-hint`}>
         {hint && <span>{hint} </span>}

@@ -32,7 +32,7 @@ export async function validateRegistration(raw:Record<string, unknown>):Promise<
   const x=(raw.expo || {}) as Record<string,unknown>; const members=list(x.teamMembers) as (string|number)[]; const indexes=members.map(m=>typeof m==='number'?m:students.findIndex(s=>match(String(m),s)));
   const encoded=x.abstract as {fileName?:unknown;mimeType?:unknown;base64?:unknown}|undefined; const file=x.abstract instanceof File?x.abstract:(encoded && typeof encoded.base64==='string' && typeof encoded.fileName==='string' && typeof encoded.mimeType==='string' ? new File([Buffer.from(encoded.base64,'base64')],encoded.fileName,{type:encoded.mimeType}) : undefined);
   if(!str(x.teamName)||str(x.teamName).length>160) errors.push('Expo team name is required and must be at most 160 characters');
-  if(!str(x.projectTitle)||!str(x.description)||!EXPO_PROJECT_CATEGORIES.includes(str(x.category) as never)) errors.push('Expo title, category and description are required');
+  if(!str(x.projectTitle)||!EXPO_PROJECT_CATEGORIES.includes(str(x.category) as never)) errors.push('Expo title and category are required');
   if(indexes.length<2||indexes.length>4||new Set(indexes).size!==indexes.length||indexes.some(i=>!Number.isInteger(i)||i<0||i>=students.length)) errors.push('Expo team must contain 2–4 distinct registered students');
   if(!file || !file.name.toLowerCase().endsWith('.pdf') || file.type !== 'application/pdf' || file.size===0 || file.size>getMaxAbstractBytes() || Buffer.from(await file.slice(0,5).arrayBuffer()).toString()!=='%PDF-') errors.push('A valid PDF abstract within the size limit is required');
   data.expo={teamName:str(x.teamName),projectTitle:str(x.projectTitle),category:str(x.category),description:str(x.description),teamMembers:indexes,abstract:file};

@@ -198,7 +198,6 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
         if (state.teamName.trim().length > 160) e.teamName = 'Keep the team name under 160 characters.';
         required(e, 'projectTitle', state.projectTitle, 'the project or product title');
         if (!EXPO_PROJECT_CATEGORIES.includes(state.category as never)) e.category = 'Choose a project category.';
-        required(e, 'description', state.description, 'a brief project description');
         if (state.description.length > MAX_DESCRIPTION_LENGTH)
           e.description = `Keep the description under ${MAX_DESCRIPTION_LENGTH} characters.`;
         const abstractError = validateAbstract(abstract);

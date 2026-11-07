@@ -4807,6 +4807,18 @@ a.hero-whatsapp:hover { background: var(--accent); color: #101510; }
 @media(max-width:600px){.expo-tracks-header{align-items:start}.expo-track-controls>span{display:none}.expo-track-controls button{width:40px;height:40px}.expo-track-list{grid-auto-columns:85%;gap:12px}.expo-track-card{min-height:320px;padding:20px}.expo-track-art{height:110px}.expo-journey-steps{grid-template-columns:1fr}.expo-step,.expo-step+.expo-step{padding:25px 0;grid-template-columns:55px 1fr;gap:15px;border-left:0}.expo-step+.expo-step{border-top:1px solid var(--line-strong)}.expo-step h3{margin:12px 0 8px}.expo-step-note{margin-top:14px}.expo-details-content{grid-template-columns:1fr;gap:24px}}
 @media(prefers-reduced-motion:reduce){.expo-track-list{scroll-behavior:auto}}
 
+/* Show every track at once when the screen is wide enough for three columns. */
+@media (min-width: 861px) {
+  .expo-track-list {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+    padding-bottom: 0;
+  }
+  .expo-track-controls,
+  .expo-track-hint { display: none; }
+}
+
 /* Size the first column to the rendered numeral, rather than letting it overlap the copy. */
 .expo-step,
 .expo-step + .expo-step {

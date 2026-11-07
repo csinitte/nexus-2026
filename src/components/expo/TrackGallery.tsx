@@ -39,7 +39,7 @@ export function TrackGallery({ tracks }: { tracks: Track[] }) {
           <button type="button" onClick={() => goTo(current + 1)} disabled={atEnd || current === tracks.length - 1} aria-label="Next track">→</button>
         </div>
       </div>
-      <ol ref={listRef} className="expo-track-list" onScroll={updateCurrent} tabIndex={0} aria-label="Swipe or scroll through the project tracks">
+      <ol ref={listRef} className="expo-track-list" onScroll={updateCurrent} tabIndex={0} aria-label="Project tracks">
         {tracks.map((track, index) => (
           <li className="expo-track-card" key={track.title}>
             <div className="expo-track-card-top"><span>TRACK {String(index + 1).padStart(2, '0')}</span><span aria-hidden="true">↗</span></div>

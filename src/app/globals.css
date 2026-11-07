@@ -4807,6 +4807,41 @@ a.hero-whatsapp:hover { background: var(--accent); color: #101510; }
 @media(max-width:600px){.expo-tracks-header{align-items:start}.expo-track-controls>span{display:none}.expo-track-controls button{width:40px;height:40px}.expo-track-list{grid-auto-columns:85%;gap:12px}.expo-track-card{min-height:320px;padding:20px}.expo-track-art{height:110px}.expo-journey-steps{grid-template-columns:1fr}.expo-step,.expo-step+.expo-step{padding:25px 0;grid-template-columns:55px 1fr;gap:15px;border-left:0}.expo-step+.expo-step{border-top:1px solid var(--line-strong)}.expo-step h3{margin:12px 0 8px}.expo-step-note{margin-top:14px}.expo-details-content{grid-template-columns:1fr;gap:24px}}
 @media(prefers-reduced-motion:reduce){.expo-track-list{scroll-behavior:auto}}
 
+/* Size the first column to the rendered numeral, rather than letting it overlap the copy. */
+.expo-step,
+.expo-step + .expo-step {
+  grid-template-columns: max-content minmax(0, 1fr);
+}
+.expo-step-number { white-space: nowrap; }
+.expo-details-content > div { min-width: 0; }
+.expo-details-content h3 { margin-bottom: 16px; }
+.expo-details-content ul {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.expo-details-content li {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.expo-details-content li::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+@media (max-width: 600px) {
+  .expo-track-controls button { width: 44px; height: 44px; }
+}
+
 /* Give the host profiles room to breathe on phones and tablets. */
 @media (max-width: 900px) {
   #hosts {

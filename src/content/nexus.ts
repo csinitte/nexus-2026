@@ -17,7 +17,7 @@ export const EVENT = {
   /** Replace the PDF in /public (same name) to update the template without code changes. */
   showcaseTemplateUrl: '/Chapter_Showcase_Template.pdf',
   /** Replace the PDF in /public (same name) to update the brochure. */
-  brochureUrl: '/Nexus_Brochure.pdf' as string | null,
+  brochureUrl: '/Nexus_Brochure_2026.pdf' as string | null,
 } as const;
 
 /** The environment can override the organising team’s public group invite. */

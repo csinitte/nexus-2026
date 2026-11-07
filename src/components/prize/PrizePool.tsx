@@ -117,7 +117,7 @@ export function PrizePool({ className }: { className?: string }) {
               }}
             >
               <span className="prize-card-icon" aria-hidden="true" style={{ color: 'var(--accent)' }}>
-                {part.icon}
+                <PrizeIcon type={part.icon} />
               </span>
               <strong className="prize-card-rank">{part.rank}</strong>
               <CountUp value={part.amount} />
@@ -138,7 +138,7 @@ export function PrizePool({ className }: { className?: string }) {
                 }}
               >
                 <span className="prize-card-icon" aria-hidden="true" style={{ color: 'var(--accent)' }}>
-                  {part.icon}
+                  <PrizeIcon type={part.icon} />
                 </span>
                 <strong className="prize-card-rank">{part.rank}</strong>
                 <CountUp value={part.amount} />
@@ -148,6 +148,17 @@ export function PrizePool({ className }: { className?: string }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function PrizeIcon({ type }: { type: (typeof PRIZE_PARTS)[number]['icon'] }) {
+  return (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {type === 'trophy' && <><path d="M10 5h12v7a6 6 0 0 1-12 0V5Z" /><path d="M10 7H6v3a5 5 0 0 0 5 5M22 7h4v3a5 5 0 0 1-5 5M16 18v5m-5 4h10m-8-4h6" /></>}
+      {type === 'medal' && <><path d="m10 4 3 7m9-7-3 7M9 4h14l-4 8h-6L9 4Z" /><circle cx="16" cy="20" r="7" /><path d="m16 16 1.2 2.5 2.8.4-2 2 .5 2.8-2.5-1.3-2.5 1.3.5-2.8-2-2 2.8-.4L16 16Z" /></>}
+      {type === 'idea' && <><path d="M11 21c0-2-3-3.5-3-7a8 8 0 1 1 16 0c0 3.5-3 5-3 7H11ZM12 25h8m-7 3h6M16 2v2M5 6l1.5 1.5M27 6l-1.5 1.5" /></>}
+      {type === 'globe' && <><circle cx="16" cy="16" r="11" /><path d="M5 16h22M16 5c-3 3-4.5 6.7-4.5 11s1.5 8 4.5 11c3-3 4.5-6.7 4.5-11S19 8 16 5ZM7.5 10h17M7.5 22h17" /></>}
+    </svg>
   );
 }
 

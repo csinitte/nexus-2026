@@ -6,11 +6,11 @@
  * Invariant: sum of all parts must equal the total.
  */
 export const PRIZE_PARTS = [
-  { rank: 'Winner', amount: 10000, icon: '🏆', special: false },
-  { rank: "1st Runner-Up", amount: 6000, icon: '🥈', special: false },
-  { rank: "2nd Runner-Up", amount: 4000, icon: '🥉', special: false },
-  { rank: 'Best Innovation Award', amount: 2500, icon: '💡', special: true },
-  { rank: 'Best Real-World Impact', amount: 2500, icon: '🌍', special: true },
+  { rank: 'Winner', amount: 10000, icon: 'trophy', special: false },
+  { rank: "1st Runner-Up", amount: 6000, icon: 'medal', special: false },
+  { rank: "2nd Runner-Up", amount: 4000, icon: 'medal', special: false },
+  { rank: 'Best Innovation Award', amount: 2500, icon: 'idea', special: true },
+  { rank: 'Best Real-World Impact', amount: 2500, icon: 'globe', special: true },
 ] as const;
 
 export const PRIZE_TOTAL = 25000;

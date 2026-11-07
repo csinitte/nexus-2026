@@ -46,6 +46,8 @@ export default function ExpoPage() {
         </div>
       </dl>
 
+      <PrizePool />
+
       <TrackGallery tracks={EXPO.categories} />
 
       <section className="expo-journey" data-reveal aria-labelledby="expo-journey-title">
@@ -65,9 +67,6 @@ export default function ExpoPage() {
         <summary>What to include & bring <span aria-hidden="true">+</span></summary>
         <div className="expo-details-content"><div><h3>Your abstract</h3><ul>{EXPO.abstractRequirements.map(item => <li key={item}>{item}</li>)}</ul></div><div><h3>At the exhibition</h3><ul>{EXPO.guidelines.map(item => <li key={item}>{item}</li>)}</ul></div></div>
       </details>
-
-      {/* Prize Pool â€” shared <PrizePool /> component */}
-      <PrizePool />
 
       <div className="callout" data-reveal>
         <div>

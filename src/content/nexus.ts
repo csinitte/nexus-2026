@@ -191,7 +191,7 @@ export const ABSTRACT_INSTRUCTIONS = [
 ];
 
 export const COORDINATOR = {
-  name: 'Sharadha Shenoy',
+  name: 'Dr. SHARADA U SHENOY',
   role: 'Student Branch Coordinator',
   email: 'sharadauday@nitte.edu.in',
   image: '/sharadha-shenoy.png',

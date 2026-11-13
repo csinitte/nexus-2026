@@ -184,7 +184,7 @@ export function SiteFooter() {
               <Link href="/#about" className="footer-nav-link">About NEXUS</Link>
               <Link href="/schedule" className="footer-nav-link">Event schedule</Link>
               <Link href="/panel" className="footer-nav-link">Industry panel</Link>
-              <Link href="/showcase" className="footer-nav-link">Chapter showcase</Link>
+              <Link href="/showcase" className="footer-nav-link">Branch showcase</Link>
               <Link href="/expo" className="footer-nav-link">Project expo</Link>
             </div>
           </nav>
@@ -195,7 +195,7 @@ export function SiteFooter() {
             <div className="footer-nav-list">
               <Link href="/register" className="footer-nav-link">Register now</Link>
               <Link href="/expo" className="footer-nav-link">Expo details</Link>
-              <Link href="/showcase" className="footer-nav-link">Showcase details</Link>
+              <Link href="/showcase" className="footer-nav-link">Branch showcase details</Link>
               {EVENT.brochureUrl && (
                 <a href={EVENT.brochureUrl} download className="footer-nav-link">Download brochure</a>
               )}

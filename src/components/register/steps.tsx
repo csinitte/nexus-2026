@@ -486,13 +486,7 @@ export function PaymentStep({ state, errors, update, screenshot, setScreenshot }
       </div>
       <div className="payment-upi">
         <img src="/payment-qr.jpeg" alt="UPI QR code for NEXUS 2026 payments" />
-        <div>
-          <p>Scan the QR code or pay to</p>
-          <p className="upi-id">csi.nmamit@syndicate</p>
-          <button type="button" className="link-button" onClick={() => navigator.clipboard.writeText('csi.nmamit@syndicate')}>
-            Copy UPI ID
-          </button>
-        </div>
+        <p>Scan the QR to pay.</p>
       </div>
       <ChoiceGroup
         id="hasCsiMembership"

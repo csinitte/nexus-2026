@@ -16,7 +16,7 @@ import { PRIZE_PARTS, PRIZE_TOTAL, formatRupees } from '@/data/prizes';
 const EXPLORE = [
   { href: '/schedule', label: 'Event Schedule', text: 'Eight sessions, from inauguration to valedictory.' },
   { href: '/panel', label: 'Industry Panel', text: 'From skills to startups with industry voices.' },
-  { href: '/showcase', label: 'Chapter Showcase', text: 'Five minutes to share your chapter’s journey.' },
+  { href: '/showcase', label: 'Branch Showcase', text: 'Five minutes to share your branch\'s journey.' },
   { href: '/expo', label: 'Project Expo', text: 'Technology for a sustainable, smarter future.' },
 ];
 

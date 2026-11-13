@@ -14,8 +14,8 @@ export const EVENT = {
   venueShort: 'NMAMIT, Nitte',
   instagramUrl: 'https://www.instagram.com/csi_nmamit/',
   websiteUrl: 'https://csinmamit.in',
-  /** Replace the PDF in /public (same name) to update the template without code changes. */
-  showcaseTemplateUrl: '/Chapter_Showcase_Template.pdf',
+  /** Replace the PPTX in /public (same name) to update the template without code changes. */
+  showcaseTemplateUrl: '/CSI Student Branch Showcase_Template.pptx',
   /** Replace the PDF in /public (same name) to update the brochure. */
   brochureUrl: '/Nexus_Brochure_2026.pdf' as string | null,
 } as const;
@@ -32,7 +32,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Home', short: 'Home' },
   { href: '/schedule', label: 'Schedule', short: 'Schedule' },
   { href: '/panel', label: 'Industry Panel', short: 'Panel' },
-  { href: '/showcase', label: 'Chapter Showcase', short: 'Showcase' },
+  { href: '/showcase', label: 'Branch Showcase', short: 'Showcase' },
   { href: '/expo', label: 'Project Expo', short: 'Expo' },
   { href: '/contact', label: 'Contact', short: 'Contact' },
 ];
@@ -115,18 +115,18 @@ export const PANEL = {
 export const SHOWCASE = {
   tagline: 'One Community. Many Journeys. Shared Impact.',
   description: [
-    'The CSI Branch Showcase provides a platform for student chapters from across Karnataka to present their journeys, achievements and contributions to the technical community.',
-    'It celebrates student-led initiatives, encourages the exchange of ideas and creates opportunities for collaboration between chapters.',
+    'The Student Branch Showcase provides a platform for students from across Karnataka to present their journeys, achievements, and contributions to the technical community.',
+    'It celebrates student-led initiatives, encourages the exchange of ideas, and creates opportunities for collaboration between student branches.',
   ],
   areas: [
-    { title: 'Chapter Overview', text: 'Chapter introduction, vision and community.' },
-    { title: 'Activities & Initiatives', text: 'Events, workshops and engagements.' },
+    { title: 'Student Branch Overview', text: 'Student Branch introduction, vision, and community.' },
+    { title: 'Activities & Initiatives', text: 'Events, workshops, and engagements.' },
     { title: 'Achievements & Highlights', text: 'Key milestones and collaborations.' },
     { title: 'Student Innovation', text: 'Projects and member initiatives.' },
     { title: 'Future Roadmap', text: 'Upcoming goals and collaborations.' },
   ],
   details: [
-    { label: 'Duration', value: '5 minutes per chapter' },
+    { label: 'Duration', value: '5 minutes per branch' },
     { label: 'Format', value: 'Standardised presentation template' },
     { label: 'Q&A', value: 'No separate Q&A session' },
   ],

@@ -94,10 +94,10 @@ export default function ShowcaseClient({ slot }: ShowcaseClientProps) {
         <div className="showcase-hero-content">
           <PageIntro
             index={4}
-            label="CHAPTERS IN FOCUS"
+            label="BRANCHES IN FOCUS"
             meta={timeText}
             eyebrow={SHOWCASE.tagline}
-            title="CSI Chapter"
+            title="CSI Student Branch"
             accent="Showcase"
           />
           <div className="showcase-intro">
@@ -110,7 +110,7 @@ export default function ShowcaseClient({ slot }: ShowcaseClientProps) {
       </div>
 
       <div className="showcase-requirements" data-reveal>
-        <h2 className="list-title">What each chapter will present</h2>
+        <h2 className="list-title">What each college will present</h2>
         <div className="requirement-grid">
           {SHOWCASE.areas.map((a, i) => (
             <ShowcaseCard key={a.title} index={i} item={a} />
@@ -122,11 +122,11 @@ export default function ShowcaseClient({ slot }: ShowcaseClientProps) {
         <div className="download-layout">
           <div className="download-info">
             <p className="eyebrow">Standardised format</p>
-            <h2 className="download-heading">Follow the standard template</h2>
-            <p className="download-desc">Every chapter will have 5 minutes to present. Download the template to prepare your presentation.</p>
+            <h2 className="download-heading">Access the Standardised Template</h2>
+            <p className="download-desc">Every participating Student Branch must prepare its five-minute presentation using the official standardised template.</p>
           </div>
-          <a className="button download-button" href={EVENT.showcaseTemplateUrl} download>
-            <span aria-hidden="true">↓</span> Download presentation template
+          <a className="button download-button" href={EVENT.showcaseTemplateUrl} download="CSI Student Branch Showcase_Template.pptx">
+            <span aria-hidden="true">↓</span> DOWNLOAD STUDENT BRANCH PRESENTATION TEMPLATE ↓
           </a>
         </div>
       </div>

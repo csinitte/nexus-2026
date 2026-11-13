@@ -3,7 +3,7 @@ import ShowcaseClient from './_showcase-client';
 import { SHOWCASE, SCHEDULE } from '@/content/nexus';
 
 export const metadata: Metadata = {
-  title: 'CSI Chapter Showcase',
+  title: 'CSI Student Branch Showcase',
   description: `${SHOWCASE.tagline} Five-minute presentations from CSI student branches across Karnataka at NEXUS 2026.`,
 };
 

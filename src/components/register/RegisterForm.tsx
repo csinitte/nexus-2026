@@ -46,6 +46,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
   const [visited, setVisited] = useState(0);
   const [errors, setErrors] = useState<Errors>({});
   const [abstract, setAbstract] = useState<File | null>(null);
+  const [screenshot, setScreenshot] = useState<File | null>(null);
   const [problems, setProblems] = useState<ServerProblem[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<RegistrationResult | null>(null);
@@ -159,6 +160,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
     const body = new FormData();
     body.set('payload', JSON.stringify(buildPayload(state)));
     if (state.participatingInExpo === 'yes' && abstract) body.set('abstract', abstract);
+    if (screenshot) body.set('paymentScreenshot', screenshot);
 
     try {
       const response = await fetch('/api/registrations', { method: 'POST', body });
@@ -167,7 +169,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
         const messages: string[] = data.errors ?? [
           data.error ??
             (response.status === 413
-              ? 'The upload was too large. Please choose a smaller PDF.'
+              ? 'The upload was too large. Please choose a smaller file.'
               : 'Registration could not be completed. Please try again.'),
         ];
         setProblems(messages.map((message) => ({ message: friendly(message, response.status), step: stepForServerError(message) })));
@@ -272,6 +274,15 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
               setErrors((prev) => {
                 const next = { ...prev };
                 delete next.abstract;
+                return next;
+              });
+            }}
+            screenshot={screenshot}
+            setScreenshot={(file) => {
+              setScreenshot(file);
+              setErrors((prev) => {
+                const next = { ...prev };
+                delete next.paymentScreenshot;
                 return next;
               });
             }}

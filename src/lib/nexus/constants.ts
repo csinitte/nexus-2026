@@ -87,6 +87,26 @@ export function getMaxAbstractBytes(): number {
   return DEFAULT_MAX_ABSTRACT_BYTES;
 }
 
+export const PAYMENT_FEES = {
+  GENERAL: 300,
+  CSI_MEMBER: 200,
+} as const;
+
+export const DEFAULT_UPI_ID = process.env.NEXT_PUBLIC_NEXUS_UPI_ID || "csi.nmamit@syndicate";
+export const DEFAULT_QR_IMAGE_PATH = process.env.NEXT_PUBLIC_NEXUS_QR_PATH || "/payment-qr.jpeg";
+export const MAX_PAYMENT_PROOF_BYTES = 5 * 1024 * 1024; // 5 MB
+
+export const PAYMENT_STATUSES = [
+  "Payment Pending",
+  "Submitted for Verification",
+  "Verified",
+  "Rejected",
+] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+export const PAYMENT_CATEGORIES = ["General", "CSI Member"] as const;
+export type PaymentCategory = (typeof PAYMENT_CATEGORIES)[number];
+
 export const DECLARATION_TEXT =
   "I confirm that the information provided is accurate and that our college understands the NEXUS 2026 participation guidelines, including the delegation limit and Student Project Expo requirements, wherever applicable.";
 

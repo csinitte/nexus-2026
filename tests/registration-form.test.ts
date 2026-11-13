@@ -16,6 +16,7 @@ import { validateRegistration } from '../src/lib/nexus/validation';
 
 const step = (id: (typeof STEPS)[number]['id']) => STEPS.findIndex((s) => s.id === id);
 const pdf = () => new File(['%PDF-1.4\n%%EOF'], 'abstract.pdf', { type: 'application/pdf' });
+const png = () => new File([new Uint8Array([137,80,78,71,0,0,0,13,0,0,0,13,105,84,88,65,2,0,82,164,108,209,206,0,0,0,2,115,82,71,66,124,237,202,87,0,0,0,4,103,65,77,65,0,0,177,173,177,144,160,0,0,0,9,112,72,89,115,0,0,11,101,0,0,11,101,3,99,115,81,73,40,0,0,0,6,116,73,77,69,0,0,0,6,240,254,84,128,0,0,0,8,73,68,65,84,8,211,99,240,71,4,0,0,0,2,0,1,94,166,80,16,0,0,0,0,73,69,78,68,174,66,96,130])], 'screenshot.png', { type: 'image/png' });
 
 function completeState(overrides: Partial<FormState> = {}): FormState {
   return syncDelegation({
@@ -45,6 +46,9 @@ function completeState(overrides: Partial<FormState> = {}): FormState {
     maleAccommodationCount: '1',
     femaleAccommodationCount: '1',
     accommodationPeople: ['s0', 'faculty'],
+    hasCsiMembership: 'no',
+    utrNumber: '123456789012',
+    paymentScreenshot: png(),
     declarationAccepted: true,
     ...overrides,
   });

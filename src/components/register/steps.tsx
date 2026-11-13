@@ -30,6 +30,8 @@ export type StepProps = {
   updateStudent: (index: number, patch: Partial<StudentDraft>) => void;
   abstract: File | null;
   setAbstract: (file: File | null) => void;
+  screenshot: File | null;
+  setScreenshot: (file: File | null) => void;
   goTo: (step: number) => void;
 };
 
@@ -463,13 +465,105 @@ function NumberField({
         <button type="button" onClick={() => onChange(String(Math.min(max, n + 1)))} aria-label={`Increase ${label.toLowerCase()}`}>
           +
         </button>
+        </div>
       </div>
-      <FieldError id={id} message={error} />
+    );
+  }
+export function PaymentStep({ state, errors, update, screenshot, setScreenshot }: StepProps) {
+  const fee = state.hasCsiMembership === 'yes' ? 200 : 300;
+  const handleFile = (file: File | null) => {
+    setScreenshot(file);
+  };
+  return (
+    <div className="fields">
+      <p className="step-note">
+        Pay via UPI and upload the payment screenshot. The fee is calculated on the server — ₹200 for CSI members and ₹300 for general registrations.
+      </p>
+      <div className="payment-fee">
+        <span>Registration fee</span>
+        <strong>₹{fee}</strong>
+      </div>
+      <div className="payment-upi">
+        <img src="/payment-qr.jpeg" alt="UPI QR code for NEXUS 2026 payments" />
+        <div>
+          <p>Scan the QR code or pay to</p>
+          <p className="upi-id">csi.nmamit@syndicate</p>
+          <button type="button" className="link-button" onClick={() => navigator.clipboard.writeText('csi.nmamit@syndicate')}>
+            Copy UPI ID
+          </button>
+        </div>
+      </div>
+      <ChoiceGroup
+        id="hasCsiMembership"
+        legend="Are you paying as a CSI member?"
+        value={state.hasCsiMembership}
+        onChange={(v) => update({ hasCsiMembership: v as YesNo })}
+        options={[
+          { value: 'no', label: 'No', detail: '₹300 fee applies' },
+          { value: 'yes', label: 'Yes', detail: '₹200 fee applies' },
+        ]}
+        error={errors.hasCsiMembership}
+      />
+      {state.hasCsiMembership === 'yes' && (
+        <>
+          <TextField
+            id="csiMemberId"
+            label="CSI membership ID"
+            value={state.csiMemberId}
+            onChange={(csiMemberId) => update({ csiMemberId })}
+            error={errors.csiMemberId}
+            placeholder="e.g. CSI-2024-042"
+          />
+          <TextField
+            id="csiMemberName"
+            label="Full name of the CSI member"
+            value={state.csiMemberName}
+            onChange={(csiMemberName) => update({ csiMemberName })}
+            error={errors.csiMemberName}
+            autoComplete="name"
+          />
+        </>
+      )}
+      <TextField
+        id="utrNumber"
+        label="UPI Transaction ID / UTR Number"
+        value={state.utrNumber}
+        onChange={(utrNumber) => update({ utrNumber })}
+        error={errors.utrNumber}
+        placeholder="e.g. 123456789012"
+        hint="Enter the 12-digit UTR from your payment app."
+      />
+      <div className="field">
+        <label className="field-label" htmlFor="paymentScreenshot">
+          Payment screenshot <span aria-hidden="true">*</span>
+        </label>
+        <label
+          htmlFor="paymentScreenshot"
+          className={`dropzone${errors.paymentScreenshot ? ' has-error' : ''}`}
+        >
+          <input
+            id="paymentScreenshot"
+            type="file"
+            accept="image/png,image/jpeg,image/jpg"
+            className="sr-only"
+            onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+          />
+          <span className="dropzone-emoji">📄</span>
+          <span className="dropzone-text">
+            {screenshot
+              ? screenshot.name
+              : 'Drop PNG/JPG/JPEG here or click to browse'}
+            <br />
+            Max 5 MB.
+          </span>
+        </label>
+        <FieldError id="paymentScreenshot" message={errors.paymentScreenshot} />
+      </div>
     </div>
   );
 }
 
-export function ReviewStep({ state, errors, update, abstract, goTo }: StepProps) {
+export function ReviewStep({ state, errors, update, abstract, screenshot, goTo }: StepProps) {
   const people = delegationPeople(state);
   const yes = (v: YesNo) => (v === 'yes' ? 'Yes' : v === 'no' ? 'No' : '—');
   const sections: { step: number; rows: [string, string][] }[] = [
@@ -546,6 +640,32 @@ export function ReviewStep({ state, errors, update, abstract, goTo }: StepProps)
           </section>
         ))}
       </div>
+      <div className="review-block" aria-labelledby="review-payment">
+        <header>
+          <h3 id="review-payment">{STEPS[6].title}</h3>
+          <button type="button" className="link-button" onClick={() => goTo(6)}>
+            Edit<span className="sr-only"> {STEPS[6].title}</span>
+          </button>
+        </header>
+        <dl>
+          <div>
+            <dt>CSI membership</dt>
+            <dd>{state.hasCsiMembership === 'yes' ? `Yes${state.csiMemberName ? ` — ${state.csiMemberName}` : ''}${state.csiMemberId ? ` (ID: ${state.csiMemberId})` : ''}` : 'No'}</dd>
+          </div>
+          <div>
+            <dt>Fee</dt>
+            <dd>{state.hasCsiMembership === 'yes' ? '₹200 (CSI member)' : '₹300 (General)'}</dd>
+          </div>
+          <div>
+            <dt>UTR / Transaction ID</dt>
+            <dd>{state.utrNumber || '—'}</dd>
+          </div>
+          <div>
+            <dt>Payment proof</dt>
+            <dd>{screenshot?.name ?? 'Not selected'}</dd>
+          </div>
+        </dl>
+      </div>
       <div className={`declaration${errors.declarationAccepted ? ' has-error' : ''}`}>
         <label className="choice check is-block">
           <input
@@ -567,7 +687,7 @@ export function ReviewStep({ state, errors, update, abstract, goTo }: StepProps)
   );
 }
 
-export const STEP_COMPONENTS = [CollegeStep, FacultyStep, DelegationStep, ShowcaseStep, ExpoStep, AccommodationStep, ReviewStep];
+export const STEP_COMPONENTS = [CollegeStep, FacultyStep, DelegationStep, ShowcaseStep, ExpoStep, AccommodationStep, PaymentStep, ReviewStep];
 
 
 

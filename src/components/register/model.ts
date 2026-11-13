@@ -48,6 +48,11 @@ export type FormState = {
   femaleAccommodationCount: string;
   /** Keys: `s0`…`s4` for students, `faculty` for the accompanying coordinator. */
   accommodationPeople: string[];
+  hasCsiMembership: YesNo;
+  csiMemberId: string;
+  csiMemberName: string;
+  utrNumber: string;
+  paymentScreenshot: File | null;
   declarationAccepted: boolean;
 };
 
@@ -60,6 +65,7 @@ export const STEPS = [
   { id: 'showcase', label: 'Showcase', title: 'CSI Chapter Showcase' },
   { id: 'expo', label: 'Expo', title: 'Student Project Expo' },
   { id: 'accommodation', label: 'Stay', title: 'Accommodation' },
+  { id: 'payment', label: 'Payment', title: 'Registration Fee & Payment' },
   { id: 'review', label: 'Submit', title: 'Review & declaration' },
 ] as const;
 
@@ -96,6 +102,11 @@ export const initialState: FormState = {
   maleAccommodationCount: '0',
   femaleAccommodationCount: '0',
   accommodationPeople: [],
+  hasCsiMembership: 'no',
+  csiMemberId: '',
+  csiMemberName: '',
+  utrNumber: '',
+  paymentScreenshot: null,
   declarationAccepted: false,
 };
 
@@ -224,6 +235,18 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
     case 'review':
       if (!state.declarationAccepted) e.declarationAccepted = 'Please confirm the declaration to submit.';
       break;
+    case 'payment':
+      if (state.hasCsiMembership === 'yes') {
+        if (!state.csiMemberId.trim()) e.csiMemberId = 'Enter your CSI membership ID.';
+        if (!state.csiMemberName.trim()) e.csiMemberName = 'Enter the full name of the CSI member.';
+      }
+      if (!state.utrNumber.trim() || state.utrNumber.trim().length < 6)
+        e.utrNumber = 'Enter the UPI Transaction ID / UTR Number from your payment.';
+      if (!state.paymentScreenshot)
+        e.paymentScreenshot = 'Upload the payment proof screenshot.';
+      else if (state.paymentScreenshot.size > 5 * 1024 * 1024)
+        e.paymentScreenshot = 'Payment screenshot must be under 5 MB.';
+      break;
   }
   return e;
 }
@@ -238,6 +261,7 @@ export function buildPayload(state: FormState) {
   const people = delegationPeople(state);
   const expo = state.participatingInExpo === 'yes';
   const accommodation = state.accommodationRequired === 'yes';
+  const hasCsi = state.hasCsiMembership === 'yes';
   return {
     collegeName: state.collegeName.trim(),
     csiChapterName: state.csiChapterName.trim(),
@@ -274,6 +298,13 @@ export function buildPayload(state: FormState) {
       ? state.accommodationPeople.map((key) => people.find((p) => p.key === key)?.name ?? '').filter(Boolean)
       : [],
     declarationAccepted: state.declarationAccepted,
+    payment: {
+      hasCsiMembership: hasCsi,
+      csiMemberId: hasCsi ? state.csiMemberId.trim() : undefined,
+      csiMemberName: hasCsi ? state.csiMemberName.trim() : undefined,
+      utrNumber: state.utrNumber.trim(),
+      paymentScreenshot: state.paymentScreenshot,
+    },
   };
 }
 
@@ -286,6 +317,7 @@ export function stepForServerError(message: string): number {
   if (m.includes('presenter') || m.includes('showcase')) return 3;
   if (m.includes('delegation') || m.includes('student')) return 2;
   if (m.includes('accommodation')) return 5;
+  if (m.includes('payment') || m.includes('utr') || m.includes('csi') || m.includes('membership') || m.includes('screenshot')) return 6;
   return STEPS.length - 1;
 }
 

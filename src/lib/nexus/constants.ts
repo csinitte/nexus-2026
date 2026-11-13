@@ -89,7 +89,7 @@ export function getMaxAbstractBytes(): number {
 
 export const PAYMENT_FEES = {
   GENERAL: 300,
-  CSI_MEMBER: 200,
+  CSI_MEMBER: 250,
 } as const;
 
 export const DEFAULT_UPI_ID = process.env.NEXT_PUBLIC_NEXUS_UPI_ID || "csi.nmamit@syndicate";

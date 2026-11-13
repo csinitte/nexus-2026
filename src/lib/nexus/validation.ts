@@ -1,4 +1,4 @@
-import { ARRIVAL_PLANS, EXPO_PROJECT_CATEGORIES, getMaxAbstractBytes, PAYMENT_CATEGORIES, MAX_PAYMENT_PROOF_BYTES } from './constants';
+import { ARRIVAL_PLANS, EXPO_PROJECT_CATEGORIES, getMaxAbstractBytes, PAYMENT_CATEGORIES, MAX_PAYMENT_PROOF_BYTES, PAYMENT_FEES } from './constants';
 export class ValidationError extends Error { constructor(public issues: string[]) { super(issues.join('; ')); } }
 export type Student = { fullName:string; department:string; year:number; contactNumber:string; email:string };
 export type PaymentInput = { hasCsiMembership:boolean; csiMemberId?:string; csiMemberName?:string; utrNumber:string; category:string; amount:number; paymentScreenshot?:File };
@@ -25,7 +25,7 @@ export async function validateRegistration(raw:Record<string, unknown>):Promise<
   const p = (raw.payment || {}) as Record<string,unknown>;
   const hasCsi = bool(p.hasCsiMembership);
   const category = hasCsi ? 'CSI Member' : 'General';
-  const amount = hasCsi ? 200 : 300;
+  const amount = hasCsi ? PAYMENT_FEES.CSI_MEMBER : PAYMENT_FEES.GENERAL;
   const utr = str(p.utrNumber);
   const screenshot = p.paymentScreenshot instanceof File ? p.paymentScreenshot : undefined;
   if (!utr) errors.push('UTR number is required');

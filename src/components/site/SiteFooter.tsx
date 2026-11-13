@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { EVENT, getWhatsappLink } from '@/content/nexus';
+import { COORDINATOR, EVENT, getWhatsappLink } from '@/content/nexus';
 import { Wordmark } from './Wordmark';
 
 export function SiteFooter() {
@@ -217,6 +217,38 @@ export function SiteFooter() {
               )}
               <a href={EVENT.websiteUrl} target="_blank" rel="noopener noreferrer" className="footer-nav-link">
                 {EVENT.website} ↗
+              </a>
+            </div>
+          </div>
+
+          {/* Student Branch Coordinator Details – Spanning the available space */}
+          <div className="footer-coordinator-card">
+            <div className="footer-coordinator-badge-row">
+              <span className="footer-coordinator-label">STUDENT BRANCH COORDINATOR</span>
+              <span className="footer-coordinator-inst">CSI NMAMIT · NITTE</span>
+            </div>
+            <div className="footer-coordinator-profile">
+              <Image
+                src={COORDINATOR.image}
+                alt={`${COORDINATOR.name} — ${COORDINATOR.role}`}
+                width={56}
+                height={56}
+                className="footer-coordinator-avatar"
+              />
+              <div className="footer-coordinator-info">
+                <strong className="footer-coordinator-name">{COORDINATOR.name}</strong>
+                <span className="footer-coordinator-role">Student Branch Coordinator</span>
+              </div>
+              <a
+                href={`mailto:${COORDINATOR.email}`}
+                className="footer-coordinator-email-btn"
+                title={`Email ${COORDINATOR.name}`}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect width="20" height="16" x="2" y="4" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+                <span>{COORDINATOR.email}</span>
               </a>
             </div>
           </div>

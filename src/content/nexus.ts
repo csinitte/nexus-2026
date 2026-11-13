@@ -190,5 +190,13 @@ export const ABSTRACT_INSTRUCTIONS = [
   'Abstracts are reviewed for theme relevance, not shortlisting.',
 ];
 
+export const COORDINATOR = {
+  name: 'Sharadha Shenoy',
+  role: 'Student Branch Coordinator',
+  email: 'sharadauday@nitte.edu.in',
+  image: '/sharadha-shenoy.png',
+} as const;
+
+
 
 

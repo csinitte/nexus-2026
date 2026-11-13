@@ -8,6 +8,7 @@ import {
   MAX_STUDENTS_WITH_FACULTY,
   MAX_TOTAL_REPRESENTATIVES,
   MIN_EXPO_TEAM_MEMBERS,
+  PAYMENT_FEES,
 } from '@/lib/nexus/constants';
 import { CheckList, ChoiceGroup, FieldError, SelectField, TextArea, TextField } from './fields';
 import {
@@ -470,14 +471,14 @@ function NumberField({
     );
   }
 export function PaymentStep({ state, errors, update, screenshot, setScreenshot }: StepProps) {
-  const fee = state.hasCsiMembership === 'yes' ? 200 : 300;
+  const fee = state.hasCsiMembership === 'yes' ? PAYMENT_FEES.CSI_MEMBER : PAYMENT_FEES.GENERAL;
   const handleFile = (file: File | null) => {
     setScreenshot(file);
   };
   return (
     <div className="fields">
       <p className="step-note">
-        Pay via UPI and upload the payment screenshot. The fee is calculated on the server — ₹200 for CSI members and ₹300 for general registrations.
+        Pay via UPI and upload the payment screenshot. The fee is calculated on the server — ₹{PAYMENT_FEES.CSI_MEMBER} for CSI members and ₹{PAYMENT_FEES.GENERAL} for general registrations.
       </p>
       <div className="payment-fee">
         <span>Registration fee</span>
@@ -499,8 +500,8 @@ export function PaymentStep({ state, errors, update, screenshot, setScreenshot }
         value={state.hasCsiMembership}
         onChange={(v) => update({ hasCsiMembership: v as YesNo })}
         options={[
-          { value: 'no', label: 'No', detail: '₹300 fee applies' },
-          { value: 'yes', label: 'Yes', detail: '₹200 fee applies' },
+          { value: 'no', label: 'No', detail: `₹${PAYMENT_FEES.GENERAL} fee applies` },
+          { value: 'yes', label: 'Yes', detail: `₹${PAYMENT_FEES.CSI_MEMBER} fee applies` },
         ]}
         error={errors.hasCsiMembership}
       />
@@ -654,7 +655,7 @@ export function ReviewStep({ state, errors, update, abstract, screenshot, goTo }
           </div>
           <div>
             <dt>Fee</dt>
-            <dd>{state.hasCsiMembership === 'yes' ? '₹200 (CSI member)' : '₹300 (General)'}</dd>
+            <dd>{state.hasCsiMembership === 'yes' ? `₹${PAYMENT_FEES.CSI_MEMBER} (CSI member)` : `₹${PAYMENT_FEES.GENERAL} (General)`}</dd>
           </div>
           <div>
             <dt>UTR / Transaction ID</dt>

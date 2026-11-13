@@ -722,13 +722,15 @@ html.menu-open .site-header {
 .footer-grid {
   display: grid;
   grid-template-columns: minmax(310px, 1.45fr) repeat(3, minmax(130px, 1fr));
-  gap: clamp(28px, 4.5vw, 56px);
+  column-gap: clamp(28px, 4.5vw, 56px);
+  row-gap: 16px;
 }
 
 /* Column 1: Brand & Details (~32% width) */
 .footer-col-brand {
   display: flex;
   flex-direction: column;
+  grid-row: 1 / 3;
 }
 
 .footer-brand-header {
@@ -971,6 +973,124 @@ html.menu-open .site-header {
   transform: translateX(0);
 }
 
+/* Student Branch Coordinator Banner in Footer */
+.footer-coordinator-card {
+  grid-column: 2 / -1;
+  align-self: start;
+  margin-top: -6px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: rgba(140, 234, 90, 0.035);
+  border: 1px solid rgba(140, 234, 90, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.22s ease;
+  width: 100%;
+}
+
+.footer-coordinator-card:hover {
+  background: rgba(140, 234, 90, 0.065);
+  border-color: rgba(140, 234, 90, 0.35);
+  transform: translateY(-1px);
+}
+
+.footer-coordinator-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(140, 234, 90, 0.1);
+  padding-bottom: 8px;
+}
+
+.footer-coordinator-label {
+  font-family: var(--font-mono), monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.footer-coordinator-inst {
+  font-family: var(--font-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.footer-coordinator-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.footer-coordinator-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--accent);
+  box-shadow: 0 0 12px rgba(140, 234, 90, 0.3);
+  flex-shrink: 0;
+  background: #0e150d;
+}
+
+.footer-coordinator-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.footer-coordinator-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.footer-coordinator-role {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+.footer-coordinator-email-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: rgba(140, 234, 90, 0.08);
+  border: 1px solid rgba(140, 234, 90, 0.24);
+  color: var(--accent);
+  font-size: 13px;
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-left: auto;
+  transition: all 0.2s ease;
+}
+
+.footer-coordinator-email-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.footer-coordinator-email-btn:hover {
+  background: var(--accent);
+  color: #090b0a;
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(140, 234, 90, 0.4);
+}
+
 /* Full-Width Horizontal Divider */
 .footer-bottom-divider {
   width: 100%;
@@ -1031,6 +1151,11 @@ html.menu-open .site-header {
   }
   .footer-col-brand {
     grid-column: 1 / -1;
+    grid-row: auto;
+  }
+  .footer-coordinator-card {
+    grid-column: 1 / -1;
+    margin-top: 4px;
   }
   .footer-col-nav {
     border-left: none;
@@ -1057,6 +1182,11 @@ html.menu-open .site-header {
   .footer-grid {
     grid-template-columns: 1fr;
     gap: 32px;
+  }
+  .footer-coordinator-email-btn {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
   }
   .footer-bottom-strip {
     flex-direction: column;

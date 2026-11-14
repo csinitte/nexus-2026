@@ -66,11 +66,14 @@ export default function HomePage() {
           </div>
 
           <div className="hero-corners" aria-label="Event hosts">
-            <div className="hero-host-logo hero-host-institution">
-              <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAM Institute of Technology" width={1628} height={278} sizes="(max-width: 700px) 45vw, (max-width: 1400px) 25vw, 350px" />
-            </div>
-            <div className="hero-host-logo hero-host-chapter">
-              <Image src="/csi-bangalore.png" alt="CSI Student Branch, NMAMIT — Computer Society of India Bangalore Chapter" width={1908} height={559} sizes="(max-width: 700px) 34vw, 220px" />
+            <div className="hero-host-logos">
+              <div className="hero-host-logo hero-host-institution">
+                <Image src="/nitte_white.png" alt="Nitte (Deemed to be University) — NMAM Institute of Technology" width={1628} height={278} sizes="(max-width: 700px) 45vw, (max-width: 1400px) 22vw, 260px" />
+              </div>
+              <div className="hero-host-divider" aria-hidden="true" />
+              <div className="hero-host-logo hero-host-chapter">
+                <Image src="/csi-bangalore.png" alt="CSI Student Branch, NMAMIT — Computer Society of India Bangalore Chapter" width={1908} height={559} sizes="(max-width: 700px) 30vw, (max-width: 1400px) 14vw, 160px" />
+              </div>
             </div>
           </div>
 

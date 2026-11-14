@@ -1573,6 +1573,7 @@ html.menu-open .site-header {
   margin: auto;
   width: min(100cqw, 100cqh * 2.32);
   aspect-ratio: 1440 / 620;
+  transform: translateX(clamp(28px, 3.5vw, 56px));
 }
 .nx-logo {
   position: absolute;
@@ -1616,7 +1617,7 @@ html.menu-open .site-header {
 .nx-robot {
   position: absolute;
   left: 31.5%;
-  top: 27%;
+  top: 31.5%;
   width: 36.1%;
   aspect-ratio: 772 / 841;
   z-index: 2;
@@ -1711,8 +1712,8 @@ a.hero-brochure:hover {
   right: var(--gutter);
   z-index: 5;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  justify-content: flex-start;
+  align-items: center;
   gap: 24px;
   pointer-events: none;
 }
@@ -5091,6 +5092,7 @@ html:not(.deck-ready) .deck-hint {
   .nx-stage-inner {
     width: min(100cqw, 100cqh * 0.92);
     aspect-ratio: 390 / 424;
+    transform: none;
   }
   .nx-logo {
     width: 90%;
@@ -5099,7 +5101,7 @@ html:not(.deck-ready) .deck-hint {
   .nx-robot {
     width: 76%;
     left: 12%;
-    top: 13%;
+    top: 16%;
   }
   .hero-corners {
     top: auto;
@@ -5532,25 +5534,40 @@ a.hero-whatsapp:hover { background: var(--accent); color: #101510; }
   #hosts .deck-side .host-facts { grid-row: 5; }
 }
 
-/* Balance the two host identities around the central NEXUS artwork. */
-.hero-corners .hero-host-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: clamp(155px, 19vw, 260px); }
-.hero-corners .hero-host-institution { width: clamp(220px, 25vw, 350px); }
+/* Host identities positioned together in the top-left of the hero. */
+.hero-host-logos {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.4vw, 18px);
+  pointer-events: auto;
+}
+.hero-host-divider {
+  width: 1px;
+  height: clamp(22px, 3.2vh, 32px);
+  background: rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+}
+.hero-corners .hero-host-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.hero-corners .hero-host-institution { width: clamp(150px, 16vw, 225px); }
 .hero-corners .hero-host-logo > span { font: 10px var(--font-mono), monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .hero-corners .hero-host-logo img { display: block; width: 100%; height: auto; object-fit: contain; }
-.hero-corners .hero-host-chapter { align-items: flex-end; text-align: right; width: clamp(145px, 15vw, 210px); }
+.hero-corners .hero-host-chapter { align-items: flex-start; text-align: left; width: clamp(95px, 9.8vw, 135px); }
 .hero-corners .hero-host-chapter strong { max-width: 22ch; font-size: 11px; line-height: 1.4; }
 @media (max-width: 700px) {
-  .hero-corners .hero-host-logo { width: min(38vw, 190px); gap: 6px; }
-  .hero-corners .hero-host-institution { width: min(45vw, 240px); }
-  .hero-corners .hero-host-chapter { width: min(31vw, 145px); }
+  .nx-stage-inner { transform: none; }
+  .hero-host-logos { gap: 10px; }
+  .hero-host-divider { height: 20px; }
+  .hero-corners .hero-host-institution { width: min(44vw, 180px); }
+  .hero-corners .hero-host-chapter { width: min(28vw, 108px); }
   .hero-corners .hero-host-logo > span { font-size: 8px; }
   .hero-corners .hero-host-chapter strong { font-size: 8px; }
   .hero-band { padding-bottom: 105px; }
 }
 @media (max-height: 680px) and (max-width: 700px) {
-  .hero-corners .hero-host-logo { width: min(32vw, 150px); }
-  .hero-corners .hero-host-institution { width: min(43vw, 210px); }
-  .hero-corners .hero-host-chapter { width: min(26vw, 120px); }
+  .hero-host-logos { gap: 8px; }
+  .hero-host-divider { height: 16px; }
+  .hero-corners .hero-host-institution { width: min(40vw, 145px); }
+  .hero-corners .hero-host-chapter { width: min(25vw, 88px); }
   .hero-band { padding-bottom: 85px; }
 }
 
@@ -5559,13 +5576,13 @@ a.hero-whatsapp:hover { background: var(--accent); color: #101510; }
 .hero-copy .eyebrow { margin-bottom: 0; }
 .hero-copy .hero-brochure { margin: 9px 0 14px; }
 @media (max-width: 700px) {
-  .hero-corners { top: calc(var(--header-h) + 12px); bottom: auto; align-items: flex-start; }
+  .hero-corners { top: calc(var(--header-h) + 12px); bottom: auto; align-items: center; }
   /* Keep the artwork below the host-logo row on narrow screens. */
   .nx-stage { margin-top: clamp(52px, 14vw, 72px); }
   .hero-band { padding-bottom: 30px; }
 }
 @media (max-aspect-ratio: 4/5) {
-  .hero-corners { top: calc(var(--header-h) + 12px); bottom: auto; align-items: flex-start; }
+  .hero-corners { top: calc(var(--header-h) + 12px); bottom: auto; align-items: center; }
   .hero-band { padding-bottom: 30px; }
 }
 .hero-copy .eyebrow time { font-size: clamp(14px, 1.2vw, 18px); font-weight: 600; }

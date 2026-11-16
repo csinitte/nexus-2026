@@ -2,6 +2,7 @@
 
 import { NextPage, PageIntro } from '@/components/site/PageParts';
 import { PANEL } from '@/content/nexus';
+import { useEffect, useRef, type CSSProperties } from 'react';
 
 function HighlightPanel({ index, item }: { index: number; item: { title: string; text: string } }) {
   return (
@@ -19,7 +20,43 @@ interface PanelClientProps {
   slot: { start: string; end: string } | undefined;
 }
 
+/** Sets --p on each card (0 → 1) as the following card slides over it. */
+function useStackProgress() {
+  const ref = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    const list = ref.current;
+    if (!list || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const slides = Array.from(list.children) as HTMLElement[];
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      slides.forEach((slide, i) => {
+        const card = slide.firstElementChild as HTMLElement | null;
+        const next = slides[i + 1];
+        if (!card) return;
+        if (!next) return card.style.setProperty('--p', '0');
+        const gap = next.getBoundingClientRect().top - slide.getBoundingClientRect().top;
+        const p = Math.min(1, Math.max(0, 1 - gap / slide.offsetHeight));
+        card.style.setProperty('--p', p.toFixed(3));
+      });
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+  return ref;
+}
+
 export default function PanelClient({ slot }: PanelClientProps) {
+  const stackRef = useStackProgress();
   const timeText = slot ? `${slot.start} – ${slot.end}` : undefined;
 
   return (
@@ -71,19 +108,42 @@ export default function PanelClient({ slot }: PanelClientProps) {
         <div className="panelists-section">
           <h2 className="list-title">Panelists</h2>
           {PANEL.panelists.length ? (
-            <ul className="panelist-grid">
-              {PANEL.panelists.map((p) => (
-                <li key={p.name}>
-                  <article className="panelist-card">
-                    <div className="panelist-info">
-                      <strong>{p.name}</strong>
-                      <span>{p.designation}</span>
-                      <span>{p.organisation}</span>
+            <ol className="panel-stack" ref={stackRef}>
+              {PANEL.panelists.map((p, i) => (
+                <li
+                  key={p.name}
+                  className="panel-slide"
+                  style={{ '--i': i, '--n': PANEL.panelists.length } as CSSProperties}
+                >
+                  <article className="panel-slide-card">
+                    {p.photo && (
+                      <div className="panel-slide-poster">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={p.photo} alt={`${p.name}, ${p.designation}, ${p.organisation}`} loading="lazy" />
+                      </div>
+                    )}
+                    <div className="panel-slide-info">
+                      <span className="panel-slide-count">
+                        {String(i + 1).padStart(2, '0')}
+                        <em> / {String(PANEL.panelists.length).padStart(2, '0')}</em>
+                      </span>
+                      <h3>{p.name}</h3>
+                      <p className="panel-slide-role">
+                        {p.designation}
+                        <span>{p.organisation}</span>
+                      </p>
+                      {p.highlights && (
+                        <ul>
+                          {p.highlights.map((h) => (
+                            <li key={h}>{h}</li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </article>
                 </li>
               ))}
-            </ul>
+            </ol>
           ) : (
             <div className="panelists-empty">
               <p>Panelists and the moderator will be announced soon.</p>

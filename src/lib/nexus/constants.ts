@@ -87,9 +87,12 @@ export function getMaxAbstractBytes(): number {
   return DEFAULT_MAX_ABSTRACT_BYTES;
 }
 
+export const COLLEGE_CATEGORIES = ["active_csi", "no_active_csi"] as const;
+export type CollegeCategory = (typeof COLLEGE_CATEGORIES)[number];
+
 export const PAYMENT_FEES = {
-  GENERAL: 300,
-  CSI_MEMBER: 250,
+  ACTIVE_CSI: 250,
+  NO_ACTIVE_CSI: 300,
 } as const;
 
 export const DEFAULT_UPI_ID = process.env.NEXT_PUBLIC_NEXUS_UPI_ID || "csi.nmamit@syndicate";
@@ -104,8 +107,18 @@ export const PAYMENT_STATUSES = [
 ] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-export const PAYMENT_CATEGORIES = ["General", "CSI Member"] as const;
+export const PAYMENT_CATEGORIES = ["Active CSI Branch", "No Active CSI Branch"] as const;
 export type PaymentCategory = (typeof PAYMENT_CATEGORIES)[number];
+
+/** Mapping from college category to payment category label */
+export function collegeCategoryToPaymentCategory(category: CollegeCategory): PaymentCategory {
+  return category === 'active_csi' ? 'Active CSI Branch' : 'No Active CSI Branch';
+}
+
+/** Mapping from college category to fee amount */
+export function collegeCategoryToFee(category: CollegeCategory): number {
+  return category === 'active_csi' ? PAYMENT_FEES.ACTIVE_CSI : PAYMENT_FEES.NO_ACTIVE_CSI;
+}
 
 export const DECLARATION_TEXT =
   "I confirm that the information provided is accurate and that our college understands the NEXUS 2026 participation guidelines, including the delegation limit and Student Project Expo requirements, wherever applicable.";

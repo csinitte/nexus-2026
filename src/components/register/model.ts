@@ -6,11 +6,13 @@
  */
 import {
   ARRIVAL_PLANS,
+  COLLEGE_CATEGORIES,
   DEFAULT_MAX_ABSTRACT_BYTES,
   EXPO_PROJECT_CATEGORIES,
   MAX_EXPO_TEAM_MEMBERS,
   MAX_TOTAL_REPRESENTATIVES,
   MIN_EXPO_TEAM_MEMBERS,
+  type CollegeCategory,
 } from '@/lib/nexus/constants';
 
 export type YesNo = '' | 'yes' | 'no';
@@ -25,6 +27,7 @@ export type StudentDraft = {
 
 export type FormState = {
   collegeName: string;
+  collegeCategory: CollegeCategory;
   csiChapterName: string;
   csiChapterId: string;
   city: string;
@@ -48,9 +51,6 @@ export type FormState = {
   femaleAccommodationCount: string;
   /** Keys: `s0`…`s4` for students, `faculty` for the accompanying coordinator. */
   accommodationPeople: string[];
-  hasCsiMembership: YesNo;
-  csiMemberId: string;
-  csiMemberName: string;
   utrNumber: string;
   paymentScreenshot: File | null;
   declarationAccepted: boolean;
@@ -81,6 +81,7 @@ export const blankStudent = (): StudentDraft => ({ fullName: '', department: '',
 
 export const initialState: FormState = {
   collegeName: '',
+  collegeCategory: 'no_active_csi' as CollegeCategory,
   csiChapterName: '',
   csiChapterId: '',
   city: '',
@@ -102,9 +103,6 @@ export const initialState: FormState = {
   maleAccommodationCount: '0',
   femaleAccommodationCount: '0',
   accommodationPeople: [],
-  hasCsiMembership: 'no',
-  csiMemberId: '',
-  csiMemberName: '',
   utrNumber: '',
   paymentScreenshot: null,
   declarationAccepted: false,
@@ -159,17 +157,20 @@ export function validateAbstract(file: File | null): string | null {
 export function validateStep(step: number, state: FormState, abstract: File | null): Errors {
   const e: Errors = {};
   const count = studentCount(state);
+  const isActiveCsi = state.collegeCategory === 'active_csi';
   switch (STEPS[step]?.id) {
     case 'college':
       required(e, 'collegeName', state.collegeName, 'your college name');
-      required(e, 'csiChapterName', state.csiChapterName, 'your CSI student branch name');
+      if (isActiveCsi) required(e, 'csiChapterName', state.csiChapterName, 'your CSI student branch name');
       required(e, 'city', state.city, 'your city');
       break;
     case 'faculty':
-      required(e, 'facultyCoordinatorName', state.facultyCoordinatorName, "the faculty coordinator's name");
-      if (!isEmail(state.facultyCoordinatorEmail)) e.facultyCoordinatorEmail = 'Enter a valid email address, like name@college.edu.';
-      if (!isPhone(state.facultyCoordinatorContact)) e.facultyCoordinatorContact = 'Enter a valid contact number with at least 10 digits.';
-      if (!state.facultyAccompanying) e.facultyAccompanying = 'Tell us whether the faculty coordinator is accompanying the delegation.';
+      if (isActiveCsi) {
+        required(e, 'facultyCoordinatorName', state.facultyCoordinatorName, "the faculty coordinator's name");
+        if (!isEmail(state.facultyCoordinatorEmail)) e.facultyCoordinatorEmail = 'Enter a valid email address, like name@college.edu.';
+        if (!isPhone(state.facultyCoordinatorContact)) e.facultyCoordinatorContact = 'Enter a valid contact number with at least 10 digits.';
+        if (!state.facultyAccompanying) e.facultyAccompanying = 'Tell us whether the faculty coordinator is accompanying the delegation.';
+      }
       break;
     case 'delegation': {
       const total = Number(state.totalRepresentatives);
@@ -196,8 +197,10 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
       break;
     }
     case 'showcase':
-      if (state.presenterIndex === null || !state.students[state.presenterIndex])
-        e.presenterIndex = 'Choose who will present your chapter.';
+      if (isActiveCsi) {
+        if (state.presenterIndex === null || !state.students[state.presenterIndex])
+          e.presenterIndex = 'Choose who will present your chapter.';
+      }
       break;
     case 'expo':
       if (!state.participatingInExpo) e.participatingInExpo = 'Tell us whether your college is participating in the Expo.';
@@ -235,10 +238,6 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
       if (!state.declarationAccepted) e.declarationAccepted = 'Please confirm the declaration to submit.';
       break;
     case 'payment':
-      if (state.hasCsiMembership === 'yes') {
-        if (!state.csiMemberId.trim()) e.csiMemberId = 'Enter your CSI membership ID.';
-        if (!state.csiMemberName.trim()) e.csiMemberName = 'Enter the full name of the CSI member.';
-      }
       if (!state.utrNumber.trim() || state.utrNumber.trim().length < 6)
         e.utrNumber = 'Enter the UPI Transaction ID / UTR Number from your payment.';
       if (!state.paymentScreenshot)
@@ -260,16 +259,17 @@ export function buildPayload(state: FormState) {
   const people = delegationPeople(state);
   const expo = state.participatingInExpo === 'yes';
   const accommodation = state.accommodationRequired === 'yes';
-  const hasCsi = state.hasCsiMembership === 'yes';
+  const isActiveCsi = state.collegeCategory === 'active_csi';
   return {
     collegeName: state.collegeName.trim(),
-    csiChapterName: state.csiChapterName.trim(),
-    csiChapterId: state.csiChapterId.trim(),
+    collegeCategory: state.collegeCategory,
+    csiChapterName: isActiveCsi ? state.csiChapterName.trim() : undefined,
+    csiChapterId: isActiveCsi ? state.csiChapterId.trim() : undefined,
     city: state.city.trim(),
-    facultyCoordinatorName: state.facultyCoordinatorName.trim(),
-    facultyCoordinatorEmail: state.facultyCoordinatorEmail.trim(),
-    facultyCoordinatorContact: state.facultyCoordinatorContact.trim(),
-    facultyAccompanying: state.facultyAccompanying === 'yes',
+    facultyCoordinatorName: isActiveCsi ? state.facultyCoordinatorName.trim() : undefined,
+    facultyCoordinatorEmail: isActiveCsi ? state.facultyCoordinatorEmail.trim() : undefined,
+    facultyCoordinatorContact: isActiveCsi ? state.facultyCoordinatorContact.trim() : undefined,
+    facultyAccompanying: isActiveCsi ? state.facultyAccompanying === 'yes' : false,
     totalRepresentatives: Number(state.totalRepresentatives),
     students: state.students.map((s) => ({
       fullName: s.fullName.trim(),
@@ -278,7 +278,7 @@ export function buildPayload(state: FormState) {
       contactNumber: s.contactNumber.trim(),
       email: s.email.trim(),
     })),
-    chapterShowcasePresenter: state.presenterIndex !== null ? (state.students[state.presenterIndex]?.fullName.trim() ?? '') : '',
+    chapterShowcasePresenter: isActiveCsi && state.presenterIndex !== null ? (state.students[state.presenterIndex]?.fullName.trim() ?? '') : undefined,
     participatingInExpo: expo,
     expo: expo
       ? {
@@ -298,9 +298,7 @@ export function buildPayload(state: FormState) {
       : [],
     declarationAccepted: state.declarationAccepted,
     payment: {
-      hasCsiMembership: hasCsi,
-      csiMemberId: hasCsi ? state.csiMemberId.trim() : undefined,
-      csiMemberName: hasCsi ? state.csiMemberName.trim() : undefined,
+      collegeCategory: state.collegeCategory,
       utrNumber: state.utrNumber.trim(),
       paymentScreenshot: state.paymentScreenshot,
     },

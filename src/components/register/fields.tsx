@@ -113,15 +113,16 @@ export function SelectField({
   label,
   error,
   hint,
+  optional,
   wide,
   value,
   onChange,
-  placeholder,
+  placeholder = 'Select an option',
   options,
 }: BaseProps & {
   value: string;
   onChange: (value: string) => void;
-  placeholder: string;
+  placeholder?: string;
   options: { value: string; label: string; disabled?: boolean }[];
 }) {
   return (

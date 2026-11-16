@@ -109,7 +109,48 @@ export const PANEL = {
     { title: 'Career Pathways', text: 'Navigating opportunities and preparing for the future.' },
   ],
   /** Add confirmed panelists here: { name, designation, organisation, photo?, moderator? } */
-  panelists: [] as { name: string; designation: string; organisation: string; photo?: string; moderator?: boolean }[],
+  panelists: [
+    {
+      name: 'Aditya R. Poonja',
+      designation: 'Business Development Executive',
+      organisation: 'AIC NITTE',
+      photo: '/panel/aditya-poonja.png',
+      highlights: [
+        '6+ years of experience in AI, Robotics, Computer Vision and Embedded Systems.',
+        'Worked with Bosch and Fraunhofer IOSB, contributing to technology projects involving Audi and Mercedes.',
+        'Startup mentor specialising in technical feasibility, prototyping and product development.',
+      ],
+    },
+    {
+      name: 'Dr. Shashank Shetty',
+      designation: 'Associate Professor, Department of CSE',
+      organisation: 'NMAMIT',
+      photo: '/panel/shashank-shetty.png',
+      highlights: [
+        'Mentored 48+ student-led startups, facilitating over ₹50 lakh in funding.',
+        "Co-founded Inspirante Technologies, delivering 25+ software solutions; Founder of Finite Loop, NMAMIT's flagship coding club, now a community of 600+ students.",
+        'Holds 20+ research publications and 8 patents in technology and innovation.',
+      ],
+    },
+    {
+      name: 'Sujith Kumar',
+      designation: 'Solutions Architect',
+      organisation: 'Niveus Solutions',
+      photo: '/panel/sujith-kumar.png',
+      highlights: [
+        '14+ years of IT industry experience, specialising in innovative solutions within the FinTech domain.',
+        'Expertise in cloud architecture, leveraging GCP, AWS and Azure to design and implement scalable solutions.',
+        'Extensive experience in enterprise application modernisation, migration projects and large-scale enterprise solutions.',
+      ],
+    },
+  ] as {
+    name: string;
+    designation: string;
+    organisation: string;
+    photo?: string;
+    highlights?: string[];
+    moderator?: boolean;
+  }[],
 };
 
 export const SHOWCASE = {

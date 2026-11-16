@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { ABSTRACT_INSTRUCTIONS, EVENT } from '@/content/nexus';
 import {
+  COLLEGE_CATEGORIES,
   DECLARATION_TEXT,
   EXPO_PROJECT_CATEGORIES,
   MAX_EXPO_TEAM_MEMBERS,
@@ -44,6 +45,7 @@ const YES_NO = (yes: string, no: string, yesDetail?: string, noDetail?: string) 
   ] as { value: Exclude<YesNo, ''>; label: string; detail?: string }[];
 
 export function CollegeStep({ state, errors, update }: StepProps) {
+  const isActiveCsi = state.collegeCategory === 'active_csi';
   return (
     <div className="fields">
       <TextField
@@ -55,20 +57,33 @@ export function CollegeStep({ state, errors, update }: StepProps) {
         autoComplete="organization"
         wide
       />
-      <TextField
-        id="csiChapterName"
-        label="CSI student branch name"
-        value={state.csiChapterName}
-        onChange={(csiChapterName) => update({ csiChapterName })}
-        error={errors.csiChapterName}
+      <SelectField
+        id="collegeCategory"
+        label="College category"
+        value={state.collegeCategory}
+        onChange={(collegeCategory) => update({ collegeCategory: collegeCategory as typeof state.collegeCategory })}
+        options={COLLEGE_CATEGORIES.map((c) => ({ value: c, label: c === 'active_csi' ? 'Active CSI Branch' : 'No Active CSI Branch' }))}
+        error={errors.collegeCategory}
+        placeholder="Select college category"
       />
-      <TextField
-        id="csiChapterId"
-        label="CSI branch ID"
-        optional
-        value={state.csiChapterId}
-        onChange={(csiChapterId) => update({ csiChapterId })}
-      />
+      {isActiveCsi && (
+        <>
+          <TextField
+            id="csiChapterName"
+            label="CSI student branch name"
+            value={state.csiChapterName}
+            onChange={(csiChapterName) => update({ csiChapterName })}
+            error={errors.csiChapterName}
+          />
+          <TextField
+            id="csiChapterId"
+            label="CSI branch ID"
+            optional
+            value={state.csiChapterId}
+            onChange={(csiChapterId) => update({ csiChapterId })}
+          />
+        </>
+      )}
       <TextField
         id="city"
         label="City"
@@ -82,6 +97,12 @@ export function CollegeStep({ state, errors, update }: StepProps) {
 }
 
 export function FacultyStep({ state, errors, update }: StepProps) {
+  const isActiveCsi = state.collegeCategory === 'active_csi';
+  if (!isActiveCsi) {
+    return (
+      <p className="step-note">Your college does not have an active CSI branch. Faculty coordinator details are not required.</p>
+    );
+  }
   return (
     <>
       <p className="step-note">Collected for institutional coordination and verification. The confirmation email is sent here.</p>
@@ -230,6 +251,12 @@ export function DelegationStep({ state, errors, update, updateStudent }: StepPro
 }
 
 export function ShowcaseStep({ state, errors, update }: StepProps) {
+  const isActiveCsi = state.collegeCategory === 'active_csi';
+  if (!isActiveCsi) {
+    return (
+      <p className="step-note">Your college does not have an active CSI branch. The Chapter Showcase is not applicable.</p>
+    );
+  }
   return (
     <>
       <p className="step-note">
@@ -472,14 +499,14 @@ function NumberField({
     );
   }
 export function PaymentStep({ state, errors, update, screenshot, setScreenshot }: StepProps) {
-  const fee = state.hasCsiMembership === 'yes' ? PAYMENT_FEES.CSI_MEMBER : PAYMENT_FEES.GENERAL;
+  const fee = state.collegeCategory === 'active_csi' ? PAYMENT_FEES.ACTIVE_CSI : PAYMENT_FEES.NO_ACTIVE_CSI;
   const handleFile = (file: File | null) => {
     setScreenshot(file);
   };
   return (
     <div className="fields">
       <p className="step-note">
-        Pay via UPI and upload the payment screenshot. The fee is calculated on the server — ₹{PAYMENT_FEES.CSI_MEMBER} for CSI members and ₹{PAYMENT_FEES.GENERAL} for general registrations.
+        Pay via UPI and upload the payment screenshot. The fee is calculated based on your college category.
       </p>
       <div className="payment-fee">
         <span>Registration fee</span>
@@ -489,37 +516,9 @@ export function PaymentStep({ state, errors, update, screenshot, setScreenshot }
         <Image src="/payment-qr.jpeg" alt="UPI QR code for NEXUS 2026 payments" width={927} height={1009} unoptimized />
         <p>Scan the QR to pay.</p>
       </div>
-      <ChoiceGroup
-        id="hasCsiMembership"
-        legend="Are you paying as a CSI member?"
-        value={state.hasCsiMembership}
-        onChange={(v) => update({ hasCsiMembership: v as YesNo })}
-        options={[
-          { value: 'no', label: 'No', detail: `₹${PAYMENT_FEES.GENERAL} fee applies` },
-          { value: 'yes', label: 'Yes', detail: `₹${PAYMENT_FEES.CSI_MEMBER} fee applies` },
-        ]}
-        error={errors.hasCsiMembership}
-      />
-      {state.hasCsiMembership === 'yes' && (
-        <>
-          <TextField
-            id="csiMemberId"
-            label="CSI membership ID"
-            value={state.csiMemberId}
-            onChange={(csiMemberId) => update({ csiMemberId })}
-            error={errors.csiMemberId}
-            placeholder="e.g. CSI-2024-042"
-          />
-          <TextField
-            id="csiMemberName"
-            label="Full name of the CSI member"
-            value={state.csiMemberName}
-            onChange={(csiMemberName) => update({ csiMemberName })}
-            error={errors.csiMemberName}
-            autoComplete="name"
-          />
-        </>
-      )}
+      <p className="step-note">
+        College category: {state.collegeCategory === 'active_csi' ? 'Active CSI Branch' : 'No Active CSI Branch'} — Fee: ₹{fee}
+      </p>
       <TextField
         id="utrNumber"
         label="UPI Transaction ID / UTR Number"
@@ -645,12 +644,12 @@ export function ReviewStep({ state, errors, update, abstract, screenshot, goTo }
         </header>
         <dl>
           <div>
-            <dt>CSI membership</dt>
-            <dd>{state.hasCsiMembership === 'yes' ? `Yes${state.csiMemberName ? ` — ${state.csiMemberName}` : ''}${state.csiMemberId ? ` (ID: ${state.csiMemberId})` : ''}` : 'No'}</dd>
+            <dt>College category</dt>
+            <dd>{state.collegeCategory === 'active_csi' ? 'Active CSI Branch' : 'No Active CSI Branch'}</dd>
           </div>
           <div>
             <dt>Fee</dt>
-            <dd>{state.hasCsiMembership === 'yes' ? `₹${PAYMENT_FEES.CSI_MEMBER} (CSI member)` : `₹${PAYMENT_FEES.GENERAL} (General)`}</dd>
+            <dd>{state.collegeCategory === 'active_csi' ? `₹${PAYMENT_FEES.ACTIVE_CSI} (Active CSI)` : `₹${PAYMENT_FEES.NO_ACTIVE_CSI} (General)`}</dd>
           </div>
           <div>
             <dt>UTR / Transaction ID</dt>

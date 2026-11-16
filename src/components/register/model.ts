@@ -111,8 +111,7 @@ export const initialState: FormState = {
 };
 
 export function studentCount(state: Pick<FormState, 'totalRepresentatives' | 'facultyAccompanying'>): number {
-  const total = Number(state.totalRepresentatives) || 0;
-  return Math.max(0, total - (state.facultyAccompanying === 'yes' ? 1 : 0));
+  return Number(state.totalRepresentatives) || 0;
 }
 
 /** Resizes the student list and drops selections that point at removed students. */
@@ -174,9 +173,9 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
       break;
     case 'delegation': {
       const total = Number(state.totalRepresentatives);
-      if (!total) e.totalRepresentatives = 'Choose the total number of representatives.';
+      if (!total) e.totalRepresentatives = 'Choose the total number of student representatives.';
       else if (total > MAX_TOTAL_REPRESENTATIVES)
-        e.totalRepresentatives = `A delegation can have at most ${MAX_TOTAL_REPRESENTATIVES} representatives.`;
+        e.totalRepresentatives = `A delegation can have at most ${MAX_TOTAL_REPRESENTATIVES} student representatives.`;
       else if (count < 1) e.totalRepresentatives = 'Include at least one student to present the Chapter Showcase.';
       const emails = new Map<string, number>();
       const names = new Map<string, number>();

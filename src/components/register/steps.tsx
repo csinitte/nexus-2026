@@ -120,15 +120,15 @@ export function FacultyStep({ state, errors, update }: StepProps) {
       <ChoiceGroup
         id="facultyAccompanying"
         legend="Is the faculty coordinator accompanying the delegation?"
-        hint="An accompanying coordinator counts towards the five-person limit."
+        hint="Tell us whether your faculty coordinator will be attending with the delegation."
         value={state.facultyAccompanying}
         onChange={(facultyAccompanying) => update({ facultyAccompanying })}
         error={errors.facultyAccompanying}
         options={YES_NO(
           'Yes',
           'No',
-          `Up to ${MAX_STUDENTS_WITH_FACULTY} students can join`,
-          `Up to ${MAX_TOTAL_REPRESENTATIVES} students can join`,
+          'Faculty coordinator will accompany',
+          'Faculty coordinator will not accompany',
         )}
       />
     </>
@@ -136,33 +136,26 @@ export function FacultyStep({ state, errors, update }: StepProps) {
 }
 
 export function DelegationStep({ state, errors, update, updateStudent }: StepProps) {
-  const faculty = state.facultyAccompanying === 'yes';
   const count = studentCount(state);
   return (
     <>
       <div className="limit-banner">
-        <strong>Maximum {MAX_TOTAL_REPRESENTATIVES} representatives per college</strong>
-        <span>Including the faculty coordinator if accompanying.</span>
+        <strong>Maximum {MAX_TOTAL_REPRESENTATIVES} student representatives per college</strong>
+        <span>Each college can register between 1 and 5 students to attend the summit.</span>
       </div>
       <ChoiceGroup
         id="totalRepresentatives"
-        legend="Total number of representatives"
-        hint={
-          faculty
-            ? 'Your faculty coordinator is accompanying, so they take one place. Their details are not needed again below.'
-            : 'Your faculty coordinator is not accompanying, so every place is for a student.'
-        }
+        legend="Total number of student representatives"
+        hint="Select the number of students attending the summit from your college."
         value={state.totalRepresentatives}
         onChange={(totalRepresentatives) => update({ totalRepresentatives })}
         error={errors.totalRepresentatives}
         options={Array.from({ length: MAX_TOTAL_REPRESENTATIVES }, (_, i) => {
           const total = i + 1;
-          const students = total - (faculty ? 1 : 0);
           return {
             value: String(total),
             label: String(total),
-            detail: students < 1 ? 'Needs a student' : `${students} student${students === 1 ? '' : 's'}${faculty ? ' + faculty' : ''}`,
-            disabled: students < 1,
+            detail: `${total} student${total === 1 ? '' : 's'}`,
           };
         })}
       />
@@ -582,7 +575,7 @@ export function ReviewStep({ state, errors, update, abstract, screenshot, goTo }
     {
       step: 2,
       rows: [
-        ['Representatives', `${state.totalRepresentatives} in total`],
+        ['Student representatives', `${state.totalRepresentatives} student${Number(state.totalRepresentatives) === 1 ? '' : 's'}`],
         ...state.students.map((s, i): [string, string] => [`Student ${i + 1}`, `${s.fullName} · ${s.department} · Year ${s.year}`]),
       ],
     },

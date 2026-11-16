@@ -5661,3 +5661,109 @@ a.hero-whatsapp:hover { background: var(--accent); color: #101510; }
   }
 }
 
+
+/* ── Panelists: sticky stacking slides ─────────────────────────────
+   Each card pins under the header; the next one slides up over it
+   while the previous shrinks and dims, like a deck being dealt. */
+.panel-stack {
+  list-style: none;
+  padding: 0;
+  margin: clamp(20px, 3vw, 32px) 0 0;
+  display: grid;
+  gap: clamp(28px, 6vh, 64px);
+}
+.panel-slide {
+  position: sticky;
+  top: calc(var(--header-h) + 24px + var(--i) * 18px);
+  z-index: calc(var(--i) + 1);
+}
+.panel-slide-card {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(20px, 4vw, 56px);
+  align-items: center;
+  padding: clamp(16px, 2.4vw, 28px);
+  border: 1px solid var(--line-strong);
+  background: linear-gradient(140deg, #0f1310 0%, var(--surface-solid) 60%);
+  box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.55);
+  transform-origin: center top;
+  will-change: transform, filter;
+}
+.panel-slide-poster {
+  aspect-ratio: 4 / 5;
+  max-height: calc(100vh - var(--header-h) - 120px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.panel-slide-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.panel-slide-info { display: grid; gap: 14px; }
+.panel-slide-count {
+  font-size: clamp(40px, 6vw, 80px);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.panel-slide-count em { font-style: normal; font-size: 0.35em; color: var(--dim); }
+.panel-slide-info h3 {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 40px);
+  color: var(--heading);
+  line-height: 1.1;
+}
+.panel-slide-role { margin: 0; color: var(--text); display: grid; gap: 2px; }
+.panel-slide-role span { color: var(--accent); font-weight: 600; }
+.panel-slide-info ul {
+  margin: 6px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.panel-slide-info ul li {
+  position: relative;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 15px;
+}
+.panel-slide-info ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.65em;
+  width: 8px;
+  height: 2px;
+  background: var(--accent);
+}
+
+/* --p (0→1) is set from JS as the next card covers this one. */
+.panel-slide-card {
+  transform: scale(calc(1 - var(--p, 0) * 0.08));
+  filter: brightness(calc(1 - var(--p, 0) * 0.55));
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .panel-slide-poster img {
+      animation: panel-slide-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+  }
+}
+@keyframes panel-slide-in {
+  from { transform: scale(1.15); opacity: 0.4; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 760px) {
+  .panel-slide { top: calc(var(--header-h) + 12px + var(--i) * 12px); }
+  .panel-slide-card { grid-template-columns: 1fr; }
+  .panel-slide-poster { max-height: none; aspect-ratio: auto; }
+  .panel-slide-poster img { object-fit: contain; height: auto; }
+}

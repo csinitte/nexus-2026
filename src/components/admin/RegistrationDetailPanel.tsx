@@ -117,7 +117,7 @@ export function RegistrationDetailPanel({
           </p>
         </section>
         <section>
-          <h3>Chapter Showcase presenter</h3>
+          <h3>Student Branch Showcase presenter</h3>
           <p>
             <strong>{r.chapterShowcasePresenter}</strong>
           </p>

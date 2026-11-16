@@ -62,7 +62,7 @@ export const STEPS = [
   { id: 'college', label: 'College', title: 'College details' },
   { id: 'faculty', label: 'Faculty', title: 'Faculty coordinator' },
   { id: 'delegation', label: 'Delegation', title: 'Delegation details' },
-  { id: 'showcase', label: 'Showcase', title: 'CSI Chapter Showcase' },
+  { id: 'showcase', label: 'Showcase', title: 'CSI Student Branch Showcase' },
   { id: 'expo', label: 'Expo', title: 'Student Project Expo' },
   { id: 'accommodation', label: 'Stay', title: 'Accommodation' },
   { id: 'payment', label: 'Payment', title: 'Registration Fee & Payment' },
@@ -177,7 +177,7 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
       if (!total) e.totalRepresentatives = 'Choose the total number of student representatives.';
       else if (total > MAX_TOTAL_REPRESENTATIVES)
         e.totalRepresentatives = `A delegation can have at most ${MAX_TOTAL_REPRESENTATIVES} student representatives.`;
-      else if (count < 1) e.totalRepresentatives = 'Include at least one student to present the Chapter Showcase.';
+      else if (count < 1) e.totalRepresentatives = 'Include at least one student to present the Student Branch Showcase.';
       const emails = new Map<string, number>();
       const names = new Map<string, number>();
       state.students.forEach((s, i) => {

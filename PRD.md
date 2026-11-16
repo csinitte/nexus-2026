@@ -37,7 +37,7 @@ Build the following:
 - About the Hosts
 - Event Schedule
 - Industry Panel Discussion
-- CSI Chapter Showcase
+- CSI Student Branch Showcase
 - Student Project Expo
 - Contact Details
 - Registration Form
@@ -66,7 +66,7 @@ The website must follow this exact page sequence:
 1. Landing Page — NEXUS Introduction and Hosts
 2. Event Schedule
 3. Industry Panel Discussion
-4. CSI Chapter Showcase
+4. CSI Student Branch Showcase
 5. Student Project Expo
 6. Contact Details
 7. Registration Form
@@ -82,7 +82,7 @@ Recommended navigation:
 - Home
 - Schedule
 - Industry Panel
-- Chapter Showcase
+- Student Branch Showcase
 - Project Expo
 - Contact
 - Register Now
@@ -352,13 +352,13 @@ Do not display placeholder panelist names or invented profiles.
 
 Heading: CHAPTERS IN FOCUS
 
-Title: CSI CHAPTER SHOWCASE
+Title: CSI Student Branch Showcase
 
 Tagline: One Community. Many Journeys. Shared Impact.
 
 ### Description
 
-The CSI Chapter Showcase provides a platform for student chapters from across Karnataka to present their journeys, achievements and contributions to the technical community.
+The CSI Student Branch Showcase provides a platform for student chapters from across Karnataka to present their journeys, achievements and contributions to the technical community.
 
 It celebrates student-led initiatives, encourages the exchange of ideas and creates opportunities for collaboration between chapters.
 
@@ -744,7 +744,7 @@ Display:
 - Total student representatives.
 - Total accompanying faculty coordinators.
 - Total registered delegations.
-- Total Chapter Showcase entries.
+- Total Student Branch Showcase entries.
 - Total Expo projects.
 - Total accommodation requests.
 
@@ -756,7 +756,7 @@ Admin should be able to:
 - Search by college name or registration ID.
 - View college and faculty details.
 - View all student representatives.
-- View the Chapter Showcase presentation lead.
+- View the Student Branch Showcase presentation lead.
 - View Expo participation details.
 - View and download abstracts.
 - View accommodation requests.
@@ -801,7 +801,7 @@ Recommended entities:
 - Faculty Coordinator Email
 - Faculty Coordinator Contact
 - Faculty Accompanying Status
-- Chapter Showcase Presenter
+- Student Branch Showcase Presenter
 - Accommodation Request
 - Registration Status
 - Submission Timestamp
@@ -980,7 +980,7 @@ The first release is ready when:
 - College registration works.
 - Faculty and student details are captured correctly.
 - The five-representative limit is enforced.
-- Chapter Showcase presenter details are collected.
+- Student Branch Showcase presenter details are collected.
 - Expo fields appear only when required.
 - Expo teams contain 2–4 registered students.
 - Abstract PDF upload works.
@@ -1023,7 +1023,7 @@ Implement in this order:
 - College details.
 - Faculty coordinator.
 - Delegation details.
-- Chapter Showcase presenter.
+- Student Branch Showcase presenter.
 - Conditional Expo registration.
 - Accommodation.
 - Declaration and submission.

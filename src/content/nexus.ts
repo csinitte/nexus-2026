@@ -32,7 +32,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Home', short: 'Home' },
   { href: '/schedule', label: 'Schedule', short: 'Schedule' },
   { href: '/panel', label: 'Industry Panel', short: 'Panel' },
-  { href: '/showcase', label: 'Chapter Showcase', short: 'Showcase' },
+  { href: '/showcase', label: 'Student Branch Showcase', short: 'Showcase' },
   { href: '/expo', label: 'Project Expo', short: 'Expo' },
   { href: '/contact', label: 'Contact', short: 'Contact' },
 ];
@@ -89,7 +89,7 @@ export const SCHEDULE = [
   { start: '9:00 AM', end: '9:30 AM', iso: '09:00', title: 'Registration & Breakfast', href: null },
   { start: '9:30 AM', end: '10:30 AM', iso: '09:30', title: 'Inauguration & Keynote', href: null },
   { start: '10:30 AM', end: '11:30 AM', iso: '10:30', title: 'Industry Panel Discussion', href: '/panel' },
-  { start: '11:30 AM', end: '1:00 PM', iso: '11:30', title: 'CSI Branch Showcase', href: '/showcase' },
+  { start: '11:30 AM', end: '1:00 PM', iso: '11:30', title: 'Student Branch Showcase', href: '/showcase' },
   { start: '1:00 PM', end: '2:00 PM', iso: '13:00', title: 'Lunch & Networking', href: null },
   { start: '2:00 PM', end: '4:00 PM', iso: '14:00', title: 'Student Project Expo', href: '/expo' },
   { start: '4:00 PM', end: '4:30 PM', iso: '16:00', title: 'Snacks', href: null },
@@ -156,11 +156,11 @@ export const PANEL = {
 export const SHOWCASE = {
   tagline: 'One Community. Many Journeys. Shared Impact.',
   description: [
-    'The CSI Branch Showcase provides a platform for student chapters from across Karnataka to present their journeys, achievements and contributions to the technical community.',
+    'The Student Branch Showcase provides a platform for student chapters from across Karnataka to present their journeys, achievements and contributions to the technical community.',
     'It celebrates student-led initiatives, encourages the exchange of ideas and creates opportunities for collaboration between chapters.',
   ],
   areas: [
-    { title: 'Chapter Overview', text: 'Chapter introduction, vision and community.' },
+    { title: 'Student Branch Overview', text: 'Student Branch introduction, vision and community.' },
     { title: 'Activities & Initiatives', text: 'Events, workshops and engagements.' },
     { title: 'Achievements & Highlights', text: 'Key milestones and collaborations.' },
     { title: 'Student Innovation', text: 'Projects and member initiatives.' },
@@ -169,7 +169,6 @@ export const SHOWCASE = {
   details: [
     { label: 'Duration', value: '5 minutes per chapter' },
     { label: 'Format', value: 'Standardised presentation template' },
-    { label: 'Q&A', value: 'No separate Q&A session' },
   ],
 };
 
@@ -189,7 +188,7 @@ export const EXPO = {
     'Participants may showcase existing or newly developed projects, including research projects, prototypes, working models, software products, hardware systems, robotics, IoT, AI/ML applications, sustainable technologies and other engineering innovations or proof-of-concepts.',
   alignment: 'All projects, including those under Open Innovation, must align with the central theme.',
   categories: EXPO_PROJECT_CATEGORIES.map((title) => ({ title, text: CATEGORY_TEXT[title] })),
-  teamSize: '2–4 members',
+  teamSize: '2–5 members',
   abstractRequirements: [
     'Project Category',
     'Project / Product Title',
@@ -215,8 +214,8 @@ export const CONTACT = {
   intro:
     'For registration-related queries, participation details, project expo submissions or other event-related information, reach out to our organising team.',
   people: [
-    { name: 'Shravya N Bhat', role: 'President, CSI NMAMIT', phone: '+91 89512 36021', tel: '+918951236021' },
-    { name: 'Pranjal Shetty', role: 'Organising Team, CSI NMAMIT', phone: '+91 85913 10513', tel: '+918591310513' },
+    { name: 'Shravya N Bhat', phone: '+91 89512 36021', tel: '+918951236021' },
+    { name: 'Pranjal Shetty', phone: '+91 85913 10513', tel: '+918591310513' },
   ],
   closing: 'Connect. Collaborate. Create Impact.',
   farewell: 'See you on 25 November 2026 at NMAMIT, Nitte!',
@@ -233,7 +232,7 @@ export const ABSTRACT_INSTRUCTIONS = [
 
 export const COORDINATOR = {
   name: 'Dr. SHARADA U SHENOY',
-  role: 'Student Branch Coordinator',
+  role: 'Student Branch Counsellor, CSI NMAMIT',
   email: 'sharadauday@nitte.edu.in',
   image: '/sharadha-shenoy.png',
 } as const;

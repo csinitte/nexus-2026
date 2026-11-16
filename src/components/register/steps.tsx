@@ -247,17 +247,17 @@ export function ShowcaseStep({ state, errors, update }: StepProps) {
   const isActiveCsi = state.collegeCategory === 'active_csi';
   if (!isActiveCsi) {
     return (
-      <p className="step-note">Your college does not have an active CSI branch. The Chapter Showcase is not applicable.</p>
+      <p className="step-note">Your college does not have an active CSI branch. The Student Branch Showcase is not applicable.</p>
     );
   }
   return (
     <>
       <p className="step-note">
-        Every registered CSI branch takes part in the Chapter Showcase with a five-minute presentation using the standard template.
+        Every registered CSI branch takes part in the Student Branch Showcase with a five-minute presentation using the standard template.
       </p>
       <ChoiceGroup
         id="presenterIndex"
-        legend="Who will be presenting your CSI Branch Showcase presentation?"
+        legend="Who will be presenting your Student Branch Showcase presentation?"
         hint="Choose the student representative who will deliver the five-minute chapter presentation."
         value={state.presenterIndex === null ? '' : String(state.presenterIndex)}
         onChange={(v) => update({ presenterIndex: Number(v) })}

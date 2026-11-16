@@ -22,7 +22,9 @@ function completeState(overrides: Partial<FormState> = {}): FormState {
   return syncDelegation({
     ...initialState,
     collegeName: 'Test College',
+    collegeCategory: 'active_csi',
     csiChapterName: 'CSI Test',
+    csiChapterId: 'CSI123',
     city: 'Udupi',
     facultyCoordinatorName: 'Dr. Rao',
     facultyCoordinatorEmail: 'rao@college.edu',
@@ -46,7 +48,6 @@ function completeState(overrides: Partial<FormState> = {}): FormState {
     maleAccommodationCount: '1',
     femaleAccommodationCount: '1',
     accommodationPeople: ['s0', 'faculty'],
-    hasCsiMembership: 'no',
     utrNumber: '123456789012',
     paymentScreenshot: png(),
     declarationAccepted: true,

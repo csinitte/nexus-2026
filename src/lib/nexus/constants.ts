@@ -25,13 +25,10 @@ export const NEXUS_EVENT = {
   ],
 } as const;
 
-export const MAX_TOTAL_REPRESENTATIVES = 5;
 export const MIN_TOTAL_REPRESENTATIVES = 1;
-export const MAX_STUDENTS_WITH_FACULTY = 4;
-export const MAX_STUDENTS_WITHOUT_FACULTY = 5;
 
-export const MIN_EXPO_TEAM_MEMBERS = 2;
-export const MAX_EXPO_TEAM_MEMBERS = 4;
+export const MIN_EXPO_TEAM_MEMBERS = 1;
+export const MAX_EXPO_TEAM_MEMBERS = 5;
 
 export const ALLOWED_STUDY_YEARS = [1, 2, 3, 4] as const;
 export type StudyYear = (typeof ALLOWED_STUDY_YEARS)[number];
@@ -121,5 +118,5 @@ export function collegeCategoryToFee(category: CollegeCategory): number {
 }
 
 export const DECLARATION_TEXT =
-  "I confirm that the information provided is accurate and that our college understands the NEXUS 2026 participation guidelines, including the delegation limit and Student Project Expo requirements, wherever applicable.";
+  "I confirm that the information provided is accurate and that our college understands the NEXUS 2026 participation guidelines and Student Project Expo requirements, wherever applicable.";
 

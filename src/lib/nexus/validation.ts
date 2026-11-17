@@ -1,4 +1,4 @@
-import { ARRIVAL_PLANS, EXPO_PROJECT_CATEGORIES, getMaxAbstractBytes, PAYMENT_CATEGORIES, MAX_PAYMENT_PROOF_BYTES, PAYMENT_FEES, COLLEGE_CATEGORIES, CollegeCategory, collegeCategoryToPaymentCategory, collegeCategoryToFee } from './constants';
+import { ARRIVAL_PLANS, EXPO_PROJECT_CATEGORIES, getMaxAbstractBytes, PAYMENT_CATEGORIES, MAX_PAYMENT_PROOF_BYTES, COLLEGE_CATEGORIES, MAX_EXPO_TEAM_MEMBERS, MIN_EXPO_TEAM_MEMBERS, CollegeCategory, collegeCategoryToPaymentCategory, collegeCategoryToFee } from './constants';
 
 export class ValidationError extends Error {
   constructor(public issues: string[]) {
@@ -168,13 +168,12 @@ export async function validateRegistration(raw: Record<string, unknown>): Promis
     }
   }
 
-  if (!Number.isInteger(data.totalRepresentatives) || data.totalRepresentatives < 1 || data.totalRepresentatives > 5) {
-    errors.push('Delegation must contain 1-5 representatives');
+  if (!Number.isSafeInteger(data.totalRepresentatives) || data.totalRepresentatives < 1 || data.totalRepresentatives > 2147483647) {
+    errors.push('Student count must be a positive whole number');
   }
 
-  const expectedStudents = data.totalRepresentatives - (data.facultyAccompanying ? 1 : 0);
-  if (students.length !== expectedStudents) {
-    errors.push('Delegation must contain the correct student count');
+  if (students.length !== data.totalRepresentatives) {
+    errors.push('Registration must contain the stated number of students');
   }
 
   if (students.some((s) => !s.fullName || !s.department || !s.contactNumber || !email(s.email) || !Number.isInteger(s.year) || s.year < 1 || s.year > 4)) {
@@ -211,8 +210,8 @@ export async function validateRegistration(raw: Record<string, unknown>): Promis
     if (!str(x.projectTitle) || !EXPO_PROJECT_CATEGORIES.includes(str(x.category) as never)) {
       errors.push('Expo title and category are required');
     }
-    if (indexes.length < 2 || indexes.length > 4 || new Set(indexes).size !== indexes.length || indexes.some((i) => !Number.isInteger(i) || i < 0 || i >= students.length)) {
-      errors.push('Expo team must contain 2-4 distinct registered students');
+    if (indexes.length < MIN_EXPO_TEAM_MEMBERS || indexes.length > MAX_EXPO_TEAM_MEMBERS || new Set(indexes).size !== indexes.length || indexes.some((i) => !Number.isInteger(i) || i < 0 || i >= students.length)) {
+      errors.push('Expo team must contain 1-5 distinct registered students');
     }
     if (!file || !file.name.toLowerCase().endsWith('.pdf') || file.type !== 'application/pdf' || file.size === 0 || file.size > getMaxAbstractBytes() || Buffer.from(await file.slice(0, 5).arrayBuffer()).toString() !== '%PDF-') {
       errors.push('A valid PDF abstract within the size limit is required');
@@ -223,12 +222,12 @@ export async function validateRegistration(raw: Record<string, unknown>): Promis
 
   if (data.accommodationRequired) {
     const count = data.maleAccommodationCount + data.femaleAccommodationCount;
-    const names = [...students.map((s) => s.fullName), ...(data.facultyAccompanying ? [data.facultyCoordinatorName!] : [])].map((x) => x.toLowerCase());
+    const names = students.map((s) => s.fullName.toLowerCase());
     if (
       !ARRIVAL_PLANS.includes(data.arrivalPlan as never) ||
       ![data.maleAccommodationCount, data.femaleAccommodationCount].every((x) => Number.isInteger(x) && x >= 0) ||
       count < 1 ||
-      count > data.totalRepresentatives ||
+      count > students.length ||
       data.accommodationParticipantNames.length !== count ||
       new Set(data.accommodationParticipantNames.map((x) => x.toLowerCase())).size !== count ||
       data.accommodationParticipantNames.some((x) => !names.includes(x.toLowerCase()))

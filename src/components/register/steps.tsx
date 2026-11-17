@@ -7,14 +7,14 @@ import {
   DECLARATION_TEXT,
   EXPO_PROJECT_CATEGORIES,
   MAX_EXPO_TEAM_MEMBERS,
-  MAX_STUDENTS_WITH_FACULTY,
-  MAX_TOTAL_REPRESENTATIVES,
   MIN_EXPO_TEAM_MEMBERS,
+  MIN_TOTAL_REPRESENTATIVES,
   PAYMENT_FEES,
 } from '@/lib/nexus/constants';
 import { CheckList, ChoiceGroup, FieldError, SelectField, TextArea, TextField } from './fields';
 import {
   ARRIVAL_LABELS,
+  blankStudent,
   MAX_ABSTRACT_BYTES,
   MAX_DESCRIPTION_LENGTH,
   STEPS,
@@ -161,25 +161,10 @@ export function DelegationStep({ state, errors, update, updateStudent }: StepPro
   return (
     <>
       <div className="limit-banner">
-        <strong>Maximum {MAX_TOTAL_REPRESENTATIVES} student representatives per college</strong>
-        <span>Each college can register between 1 and 5 students to attend the summit.</span>
+        <strong>Multiple teams from the same college are welcome</strong>
+        <span>Student counts apply to this registration only. The faculty coordinator is not included.</span>
       </div>
-      <ChoiceGroup
-        id="totalRepresentatives"
-        legend="Total number of student representatives"
-        hint="Select the number of students attending the summit from your college."
-        value={state.totalRepresentatives}
-        onChange={(totalRepresentatives) => update({ totalRepresentatives })}
-        error={errors.totalRepresentatives}
-        options={Array.from({ length: MAX_TOTAL_REPRESENTATIVES }, (_, i) => {
-          const total = i + 1;
-          return {
-            value: String(total),
-            label: String(total),
-            detail: `${total} student${total === 1 ? '' : 's'}`,
-          };
-        })}
-      />
+      <FieldError id="totalRepresentatives" message={errors.totalRepresentatives} />
       {state.students.map((s, i) => {
         const p = `s${i}-`;
         return (
@@ -188,6 +173,11 @@ export function DelegationStep({ state, errors, update, updateStudent }: StepPro
               Student {String(i + 1).padStart(2, '0')}
               <span> of {String(count).padStart(2, '0')}</span>
             </legend>
+            {i === count - 1 && count > MIN_TOTAL_REPRESENTATIVES && (
+              <button type="button" className="link-button" onClick={() => update({ students: state.students.slice(0, -1) })}>
+                Remove last student
+              </button>
+            )}
             <div className="fields">
               <TextField
                 id={`${p}fullName`}
@@ -239,6 +229,14 @@ export function DelegationStep({ state, errors, update, updateStudent }: StepPro
           </fieldset>
         );
       })}
+      <button
+        id="totalRepresentatives"
+        type="button"
+        className="button outline"
+        onClick={() => update({ students: [...state.students, blankStudent()] })}
+      >
+        Add a student <span aria-hidden="true">+</span>
+      </button>
     </>
   );
 }
@@ -285,7 +283,7 @@ export function ExpoStep({ state, errors, update, abstract, setAbstract }: StepP
     <>
       <ChoiceGroup
         id="participatingInExpo"
-        legend="Will your college be participating in the Student Project Expo?"
+        legend="Will this registration include a Student Project Expo team?"
         value={state.participatingInExpo}
         onChange={(participatingInExpo) => update({ participatingInExpo })}
         error={errors.participatingInExpo}
@@ -306,6 +304,20 @@ export function ExpoStep({ state, errors, update, abstract, setAbstract }: StepP
               ))}
             </ul>
           </aside>
+          <ChoiceGroup
+            id="expoTeamSize"
+            legend="How many students are on this Expo team?"
+            value={state.expoTeamSize}
+            onChange={(expoTeamSize) => {
+              const teamSize = Number(expoTeamSize);
+              update({ expoTeamSize, teamIndexes: state.teamIndexes.slice(0, teamSize) });
+            }}
+            error={errors.expoTeamSize}
+            options={Array.from({ length: MAX_EXPO_TEAM_MEMBERS }, (_, i) => {
+              const size = i + MIN_EXPO_TEAM_MEMBERS;
+              return { value: String(size), label: String(size), detail: `${size} student${size === 1 ? '' : 's'}` };
+            })}
+          />
           <div className="fields">
             <TextField
               id="teamName"
@@ -365,7 +377,7 @@ export function ExpoStep({ state, errors, update, abstract, setAbstract }: StepP
           <CheckList
             id="teamIndexes"
             legend="Expo team members"
-            hint={`Select ${MIN_EXPO_TEAM_MEMBERS}–${MAX_EXPO_TEAM_MEMBERS} members from your registered students. ${state.teamIndexes.length} selected.`}
+            hint={`Select the ${state.expoTeamSize || 'chosen number of'} students from this registration. ${state.teamIndexes.length} selected.`}
             items={state.students.map((s, i) => ({
               key: String(i),
               label: s.fullName.trim() || `Student ${i + 1}`,
@@ -373,7 +385,7 @@ export function ExpoStep({ state, errors, update, abstract, setAbstract }: StepP
             }))}
             selected={state.teamIndexes.map(String)}
             onToggle={toggleMember}
-            limit={MAX_EXPO_TEAM_MEMBERS}
+            limit={Number(state.expoTeamSize) || MAX_EXPO_TEAM_MEMBERS}
             error={errors.teamIndexes}
           />
         </div>
@@ -393,7 +405,7 @@ export function AccommodationStep({ state, errors, update }: StepProps) {
   return (
     <>
       <p className="step-note">
-        Participants requiring accommodation must indicate their requirements below. Accommodation is subject to availability.
+        Student participants requiring accommodation must indicate their requirements below. Faculty coordinators are not included. Accommodation is subject to availability.
       </p>
       <ChoiceGroup
         id="accommodationRequired"
@@ -415,8 +427,8 @@ export function AccommodationStep({ state, errors, update }: StepProps) {
           />
           <CheckList
             id="accommodationPeople"
-            legend="Who requires accommodation?"
-            hint={`Select from your registered delegation. ${state.accommodationPeople.length} selected.`}
+            legend="Which students require accommodation?"
+            hint={`Select from the students in this registration. ${state.accommodationPeople.length} selected.`}
             items={people.map((p) => ({ key: p.key, label: p.name, detail: p.role }))}
             selected={state.accommodationPeople}
             onToggle={toggle}
@@ -425,16 +437,18 @@ export function AccommodationStep({ state, errors, update }: StepProps) {
           <div className="fields" id="accommodationCounts" tabIndex={-1}>
             <NumberField
               id="maleAccommodationCount"
-              label="Number of male participants"
+              label="Number of male students"
               value={state.maleAccommodationCount}
+              min={0}
               max={people.length}
               onChange={(maleAccommodationCount) => update({ maleAccommodationCount })}
               error={errors.maleAccommodationCount}
             />
             <NumberField
               id="femaleAccommodationCount"
-              label="Number of female participants"
+              label="Number of female students"
               value={state.femaleAccommodationCount}
+              min={0}
               max={people.length}
               onChange={(femaleAccommodationCount) => update({ femaleAccommodationCount })}
               error={errors.femaleAccommodationCount}
@@ -454,6 +468,7 @@ function NumberField({
   id,
   label,
   value,
+  min = 0,
   max,
   onChange,
   error,
@@ -461,7 +476,8 @@ function NumberField({
   id: string;
   label: string;
   value: string;
-  max: number;
+  min?: number;
+  max?: number;
   onChange: (v: string) => void;
   error?: string;
 }) {
@@ -470,24 +486,25 @@ function NumberField({
     <div className={`field stepper${error ? ' has-error' : ''}`}>
       <label htmlFor={id}>{label}</label>
       <div className="stepper-control">
-        <button type="button" onClick={() => onChange(String(Math.max(0, n - 1)))} aria-label={`Decrease ${label.toLowerCase()}`}>
+        <button type="button" onClick={() => onChange(String(Math.max(min, n - 1)))} aria-label={`Decrease ${label.toLowerCase()}`}>
           −
         </button>
         <input
           id={id}
           type="number"
           inputMode="numeric"
-          min={0}
+          min={min}
           max={max}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
         />
-        <button type="button" onClick={() => onChange(String(Math.min(max, n + 1)))} aria-label={`Increase ${label.toLowerCase()}`}>
+        <button type="button" onClick={() => onChange(String(max === undefined ? n + 1 : Math.min(max, n + 1)))} aria-label={`Increase ${label.toLowerCase()}`}>
           +
         </button>
         </div>
+        <FieldError id={id} message={error} />
       </div>
     );
   }
@@ -574,7 +591,7 @@ export function ReviewStep({ state, errors, update, abstract, screenshot, goTo }
     {
       step: 2,
       rows: [
-        ['Student representatives', `${state.totalRepresentatives} student${Number(state.totalRepresentatives) === 1 ? '' : 's'}`],
+        ['Students in this registration', `${state.students.length} student${state.students.length === 1 ? '' : 's'}`],
         ...state.students.map((s, i): [string, string] => [`Student ${i + 1}`, `${s.fullName} · ${s.department} · Year ${s.year}`]),
       ],
     },
@@ -588,6 +605,7 @@ export function ReviewStep({ state, errors, update, abstract, screenshot, goTo }
         state.participatingInExpo === 'yes'
           ? [
               ['Team name', state.teamName],
+              ['Team size', `${state.teamIndexes.length} student${state.teamIndexes.length === 1 ? '' : 's'}`],
               ['Project', `${state.projectTitle} · ${state.category}`],
               ['Team', state.teamIndexes.map((i) => state.students[i]?.fullName).join(', ')],
               ['Abstract', abstract?.name ?? 'Not selected'],
@@ -600,7 +618,7 @@ export function ReviewStep({ state, errors, update, abstract, screenshot, goTo }
         state.accommodationRequired === 'yes'
           ? [
               ['Arrival', ARRIVAL_LABELS[state.arrivalPlan as keyof typeof ARRIVAL_LABELS] ?? '—'],
-              ['Guests', state.accommodationPeople.map((k) => people.find((p) => p.key === k)?.name).join(', ')],
+              ['Students requiring accommodation', state.accommodationPeople.map((k) => people.find((p) => p.key === k)?.name).join(', ')],
               ['Male · female', `${state.maleAccommodationCount} · ${state.femaleAccommodationCount}`],
             ]
           : [['Accommodation', 'Not required']],

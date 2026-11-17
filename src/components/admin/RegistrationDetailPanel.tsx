@@ -31,6 +31,7 @@ export function RegistrationDetailPanel({
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const team = new Set(detail.teamMembers.map((m) => m.participantId));
+  const students = detail.participants.filter((p) => p.participantType === 'student');
   const panelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -126,24 +127,23 @@ export function RegistrationDetailPanel({
           <h3>Accommodation</h3>
           <p>
             {r.accommodationRequired
-              ? `${ARRIVAL_LABELS[r.arrivalPlan ?? ''] ?? r.arrivalPlan} · ${r.maleAccommodationCount} male, ${r.femaleAccommodationCount} female · ${r.accommodationParticipantNames.join(', ')}`
+              ? `${ARRIVAL_LABELS[r.arrivalPlan ?? ''] ?? r.arrivalPlan} · ${r.maleAccommodationCount} male students, ${r.femaleAccommodationCount} female students · ${r.accommodationParticipantNames.join(', ')}`
               : 'Not requested'}
           </p>
         </section>
       </div>
 
       <section className="detail-people">
-        <h3>Delegation ({detail.participants.length})</h3>
+        <h3>Registered students ({students.length})</h3>
         <ul>
-          {detail.participants.map((p) => (
+          {students.map((p) => (
             <li key={p.id}>
               <strong>
                 {p.fullName}
                 {team.has(p.id) && <em> · Expo team</em>}
               </strong>
               <span>
-                {p.participantType === 'student' ? `${p.department} · Year ${p.year}` : 'Faculty coordinator'} · {p.email} ·{' '}
-                {p.contactNumber}
+                {p.department} · Year {p.year} · {p.email} · {p.contactNumber}
               </span>
             </li>
           ))}
@@ -227,18 +227,18 @@ export function RegistrationDetailPanel({
                   </select>
                 </div>
                 <div className="field">
-                  <label htmlFor="edit-male">Male participants</label>
-                  <input id="edit-male" name="maleAccommodationCount" type="number" min="0" defaultValue={r.maleAccommodationCount} />
+                  <label htmlFor="edit-male">Male students</label>
+                  <input id="edit-male" name="maleAccommodationCount" type="number" min="0" max={students.length} defaultValue={r.maleAccommodationCount} />
                 </div>
                 <div className="field">
-                  <label htmlFor="edit-female">Female participants</label>
-                  <input id="edit-female" name="femaleAccommodationCount" type="number" min="0" defaultValue={r.femaleAccommodationCount} />
+                  <label htmlFor="edit-female">Female students</label>
+                  <input id="edit-female" name="femaleAccommodationCount" type="number" min="0" max={students.length} defaultValue={r.femaleAccommodationCount} />
                 </div>
               </div>
               <fieldset className="choice-group">
-                <legend>Participants requiring accommodation</legend>
+                <legend>Students requiring accommodation</legend>
                 <div className="choices">
-                  {detail.participants.map((p) => (
+                  {students.map((p) => (
                     <label key={p.id} className={`choice check${names.includes(p.fullName) ? ' is-selected' : ''}`}>
                       <input
                         type="checkbox"

@@ -100,8 +100,8 @@ export function RegistrationSuccess({ result, coordinatorEmail }: { result: Regi
             </dd>
           </div>
           <div>
-            <dt>Delegation</dt>
-            <dd>{s.totalRepresentatives} representatives</dd>
+            <dt>Students in this registration</dt>
+            <dd>{s.totalRepresentatives}</dd>
           </div>
           <div>
             <dt>Students</dt>
@@ -124,7 +124,7 @@ export function RegistrationSuccess({ result, coordinatorEmail }: { result: Regi
             <dd>{result.expo ? `${result.expo.teamName} · ${result.expo.projectTitle} · ${result.expo.category}` : 'Not participating'}</dd>
           </div>
           <div>
-            <dt>Accommodation</dt>
+            <dt>Students requiring accommodation</dt>
             <dd>
               {s.accommodationRequired
                 ? `Requested for ${s.accommodationParticipantNames.join(', ')} · ${ARRIVAL[s.arrivalPlan ?? ''] ?? ''}`

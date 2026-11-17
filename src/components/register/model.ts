@@ -6,12 +6,11 @@
  */
 import {
   ARRIVAL_PLANS,
-  COLLEGE_CATEGORIES,
   DEFAULT_MAX_ABSTRACT_BYTES,
   EXPO_PROJECT_CATEGORIES,
   MAX_EXPO_TEAM_MEMBERS,
-  MAX_TOTAL_REPRESENTATIVES,
   MIN_EXPO_TEAM_MEMBERS,
+  MIN_TOTAL_REPRESENTATIVES,
   type CollegeCategory,
 } from '@/lib/nexus/constants';
 
@@ -35,7 +34,6 @@ export type FormState = {
   facultyCoordinatorEmail: string;
   facultyCoordinatorContact: string;
   facultyAccompanying: YesNo;
-  totalRepresentatives: string;
   students: StudentDraft[];
   /** Index into `students`, kept as an index so renaming a student keeps the choice. */
   presenterIndex: number | null;
@@ -44,12 +42,13 @@ export type FormState = {
   projectTitle: string;
   category: string;
   description: string;
+  expoTeamSize: string;
   teamIndexes: number[];
   accommodationRequired: YesNo;
   arrivalPlan: string;
   maleAccommodationCount: string;
   femaleAccommodationCount: string;
-  /** Keys: `s0`…`s4` for students, `faculty` for the accompanying coordinator. */
+  /** Keys: `s0`, `s1`, … for students requiring accommodation. */
   accommodationPeople: string[];
   utrNumber: string;
   paymentScreenshot: File | null;
@@ -89,7 +88,6 @@ export const initialState: FormState = {
   facultyCoordinatorEmail: '',
   facultyCoordinatorContact: '',
   facultyAccompanying: '',
-  totalRepresentatives: '',
   students: [],
   presenterIndex: null,
   participatingInExpo: '',
@@ -97,6 +95,7 @@ export const initialState: FormState = {
   projectTitle: '',
   category: '',
   description: '',
+  expoTeamSize: '',
   teamIndexes: [],
   accommodationRequired: '',
   arrivalPlan: '',
@@ -108,33 +107,25 @@ export const initialState: FormState = {
   declarationAccepted: false,
 };
 
-export function studentCount(state: Pick<FormState, 'totalRepresentatives' | 'facultyAccompanying'>): number {
-  return Number(state.totalRepresentatives) || 0;
+export function studentCount(state: Pick<FormState, 'students'>): number {
+  return state.students.length;
 }
 
-/** Resizes the student list and drops selections that point at removed students. */
+/** Drops selections that point at students removed from this registration. */
 export function syncDelegation(state: FormState): FormState {
   const count = studentCount(state);
-  const students = Array.from({ length: count }, (_, i) => state.students[i] ?? blankStudent());
   const valid = (i: number) => i >= 0 && i < count;
   return {
     ...state,
-    students,
     presenterIndex: state.presenterIndex !== null && valid(state.presenterIndex) ? state.presenterIndex : null,
     teamIndexes: state.teamIndexes.filter(valid),
-    accommodationPeople: state.accommodationPeople.filter((key) =>
-      key === 'faculty' ? state.facultyAccompanying === 'yes' : valid(Number(key.slice(1))),
-    ),
+    accommodationPeople: state.accommodationPeople.filter((key) => valid(Number(key.slice(1)))),
   };
 }
 
-/** People who can be chosen for accommodation, keyed for stable selection. */
+/** Students who can be chosen for accommodation, keyed for stable selection. */
 export function delegationPeople(state: FormState): { key: string; name: string; role: string }[] {
-  const people = state.students.map((s, i) => ({ key: `s${i}`, name: s.fullName.trim() || `Student ${i + 1}`, role: 'Student' }));
-  if (state.facultyAccompanying === 'yes') {
-    people.push({ key: 'faculty', name: state.facultyCoordinatorName.trim() || 'Faculty coordinator', role: 'Faculty coordinator' });
-  }
-  return people;
+  return state.students.map((s, i) => ({ key: `s${i}`, name: s.fullName.trim() || `Student ${i + 1}`, role: 'Student' }));
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -173,11 +164,7 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
       }
       break;
     case 'delegation': {
-      const total = Number(state.totalRepresentatives);
-      if (!total) e.totalRepresentatives = 'Choose the total number of student representatives.';
-      else if (total > MAX_TOTAL_REPRESENTATIVES)
-        e.totalRepresentatives = `A delegation can have at most ${MAX_TOTAL_REPRESENTATIVES} student representatives.`;
-      else if (count < 1) e.totalRepresentatives = 'Include at least one student to present the Student Branch Showcase.';
+      if (count < MIN_TOTAL_REPRESENTATIVES) e.totalRepresentatives = 'Add at least one student to this registration.';
       const emails = new Map<string, number>();
       const names = new Map<string, number>();
       state.students.forEach((s, i) => {
@@ -216,8 +203,10 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
         const abstractError = validateAbstract(abstract);
         if (abstractError) e.abstract = abstractError;
         const team = state.teamIndexes.length;
-        if (team < MIN_EXPO_TEAM_MEMBERS || team > MAX_EXPO_TEAM_MEMBERS)
-          e.teamIndexes = `Select ${MIN_EXPO_TEAM_MEMBERS}–${MAX_EXPO_TEAM_MEMBERS} team members (currently ${team}).`;
+        const teamSize = Number(state.expoTeamSize);
+        if (!Number.isInteger(teamSize) || teamSize < MIN_EXPO_TEAM_MEMBERS || teamSize > MAX_EXPO_TEAM_MEMBERS)
+          e.expoTeamSize = 'Choose an Expo team size from 1 to 5 students.';
+        else if (team !== teamSize) e.teamIndexes = `Select ${teamSize} team member${teamSize === 1 ? '' : 's'} (currently ${team}).`;
       }
       break;
     case 'accommodation':
@@ -231,7 +220,7 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
         if (!Number.isInteger(female) || female < 0) e.femaleAccommodationCount = 'Enter 0 or more.';
         if (selected < 1) e.accommodationPeople = 'Select everyone who needs accommodation.';
         else if (!e.maleAccommodationCount && !e.femaleAccommodationCount && male + female !== selected)
-          e.accommodationCounts = `Male + female participants (${male + female}) must equal the ${selected} ${selected === 1 ? 'person' : 'people'} selected.`;
+          e.accommodationCounts = `Male + female students (${male + female}) must equal the ${selected} ${selected === 1 ? 'student' : 'students'} selected.`;
       }
       break;
     case 'review':
@@ -270,7 +259,7 @@ export function buildPayload(state: FormState) {
     facultyCoordinatorEmail: isActiveCsi ? state.facultyCoordinatorEmail.trim() : undefined,
     facultyCoordinatorContact: isActiveCsi ? state.facultyCoordinatorContact.trim() : undefined,
     facultyAccompanying: isActiveCsi ? state.facultyAccompanying === 'yes' : false,
-    totalRepresentatives: Number(state.totalRepresentatives),
+    totalRepresentatives: state.students.length,
     students: state.students.map((s) => ({
       fullName: s.fullName.trim(),
       department: s.department.trim(),

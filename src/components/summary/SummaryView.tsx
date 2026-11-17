@@ -101,8 +101,8 @@ export function SummaryView() {
             </dd>
           </div>
           <div>
-            <dt>Delegation</dt>
-            <dd>{r.totalRepresentatives} representatives</dd>
+            <dt>Students in this registration</dt>
+            <dd>{r.totalRepresentatives}</dd>
           </div>
           <div>
             <dt>Students</dt>
@@ -125,7 +125,7 @@ export function SummaryView() {
             <dd>{detail.expoProject ? `${detail.expoProject.teamName ? `${detail.expoProject.teamName} · ` : ''}${detail.expoProject.projectTitle} · ${detail.expoProject.category}` : 'Not participating'}</dd>
           </div>
           <div>
-            <dt>Accommodation</dt>
+            <dt>Students requiring accommodation</dt>
             <dd>{r.accommodationRequired ? `Requested for ${r.accommodationParticipantNames.join(', ')}` : 'Not requested'}</dd>
           </div>
         </dl>

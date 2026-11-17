@@ -27,7 +27,7 @@ function reducer(state: FormState, action: Action): FormState {
   switch (action.type) {
     case 'patch': {
       const next = { ...state, ...action.patch };
-      const delegationChanged = 'totalRepresentatives' in action.patch || 'facultyAccompanying' in action.patch;
+      const delegationChanged = 'students' in action.patch;
       return delegationChanged ? syncDelegation(next) : next;
     }
     case 'student':
@@ -98,6 +98,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
   const update = useCallback((patch: Partial<FormState>) => {
     dispatch({ type: 'patch', patch });
     setErrors((prev) => {
+      if ('students' in patch) return {};
       const keys = Object.keys(patch);
       if (!keys.some((k) => prev[k] || k.startsWith('maleAcc') || k.startsWith('femaleAcc') || k === 'accommodationPeople')) return prev;
       const next = { ...prev };
@@ -328,7 +329,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
 
 function friendly(message: string, status: number): string {
   if (status === 409)
-    return 'This college and faculty coordinator are already registered. Contact the organising team if you need to make changes.';
+    return 'This UTR number has already been used for another registration. Enter the UTR from this registration’s payment.';
   const map: [RegExp, string][] = [
     [/collegeName is required/i, 'Enter your college name.'],
     [/csiChapterName is required/i, 'Enter your CSI branch name.'],

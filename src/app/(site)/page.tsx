@@ -133,6 +133,10 @@ export default function HomePage() {
               A common platform to exchange ideas, showcase innovation, build leadership and explore emerging technologies — through
               industry interactions, chapter presentations and project exhibitions.
             </p>
+            <p className="deck-text">
+              Multiple teams from the same college are welcome. Project Expo is optional; teams of 1–5 students can submit a PDF abstract by{' '}
+              {EVENT.abstractDeadlineDisplay}.
+            </p>
             <ul className="deck-stats" aria-label="Participation highlights">
               {ABOUT.stats.map((s) => (
                 <li key={s.label}>

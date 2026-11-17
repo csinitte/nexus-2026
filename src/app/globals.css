@@ -4939,18 +4939,6 @@ html:not(.deck-ready) .deck-hint {
   .choices {
     grid-template-columns: 1fr;
   }
-  #totalRepresentatives .choices {
-    grid-template-columns: repeat(5, 1fr);
-  }
-  #totalRepresentatives .choice {
-    flex-direction: column;
-    align-items: center;
-    padding: 12px 6px;
-    text-align: center;
-  }
-  #totalRepresentatives .choice small {
-    font-size: 11px;
-  }
   .back-link {
     display: none;
   }

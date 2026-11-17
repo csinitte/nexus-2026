@@ -17,7 +17,7 @@ export const EVENT = {
   /** Replace the PDF in /public (same name) to update the template without code changes. */
   showcaseTemplateUrl: '/Chapter_Showcase_Template.pdf',
   /** Replace the PDF in /public (same name) to update the brochure. */
-  brochureUrl: '/Nexus_Brochure_2026.pdf' as string | null,
+  brochureUrl: '/Nexus_Brochure_2026.pdf?v=BCB187E1280C' as string | null,
 } as const;
 
 /** The environment can override the organising team’s public group invite. */
@@ -188,7 +188,7 @@ export const EXPO = {
     'Participants may showcase existing or newly developed projects, including research projects, prototypes, working models, software products, hardware systems, robotics, IoT, AI/ML applications, sustainable technologies and other engineering innovations or proof-of-concepts.',
   alignment: 'All projects, including those under Open Innovation, must align with the central theme.',
   categories: EXPO_PROJECT_CATEGORIES.map((title) => ({ title, text: CATEGORY_TEXT[title] })),
-  teamSize: '2–5 members',
+  teamSize: '1–5 students',
   abstractRequirements: [
     'Project Category',
     'Project / Product Title',

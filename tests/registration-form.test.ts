@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   STEPS,
+  blankStudent,
   buildPayload,
   firstInvalidStep,
   initialState,
@@ -30,7 +31,6 @@ function completeState(overrides: Partial<FormState> = {}): FormState {
     facultyCoordinatorEmail: 'rao@college.edu',
     facultyCoordinatorContact: '+91 98765 43210',
     facultyAccompanying: 'yes',
-    totalRepresentatives: '4',
     students: [
       { fullName: 'Asha', department: 'CSE', year: '3', contactNumber: '9876500001', email: 'asha@college.edu' },
       { fullName: 'Bharath', department: 'ECE', year: '2', contactNumber: '9876500002', email: 'bharath@college.edu' },
@@ -42,12 +42,13 @@ function completeState(overrides: Partial<FormState> = {}): FormState {
     projectTitle: 'Smart Grid',
     category: 'Energy & Resource Management',
     description: 'Leak detection for campus water lines.',
+    expoTeamSize: '2',
     teamIndexes: [0, 1],
     accommodationRequired: 'yes',
     arrivalPlan: '2026-11-24_NIGHT',
     maleAccommodationCount: '1',
     femaleAccommodationCount: '1',
-    accommodationPeople: ['s0', 'faculty'],
+    accommodationPeople: ['s0', 's1'],
     utrNumber: '123456789012',
     paymentScreenshot: png(),
     declarationAccepted: true,
@@ -55,28 +56,45 @@ function completeState(overrides: Partial<FormState> = {}): FormState {
   });
 }
 
-describe('delegation limits', () => {
-  test('accompanying faculty takes one of the five places', () => {
-    expect(studentCount({ totalRepresentatives: '5', facultyAccompanying: 'yes' })).toBe(4);
-    expect(studentCount({ totalRepresentatives: '5', facultyAccompanying: 'no' })).toBe(5);
+describe('registration student counts', () => {
+  test('faculty accompanying does not change the student count', () => {
+    const state = completeState({
+      students: [...completeState().students, blankStudent(), blankStudent(), blankStudent()],
+      facultyAccompanying: 'yes',
+    });
+    expect(studentCount(state)).toBe(6);
+    state.facultyAccompanying = 'no';
+    expect(studentCount(state)).toBe(6);
   });
 
   test('shrinking the delegation drops selections for removed students', () => {
-    const shrunk = syncDelegation({ ...completeState({ presenterIndex: 2, teamIndexes: [1, 2] }), totalRepresentatives: '3' });
-    expect(shrunk.students).toHaveLength(2);
+    const expanded = completeState({
+      students: [...completeState().students, blankStudent(), blankStudent()],
+      presenterIndex: 4,
+      teamIndexes: [1, 4],
+      accommodationPeople: ['s0', 's4'],
+    });
+    const shrunk = syncDelegation({ ...expanded, students: expanded.students.slice(0, 4) });
+    expect(shrunk.students).toHaveLength(4);
     expect(shrunk.presenterIndex).toBeNull();
     expect(shrunk.teamIndexes).toEqual([1]);
   });
 
-  test('faculty no longer accompanying is removed from accommodation', () => {
+  test('faculty is never included in accommodation selections', () => {
     const next = syncDelegation({ ...completeState(), facultyAccompanying: 'no' });
-    expect(next.accommodationPeople).toEqual(['s0']);
-    expect(next.students).toHaveLength(4);
+    expect(next.accommodationPeople).toEqual(['s0', 's1']);
+    expect(next.students).toHaveLength(3);
   });
 
-  test('a delegation of one with faculty accompanying is rejected', () => {
-    const errors = validateStep(step('delegation'), completeState({ totalRepresentatives: '1' }), null);
-    expect(errors.totalRepresentatives).toContain('at least one student');
+  test('one student is valid even when faculty accompanies', () => {
+    const errors = validateStep(step('delegation'), completeState({ students: completeState().students.slice(0, 1) }), null);
+    expect(errors.totalRepresentatives).toBeUndefined();
+  });
+
+  test('more than five students are accepted in one registration', () => {
+    const state = completeState({ students: [...completeState().students, blankStudent(), blankStudent(), blankStudent()] });
+    expect(studentCount(state)).toBe(6);
+    expect(state.students).toHaveLength(6);
   });
 
   test('duplicate student emails and names are flagged', () => {
@@ -93,10 +111,21 @@ describe('step validation', () => {
     expect(firstInvalidStep(completeState(), pdf())).toBeNull();
   });
 
-  test('Expo team must have 2–4 members and an abstract', () => {
-    const errors = validateStep(step('expo'), completeState({ teamIndexes: [0] }), null);
-    expect(errors.teamIndexes).toBeDefined();
+  test('Expo team accepts 1–5 students and requires an abstract', () => {
+    const errors = validateStep(step('expo'), completeState({ expoTeamSize: '1', teamIndexes: [0] }), null);
+    expect(errors.teamIndexes).toBeUndefined();
     expect(errors.abstract).toBeDefined();
+    expect(
+      validateStep(
+        step('expo'),
+        completeState({
+          students: [...completeState().students, blankStudent(), blankStudent()],
+          expoTeamSize: '5',
+          teamIndexes: [0, 1, 2, 3, 4],
+        }),
+        pdf(),
+      ).teamIndexes,
+    ).toBeUndefined();
   });
 
   test('Expo description can be blank or omitted', async () => {
@@ -138,7 +167,7 @@ describe('step validation', () => {
   test('server messages map to the step that fixes them', () => {
     expect(stepForServerError('collegeName is required')).toBe(step('college'));
     expect(stepForServerError('Valid facultyCoordinatorEmail is required')).toBe(step('faculty'));
-    expect(stepForServerError('Expo team must contain 2–4 distinct registered students')).toBe(step('expo'));
+    expect(stepForServerError('Expo team must contain 1-5 distinct registered students')).toBe(step('expo'));
     expect(stepForServerError('Showcase presenter must be a registered student')).toBe(step('showcase'));
     expect(stepForServerError('Each student needs valid name, department, year, contact and email')).toBe(step('delegation'));
     expect(stepForServerError('Invalid accommodation details')).toBe(step('accommodation'));
@@ -153,7 +182,7 @@ describe('payload contract with the server', () => {
     expect(parsed.chapterShowcasePresenter).toBe('Asha');
     expect(parsed.expo?.teamName).toBe('Grid Pioneers');
     expect(parsed.expo?.teamMembers).toEqual([0, 1]);
-    expect(parsed.accommodationParticipantNames).toEqual(['Asha', 'Dr. Rao']);
+    expect(parsed.accommodationParticipantNames).toEqual(['Asha', 'Bharath']);
   });
 
   test('without Expo or accommodation the payload omits those details', async () => {

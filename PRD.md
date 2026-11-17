@@ -450,7 +450,7 @@ Required information:
 - Theme Relevance
 - College and Team Details
 
-Team size: 2–4 members.
+Team size: 1–5 students. The selection control must offer 1, 2, 3, 4 and 5.
 
 All eligible registered teams proceed to the exhibition. Abstracts are reviewed for theme relevance, not shortlisting.
 
@@ -530,6 +530,7 @@ Purpose: Collect only the information required to register a college delegation 
 The registration form must be separate from the informational website pages.
 
 It should be short, clear, mobile-friendly and easy to complete.
+Multiple registrations from the same college are welcome. Registration progress is saved on the device until submission.
 
 Avoid unnecessary questions, repeated information and long descriptive inputs.
 
@@ -540,7 +541,7 @@ Avoid unnecessary questions, repeated information and long descriptive inputs.
 - Use conditional fields.
 - Display a progress indicator.
 - Provide clear field labels and validation.
-- Show the five-representative limit before the form begins.
+- Explain that multiple registrations from the same college are welcome.
 - Keep the form usable on mobile devices.
 
 ### Section 1 — College Details
@@ -562,7 +563,7 @@ Required fields:
 
 These details are collected for institutional coordination and verification.
 
-The faculty coordinator's accompanying status must be captured separately so the system can enforce the five-person delegation limit.
+The faculty coordinator's accompanying status is collected separately. The coordinator is not a student participant and is never included in the student count.
 
 Question: Is the faculty coordinator accompanying the delegation?
 
@@ -573,11 +574,11 @@ Question: Is the faculty coordinator accompanying the delegation?
 
 Section description:
 
-Maximum 5 representatives per college, including the faculty coordinator if accompanying.
+Count students for each registration independently. There is no college-wide participant limit, and multiple teams from the same college are welcome.
 
 Question:
 
-Total Number of Representatives
+Number of Student Participants in This Registration
 
 Options: 1, 2, 3, 4, 5.
 
@@ -589,13 +590,12 @@ Collect the following details for each student representative:
 4. Contact Number
 5. Email ID
 
-Allow the registering person to add the appropriate number of student representatives based on the total delegation size.
+Allow the registering person to enter the number of students in this registration. Do not count the faculty coordinator.
 
 #### Delegation validation
 
-- If faculty coordinator is accompanying: maximum 4 students.
-- If faculty coordinator is not accompanying: maximum 5 students.
-- Maximum total representatives: 5.
+- Student count must match the student records in this registration.
+- Do not impose a college-wide student or registration limit.
 
 Do not ask for the faculty coordinator's information again in the student list.
 
@@ -647,7 +647,7 @@ Category options:
 
 #### Expo Team
 
-Team size: 2–4 members.
+Team size: 1–5 students. The selection control must offer 1, 2, 3, 4 and 5.
 
 Allow the user to select Expo team members from the already-entered student representatives.
 
@@ -655,9 +655,9 @@ Do not ask for their names, emails and phone numbers again.
 
 Validate that:
 
-- The team contains 2–4 members.
+- The team contains 1–5 students.
 - All selected team members belong to the registered college delegation.
-- The team satisfies the college's overall five-representative limit.
+- Project Expo registration is optional and multiple teams from the same college are welcome.
 
 #### Abstract Instructions
 
@@ -676,7 +676,7 @@ Recommended PDF upload limit: 10 MB, subject to confirmation.
 
 Section description:
 
-Participants requiring accommodation must indicate their requirements below. Accommodation is subject to availability.
+Student participants requiring accommodation must indicate their requirements below. The faculty coordinator is not included. Accommodation is subject to availability.
 
 Question:
 
@@ -692,11 +692,11 @@ If Yes, display:
    - 25 November 2026 (Event morning)
 2. Number of male participants.
 3. Number of female participants.
-4. Names of participants requiring accommodation.
+4. Names of students requiring accommodation.
 
 The names should preferably be selected from the registered delegation list.
 
-Validate that the total accommodation count does not exceed the number of registered representatives.
+Validate that the accommodation count does not exceed the number of students in this registration.
 
 Display:
 
@@ -706,7 +706,7 @@ Accommodation is subject to availability. Submission of a request does not guara
 
 Required checkbox:
 
-"I confirm that the information provided is accurate and that our college understands the NEXUS 2026 participation guidelines, including the delegation limit and Student Project Expo requirements, wherever applicable."
+"I confirm that the information provided is accurate and that our college understands the NEXUS 2026 participation guidelines and Student Project Expo requirements, wherever applicable."
 
 Button:
 
@@ -859,7 +859,7 @@ This will allow future jury management, evaluation, certificates and attendance 
 | FR-08 | Dedicated registration page | Must |
 | FR-09 | College-level registration | Must |
 | FR-10 | Faculty coordinator details | Must |
-| FR-11 | Five-person delegation validation | Must |
+| FR-11 | Per-registration student-count validation with no college-wide cap | Must |
 | FR-12 | Dynamic student representative fields | Must |
 | FR-13 | Chapter Showcase presenter field | Must |
 | FR-14 | Conditional Project Expo form | Must |
@@ -939,7 +939,7 @@ Recommended architecture:
 
 - Registration APIs.
 - Form validation.
-- Participant limit enforcement.
+- Per-registration student and accommodation validation.
 - File upload handling.
 - Confirmation email service.
 - Admin authentication.
@@ -979,10 +979,12 @@ The first release is ready when:
 - The registration form is separate from informational pages.
 - College registration works.
 - Faculty and student details are captured correctly.
-- The five-representative limit is enforced.
+- Multiple registrations from one college are accepted without a college-wide participant cap.
+- Faculty coordinators are excluded from student counts.
+- Accommodation counts include students only and cannot exceed the registration's student count.
 - Student Branch Showcase presenter details are collected.
 - Expo fields appear only when required.
-- Expo teams contain 2–4 registered students.
+- Expo teams contain 1–5 registered students.
 - Abstract PDF upload works.
 - Accommodation requests are captured.
 - A unique registration ID is generated.
@@ -1040,7 +1042,7 @@ Implement in this order:
 ### Stage 6 — Testing and Deployment
 
 - Test all registration conditions.
-- Test delegation limit.
+- Test per-registration student counts and multiple registrations from one college.
 - Test Expo team selection.
 - Test abstract upload.
 - Test mobile experience.
@@ -1055,14 +1057,15 @@ The following decisions must be retained during development:
 2. The website is an informational multi-page experience followed by a separate registration page.
 3. The page sequence is fixed: Home → Schedule → Industry Panel → Chapter Showcase → Project Expo → Contact → Register.
 4. Every registered CSI chapter participates in the Chapter Showcase. Ask only for the presentation lead's name.
-5. The college-level delegation limit is five representatives, including an accompanying faculty coordinator.
-6. Expo team size is 2–4 members.
-7. Expo team members should be selected from registered student representatives rather than entered again.
-8. The Expo abstract deadline is 20 November 2026.
-9. Accommodation requests are subject to availability.
-10. Jury management and project evaluation are deferred to a later phase.
-11. Keep registration short and collect only essential information.
-12. The website's visual identity must remain consistent with the supplied NEXUS poster and brochure.
+5. There is no college-wide participant or registration limit; multiple registrations from one college are welcome.
+6. Faculty coordinators are not counted as students or accommodation guests.
+7. Expo team size is 1–5 students.
+8. Expo team members should be selected from registered student representatives rather than entered again.
+9. The Expo abstract deadline is 20 November 2026.
+10. Accommodation requests are subject to availability.
+11. Jury management and project evaluation are deferred to a later phase.
+12. Keep registration short and collect only essential information.
+13. The website's visual identity must remain consistent with the supplied NEXUS poster and brochure.
 
 ## FINAL PRODUCT DIRECTION
 

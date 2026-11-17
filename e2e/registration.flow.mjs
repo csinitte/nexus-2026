@@ -54,12 +54,15 @@ await page.getByLabel('Contact number').fill('+91 98765 43210');
 await page.getByRole('radio', { name: /^Yes/ }).check();
 await step('Delegation');
 
-// Faculty accompanying + 4 representatives = 3 students.
-await page.getByRole('radio', { name: /^4/ }).check();
+// The accompanying coordinator is not counted as a student.
+for (let i = 0; i < 6; i++) await page.getByRole('button', { name: /Add a student/ }).click();
 const students = [
   ['Asha Rao', 'Computer Science', '3', '9876500001'],
   ['Bharath K', 'Electronics', '2', '9876500002'],
   ['Chitra S', 'Mechanical', '4', '9876500003'],
+  ['Dev N', 'Information Science', '2', '9876500004'],
+  ['Esha P', 'Electrical', '3', '9876500005'],
+  ['Farhan M', 'Civil', '1', '9876500006'],
 ];
 for (const [i, [name, dept, year, phone]] of students.entries()) {
   await page.locator(`#s${i}-fullName`).fill(name);
@@ -68,7 +71,7 @@ for (const [i, [name, dept, year, phone]] of students.entries()) {
   await page.locator(`#s${i}-contactNumber`).fill(phone);
   await page.locator(`#s${i}-email`).fill(`s${i}+${run}@example.edu`);
 }
-ok((await page.locator('.student-card').count()) === 3, 'faculty accompanying leaves 3 student slots for 4 representatives');
+ok((await page.locator('.student-card').count()) === 6, 'six students are accepted independently of the accompanying faculty coordinator');
 await step('Showcase');
 
 await page.getByRole('radio', { name: /Asha Rao/ }).check();
@@ -80,25 +83,21 @@ await page.getByLabel('Project / product title').fill('Smart Water Grid');
 await page.getByLabel('Project category').selectOption('Energy & Resource Management');
 await page.getByLabel('Brief project description').fill('IoT sensors that detect leaks in campus water lines.');
 await page.locator('#abstract').setInputFiles(pdf);
-await page.getByRole('checkbox', { name: /Asha Rao/ }).check();
-await step('Stay');
-ok(
-  await page
-    .getByText(/Select 2–4 team members/)
-    .first()
-    .isVisible(),
-  'one-member Expo team is rejected',
-);
-await page.getByRole('checkbox', { name: /Bharath K/ }).check();
+await page.getByRole('radio', { name: /^5/ }).check();
+for (const name of ['Asha Rao', 'Bharath K', 'Chitra S', 'Dev N', 'Esha P']) {
+  await page.getByRole('checkbox', { name: new RegExp(name) }).check();
+}
+ok(await page.getByRole('checkbox', { name: /Farhan M/ }).isDisabled(), 'Expo teams are limited to five students');
 await step('Stay');
 
 await page.getByRole('radio', { name: /^Yes/ }).check();
 await page.getByRole('radio', { name: /previous night/ }).check();
 await page.getByRole('checkbox', { name: /Asha Rao/ }).check();
-await page.getByRole('checkbox', { name: /Dr. Test Coordinator/ }).check();
+await page.getByRole('checkbox', { name: /Bharath K/ }).check();
+ok((await page.getByRole('checkbox', { name: /Dr. Test Coordinator/ }).count()) === 0, 'faculty coordinator is not an accommodation student');
 await page.locator('#femaleAccommodationCount').fill('1');
 await step('Submit');
-ok(await page.getByText(/must equal the 2 people selected/).isVisible(), 'accommodation counts must match selected people');
+ok(await page.getByText(/must equal the 2 students selected/).isVisible(), 'accommodation counts must match selected students');
 await page.locator('#maleAccommodationCount').fill('1');
 await step('Submit');
 

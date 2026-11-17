@@ -113,7 +113,6 @@ export function SelectField({
   label,
   error,
   hint,
-  optional,
   wide,
   value,
   onChange,

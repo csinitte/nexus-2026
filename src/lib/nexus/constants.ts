@@ -25,9 +25,10 @@ export const NEXUS_EVENT = {
   ],
 } as const;
 
-export const MIN_TOTAL_REPRESENTATIVES = 1;
+export const MIN_TOTAL_REPRESENTATIVES = 2;
+export const MAX_TOTAL_REPRESENTATIVES = 5;
 
-export const MIN_EXPO_TEAM_MEMBERS = 1;
+export const MIN_EXPO_TEAM_MEMBERS = 2;
 export const MAX_EXPO_TEAM_MEMBERS = 5;
 
 export const ALLOWED_STUDY_YEARS = [1, 2, 3, 4] as const;
@@ -74,12 +75,12 @@ export type ParticipantType = (typeof PARTICIPANT_TYPES)[number];
 export const ADMIN_ROLES = ["admin", "coordinator", "viewer"] as const;
 export type AdminRole = (typeof ADMIN_ROLES)[number];
 
-export const DEFAULT_MAX_ABSTRACT_BYTES = 10 * 1024 * 1024; // 10 MB per PRD Section 11
+export const DEFAULT_MAX_ABSTRACT_BYTES = 3 * 1024 * 1024; // Leave room for payment proof and multipart metadata.
 
 export function getMaxAbstractBytes(): number {
   const raw = Number(process.env.NEXUS_MAX_ABSTRACT_BYTES);
   if (Number.isFinite(raw) && raw > 0) {
-    return Math.floor(raw);
+    return Math.min(Math.floor(raw), DEFAULT_MAX_ABSTRACT_BYTES);
   }
   return DEFAULT_MAX_ABSTRACT_BYTES;
 }
@@ -94,7 +95,12 @@ export const PAYMENT_FEES = {
 
 export const DEFAULT_UPI_ID = process.env.NEXT_PUBLIC_NEXUS_UPI_ID || "csi.nmamit@syndicate";
 export const DEFAULT_QR_IMAGE_PATH = process.env.NEXT_PUBLIC_NEXUS_QR_PATH || "/payment-qr.jpeg";
-export const MAX_PAYMENT_PROOF_BYTES = 5 * 1024 * 1024; // 5 MB
+export const MAX_PAYMENT_PROOF_BYTES = 1024 * 1024; // 1 MB
+export const PAYMENT_PROOF_TYPES = ["image/png", "image/jpeg", "image/jpg"];
+
+export function isNmamit(collegeName: string): boolean {
+  return /\bn\s*m\s*a\s*m(?:\s*i\s*t|\s+institute)\b/i.test(collegeName.replace(/[.]/g, ""));
+}
 
 export const PAYMENT_STATUSES = [
   "Payment Pending",

@@ -54,19 +54,21 @@ describe('registration validation', () => {
     const data = await validateRegistration({
       ...base(),
       facultyAccompanying: true,
-      totalRepresentatives: 6,
-      students: [1, 2, 3, 4, 5, 6].map(student),
+      totalRepresentatives: 5,
+      students: [1, 2, 3, 4, 5].map(student),
     });
-    expect(data.students).toHaveLength(6);
+    expect(data.students).toHaveLength(5);
   });
 
   test('rejects mismatched student counts and duplicate student email', async () => {
-    await expect(validateRegistration({ ...base(), totalRepresentatives: 1 })).rejects.toThrow();
+    await expect(validateRegistration({ ...base(), totalRepresentatives: 1, students: [student(1)] })).rejects.toThrow('2–5 students');
+    await expect(validateRegistration({ ...base(), totalRepresentatives: 6, students: [1, 2, 3, 4, 5, 6].map(student) })).rejects.toThrow('2–5 students');
+    await expect(validateRegistration({ ...base(), totalRepresentatives: 3 })).rejects.toThrow('stated number of students');
     await expect(validateRegistration({ ...base(), students: [student(1), student(1)] })).rejects.toThrow();
   });
 
-  test('accepts Expo teams of 1 through 5 students and rejects larger teams', async () => {
-    const students = [1, 2, 3, 4, 5, 6].map(student);
+  test('accepts Expo teams of 2 through 5 students and rejects out-of-range teams', async () => {
+    const students = [1, 2, 3, 4, 5].map(student);
     const common = {
       teamName: 'Team One',
       projectTitle: 'Project',
@@ -74,7 +76,7 @@ describe('registration validation', () => {
       description: 'A project',
       abstract: pdf(),
     };
-    for (let size = 1; size <= 5; size++) {
+    for (let size = 2; size <= 5; size++) {
       await expect(
         validateRegistration({
           ...base(),
@@ -85,15 +87,15 @@ describe('registration validation', () => {
         }),
       ).resolves.toBeDefined();
     }
-    await expect(
-      validateRegistration({
+    for (const teamMembers of [[0], [0, 1, 2, 3, 4, 5]]) {
+      await expect(validateRegistration({
         ...base(),
         totalRepresentatives: students.length,
         students,
         participatingInExpo: true,
-        expo: { ...common, teamMembers: [0, 1, 2, 3, 4, 5] },
-      }),
-    ).rejects.toThrow('1-5 distinct registered students');
+        expo: { ...common, teamMembers },
+      })).rejects.toThrow('2–5 distinct registered students');
+    }
     await expect(
       validateRegistration({
         ...base(),
@@ -104,7 +106,7 @@ describe('registration validation', () => {
   });
 
   test('accommodation is student-only and can cover every student in a registration', async () => {
-    const students = [1, 2, 3, 4, 5, 6].map(student);
+    const students = [1, 2, 3, 4, 5].map(student);
     const details = {
       facultyAccompanying: true,
       totalRepresentatives: students.length,
@@ -112,7 +114,7 @@ describe('registration validation', () => {
       accommodationRequired: true,
       arrivalPlan: '2026-11-24_NIGHT',
       maleAccommodationCount: 3,
-      femaleAccommodationCount: 3,
+      femaleAccommodationCount: 2,
       accommodationParticipantNames: students.map((s) => s.fullName),
     };
     await expect(validateRegistration({ ...base(), ...details })).resolves.toBeDefined();
@@ -121,7 +123,7 @@ describe('registration validation', () => {
         ...base(),
         ...details,
         maleAccommodationCount: 3,
-        femaleAccommodationCount: 4,
+        femaleAccommodationCount: 3,
         accommodationParticipantNames: [...students.map((s) => s.fullName), 'Faculty'],
       }),
     ).rejects.toThrow('Invalid accommodation details');
@@ -168,13 +170,13 @@ test('allows multiple registrations from the same college and coordinator', asyn
   const firstInput = await validateRegistration({
     ...base(),
     facultyAccompanying: true,
-    totalRepresentatives: 6,
-    students: [1, 2, 3, 4, 5, 6].map(student),
+    totalRepresentatives: 5,
+    students: [1, 2, 3, 4, 5].map(student),
   });
   const first = await createRegistration(firstInput);
   expect(first.registrationCode).toMatch(/^NEXUS26-\d{4}$/);
   const firstDetail = await registrationDetail(first.summary.id);
-  expect(firstDetail?.participants.filter((p) => p.participantType === 'student')).toHaveLength(6);
+  expect(firstDetail?.participants.filter((p) => p.participantType === 'student')).toHaveLength(5);
   expect(firstDetail?.participants.filter((p) => p.participantType === 'faculty_coordinator')).toHaveLength(1);
   const second = await createRegistration(await validateRegistration(base('123456789013')));
   expect(second.summary.collegeName).toBe(first.summary.collegeName);

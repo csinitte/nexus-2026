@@ -37,7 +37,7 @@ export default function RegisterPage() {
                 </li>
                 <li>
                   <strong>Optional Expo</strong>
-                  <span>teams of 1–5 students · PDF abstract due {EVENT.abstractDeadlineDisplay}</span>
+                  <span>teams of 2–5 students · PDF abstract due {EVENT.abstractDeadlineDisplay}</span>
                 </li>
                 <li>
                   <strong>Saved on this device</strong>

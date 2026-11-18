@@ -43,8 +43,18 @@ await page.reload({ waitUntil: 'networkidle' });
 await step('Faculty');
 ok(await page.getByText('Enter your college name.').isVisible(), 'empty college step shows inline errors');
 
+await page.getByLabel('College name').fill('NMAM Institute of Technology, Nitte');
+await page.getByLabel('College name').press('Tab');
+const hostDialog = page.getByRole('dialog', { name: 'Are you from NMAMIT, Nitte?' });
+ok(!(await hostDialog.getByText(/is hosting NEXUS/).isVisible()), 'host instructions wait for confirmation');
+await hostDialog.getByRole('button', { name: 'Yes, I’m from NMAMIT' }).click();
+ok(await hostDialog.getByText(/is hosting NEXUS/).isVisible(), 'the popup explains the host category');
+await hostDialog.getByRole('button', { name: 'Use No Active CSI Branch' }).click();
+ok((await page.getByLabel('College category').inputValue()) === 'no_active_csi', 'NMAMIT notice selects the correct category');
+
 await page.getByLabel('College name').fill(`E2E Institute ${run}`);
-await page.getByLabel('CSI student chapter name').fill('CSI E2E Chapter');
+await page.getByLabel('College category').selectOption('active_csi');
+await page.getByLabel('CSI student branch name').fill('CSI E2E Chapter');
 await page.getByLabel('City').fill('Mangaluru');
 await step('Faculty');
 
@@ -55,14 +65,13 @@ await page.getByRole('radio', { name: /^Yes/ }).check();
 await step('Delegation');
 
 // The accompanying coordinator is not counted as a student.
-for (let i = 0; i < 6; i++) await page.getByRole('button', { name: /Add a student/ }).click();
+for (let i = 0; i < 3; i++) await page.getByRole('button', { name: /Add a student/ }).click();
 const students = [
   ['Asha Rao', 'Computer Science', '3', '9876500001'],
   ['Bharath K', 'Electronics', '2', '9876500002'],
   ['Chitra S', 'Mechanical', '4', '9876500003'],
   ['Dev N', 'Information Science', '2', '9876500004'],
   ['Esha P', 'Electrical', '3', '9876500005'],
-  ['Farhan M', 'Civil', '1', '9876500006'],
 ];
 for (const [i, [name, dept, year, phone]] of students.entries()) {
   await page.locator(`#s${i}-fullName`).fill(name);
@@ -71,7 +80,8 @@ for (const [i, [name, dept, year, phone]] of students.entries()) {
   await page.locator(`#s${i}-contactNumber`).fill(phone);
   await page.locator(`#s${i}-email`).fill(`s${i}+${run}@example.edu`);
 }
-ok((await page.locator('.student-card').count()) === 6, 'six students are accepted independently of the accompanying faculty coordinator');
+ok((await page.locator('.student-card').count()) === 5, 'five students are accepted with an accompanying coordinator');
+ok(await page.getByRole('button', { name: /Add a student/ }).isDisabled(), 'the form caps delegations at five students');
 await step('Showcase');
 
 await page.getByRole('radio', { name: /Asha Rao/ }).check();
@@ -87,7 +97,7 @@ await page.getByRole('radio', { name: /^5/ }).check();
 for (const name of ['Asha Rao', 'Bharath K', 'Chitra S', 'Dev N', 'Esha P']) {
   await page.getByRole('checkbox', { name: new RegExp(name) }).check();
 }
-ok(await page.getByRole('checkbox', { name: /Farhan M/ }).isDisabled(), 'Expo teams are limited to five students');
+ok((await page.getByRole('radio', { name: /^1 student/ }).count()) === 0, 'Expo does not offer solo teams');
 await step('Stay');
 
 await page.getByRole('radio', { name: /^Yes/ }).check();
@@ -96,10 +106,35 @@ await page.getByRole('checkbox', { name: /Asha Rao/ }).check();
 await page.getByRole('checkbox', { name: /Bharath K/ }).check();
 ok((await page.getByRole('checkbox', { name: /Dr. Test Coordinator/ }).count()) === 0, 'faculty coordinator is not an accommodation student');
 await page.locator('#femaleAccommodationCount').fill('1');
-await step('Submit');
+await step('Payment');
 ok(await page.getByText(/must equal the 2 students selected/).isVisible(), 'accommodation counts must match selected students');
 await page.locator('#maleAccommodationCount').fill('1');
+await step('Payment');
+
+await page.getByLabel(/UTR Number/).fill(String(Date.now()).slice(-12));
 await step('Submit');
+ok(await page.getByText('Upload the payment proof screenshot.').isVisible(), 'payment requires a screenshot');
+
+const image = await page.evaluate(() => {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 800;
+  const ctx = canvas.getContext('2d');
+  const pixels = ctx.createImageData(800, 800);
+  for (let i = 0; i < pixels.data.length; i += 4) {
+    pixels.data[i] = Math.random() * 255;
+    pixels.data[i + 1] = Math.random() * 255;
+    pixels.data[i + 2] = Math.random() * 255;
+    pixels.data[i + 3] = 255;
+  }
+  ctx.putImageData(pixels, 0, 0);
+  return canvas.toDataURL('image/png').split(',')[1];
+});
+const largePng = Buffer.from(image, 'base64');
+ok(largePng.length > 1024 * 1024, 'test screenshot is larger than the upload limit');
+await page.locator('#paymentScreenshot').setInputFiles({ name: 'payment.png', mimeType: 'image/png', buffer: largePng });
+await page.getByText('payment.jpg', { exact: true }).waitFor();
+await step('Submit');
+ok(await page.getByText('payment.jpg', { exact: true }).isVisible(), 'compressed proof survives the payment step');
 
 ok(await page.getByText('Smart Water Grid · Energy & Resource Management').isVisible(), 'review step summarises the Expo entry');
 await page.getByRole('button', { name: /Submit registration/ }).click();

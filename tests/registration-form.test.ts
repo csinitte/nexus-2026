@@ -13,7 +13,7 @@ import {
   validateStep,
   type FormState,
 } from '../src/components/register/model';
-import { validateRegistration } from '../src/lib/nexus/validation';
+import { parseRegistrationRequest, validateRegistration } from '../src/lib/nexus/validation';
 
 const step = (id: (typeof STEPS)[number]['id']) => STEPS.findIndex((s) => s.id === id);
 const pdf = () => new File(['%PDF-1.4\n%%EOF'], 'abstract.pdf', { type: 'application/pdf' });
@@ -50,7 +50,6 @@ function completeState(overrides: Partial<FormState> = {}): FormState {
     femaleAccommodationCount: '1',
     accommodationPeople: ['s0', 's1'],
     utrNumber: '123456789012',
-    paymentScreenshot: png(),
     declarationAccepted: true,
     ...overrides,
   });
@@ -59,12 +58,12 @@ function completeState(overrides: Partial<FormState> = {}): FormState {
 describe('registration student counts', () => {
   test('faculty accompanying does not change the student count', () => {
     const state = completeState({
-      students: [...completeState().students, blankStudent(), blankStudent(), blankStudent()],
+      students: [...completeState().students, blankStudent(), blankStudent()],
       facultyAccompanying: 'yes',
     });
-    expect(studentCount(state)).toBe(6);
+    expect(studentCount(state)).toBe(5);
     state.facultyAccompanying = 'no';
-    expect(studentCount(state)).toBe(6);
+    expect(studentCount(state)).toBe(5);
   });
 
   test('shrinking the delegation drops selections for removed students', () => {
@@ -86,15 +85,15 @@ describe('registration student counts', () => {
     expect(next.students).toHaveLength(3);
   });
 
-  test('one student is valid even when faculty accompanies', () => {
+  test('one student is insufficient even when faculty accompanies', () => {
     const errors = validateStep(step('delegation'), completeState({ students: completeState().students.slice(0, 1) }), null);
-    expect(errors.totalRepresentatives).toBeUndefined();
+    expect(errors.totalRepresentatives).toContain('2–5');
   });
 
-  test('more than five students are accepted in one registration', () => {
+  test('more than five students are rejected in one registration', () => {
     const state = completeState({ students: [...completeState().students, blankStudent(), blankStudent(), blankStudent()] });
     expect(studentCount(state)).toBe(6);
-    expect(state.students).toHaveLength(6);
+    expect(validateStep(step('delegation'), state, null).totalRepresentatives).toContain('2–5');
   });
 
   test('duplicate student emails and names are flagged', () => {
@@ -108,12 +107,12 @@ describe('registration student counts', () => {
 
 describe('step validation', () => {
   test('a complete form has no invalid step', () => {
-    expect(firstInvalidStep(completeState(), pdf())).toBeNull();
+    expect(firstInvalidStep(completeState(), pdf(), png())).toBeNull();
   });
 
-  test('Expo team accepts 1–5 students and requires an abstract', () => {
+  test('Expo team accepts 2–5 students and requires an abstract', () => {
     const errors = validateStep(step('expo'), completeState({ expoTeamSize: '1', teamIndexes: [0] }), null);
-    expect(errors.teamIndexes).toBeUndefined();
+    expect(errors.expoTeamSize).toBeDefined();
     expect(errors.abstract).toBeDefined();
     expect(
       validateStep(
@@ -134,7 +133,7 @@ describe('step validation', () => {
     const payload = buildPayload(state);
     const { description, ...expoWithoutDescription } = payload.expo!;
     expect(description).toBe('');
-    const parsed = await validateRegistration({ ...payload, expo: { ...expoWithoutDescription, abstract: pdf() } });
+    const parsed = await validateRegistration({ ...payload, payment: { ...payload.payment, paymentScreenshot: png() }, expo: { ...expoWithoutDescription, abstract: pdf() } });
     expect(parsed.expo?.description).toBe('');
   });
 
@@ -142,7 +141,7 @@ describe('step validation', () => {
     const withoutName = completeState({ teamName: '   ' });
     expect(validateStep(step('expo'), withoutName, pdf()).teamName).toBeDefined();
     const payload = buildPayload(withoutName);
-    await expect(validateRegistration({ ...payload, expo: { ...payload.expo!, abstract: pdf() } })).rejects.toThrow('Expo team name');
+    await expect(validateRegistration({ ...payload, payment: { ...payload.payment, paymentScreenshot: png() }, expo: { ...payload.expo!, abstract: pdf() } })).rejects.toThrow('Expo team name');
     expect(validateStep(step('expo'), completeState({ participatingInExpo: 'no', teamName: '' }), null).teamName).toBeUndefined();
   });
 
@@ -151,9 +150,9 @@ describe('step validation', () => {
     expect(errors.accommodationCounts).toContain('must equal');
   });
 
-  test('abstract must be a PDF within 10 MB', () => {
+  test('abstract must be a PDF within 3 MB', () => {
     expect(validateAbstract(new File(['x'], 'a.docx', { type: 'application/msword' }))).toContain('PDF');
-    expect(validateAbstract(new File([new Uint8Array(11 * 1024 * 1024)], 'big.pdf', { type: 'application/pdf' }))).toContain('10 MB');
+    expect(validateAbstract(new File([new Uint8Array(4 * 1024 * 1024)], 'big.pdf', { type: 'application/pdf' }))).toContain('3 MB');
     expect(validateAbstract(pdf())).toBeNull();
   });
 
@@ -167,7 +166,7 @@ describe('step validation', () => {
   test('server messages map to the step that fixes them', () => {
     expect(stepForServerError('collegeName is required')).toBe(step('college'));
     expect(stepForServerError('Valid facultyCoordinatorEmail is required')).toBe(step('faculty'));
-    expect(stepForServerError('Expo team must contain 1-5 distinct registered students')).toBe(step('expo'));
+    expect(stepForServerError('Expo team must contain 2–5 distinct registered students')).toBe(step('expo'));
     expect(stepForServerError('Showcase presenter must be a registered student')).toBe(step('showcase'));
     expect(stepForServerError('Each student needs valid name, department, year, contact and email')).toBe(step('delegation'));
     expect(stepForServerError('Invalid accommodation details')).toBe(step('accommodation'));
@@ -177,7 +176,12 @@ describe('step validation', () => {
 describe('payload contract with the server', () => {
   test('the built payload passes server-side validation', async () => {
     const payload = buildPayload(completeState());
-    const parsed = await validateRegistration({ ...payload, expo: { ...payload.expo!, abstract: pdf() } });
+    const body = new FormData();
+    body.set('payload', JSON.stringify(payload));
+    body.set('abstract', pdf());
+    body.set('paymentScreenshot', png());
+    const parsed = await parseRegistrationRequest(new Request('http://localhost/api/registrations', { method: 'POST', body }));
+    expect(parsed.payment.paymentScreenshot?.name).toBe('screenshot.png');
     expect(parsed.students).toHaveLength(3);
     expect(parsed.chapterShowcasePresenter).toBe('Asha');
     expect(parsed.expo?.teamName).toBe('Grid Pioneers');
@@ -189,7 +193,7 @@ describe('payload contract with the server', () => {
     const payload = buildPayload(completeState({ participatingInExpo: 'no', accommodationRequired: 'no' }));
     expect(payload.expo).toBeUndefined();
     expect(payload.accommodationParticipantNames).toEqual([]);
-    const parsed = await validateRegistration(payload);
+    const parsed = await validateRegistration({ ...payload, payment: { ...payload.payment, paymentScreenshot: png() } });
     expect(parsed.participatingInExpo).toBe(false);
   });
 });

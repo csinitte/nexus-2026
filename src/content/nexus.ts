@@ -188,7 +188,7 @@ export const EXPO = {
     'Participants may showcase existing or newly developed projects, including research projects, prototypes, working models, software products, hardware systems, robotics, IoT, AI/ML applications, sustainable technologies and other engineering innovations or proof-of-concepts.',
   alignment: 'All projects, including those under Open Innovation, must align with the central theme.',
   categories: EXPO_PROJECT_CATEGORIES.map((title) => ({ title, text: CATEGORY_TEXT[title] })),
-  teamSize: '1–5 students',
+  teamSize: '2–5 students',
   abstractRequirements: [
     'Project Category',
     'Project / Product Title',
@@ -223,7 +223,7 @@ export const CONTACT = {
 
 export const ABSTRACT_INSTRUCTIONS = [
   'Deadline: 20 November 2026.',
-  'PDF format only, up to 10 MB.',
+  'PDF format only, up to 3 MB.',
   'Explain the project, problem statement, proposed solution and theme relevance.',
   'Existing and newly developed projects are accepted.',
   'All eligible registered teams proceed to the exhibition.',

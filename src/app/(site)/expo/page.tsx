@@ -27,7 +27,7 @@ export default function ExpoPage() {
         </p>
         <p className="lead">{EXPO.intro}</p>
         <p>Bring an existing project, prototype, software or hardware idea. All projects should fit the event theme.</p>
-        <p>Project Expo participation is optional. Teams may include 1–5 students, and multiple teams from the same college are welcome.</p>
+        <p>Project Expo participation is optional. Teams may include 2–5 students, and multiple teams from the same college are welcome.</p>
       </PageIntro>
 
       <dl className="detail-strip" data-reveal>

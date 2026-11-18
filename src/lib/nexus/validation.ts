@@ -1,4 +1,4 @@
-import { ARRIVAL_PLANS, EXPO_PROJECT_CATEGORIES, getMaxAbstractBytes, PAYMENT_CATEGORIES, MAX_PAYMENT_PROOF_BYTES, COLLEGE_CATEGORIES, MAX_EXPO_TEAM_MEMBERS, MIN_EXPO_TEAM_MEMBERS, CollegeCategory, collegeCategoryToPaymentCategory, collegeCategoryToFee } from './constants';
+import { ARRIVAL_PLANS, EXPO_PROJECT_CATEGORIES, getMaxAbstractBytes, PAYMENT_CATEGORIES, MAX_PAYMENT_PROOF_BYTES, COLLEGE_CATEGORIES, MAX_EXPO_TEAM_MEMBERS, MIN_EXPO_TEAM_MEMBERS, MIN_TOTAL_REPRESENTATIVES, MAX_TOTAL_REPRESENTATIVES, PAYMENT_PROOF_TYPES, isNmamit, CollegeCategory, collegeCategoryToPaymentCategory, collegeCategoryToFee } from './constants';
 
 export class ValidationError extends Error {
   constructor(public issues: string[]) {
@@ -116,10 +116,12 @@ export async function validateRegistration(raw: Record<string, unknown>): Promis
     errors.push('Invalid payment category');
   }
 
-  if (!screenshot) {
+  if (!screenshot?.size) {
     errors.push('Payment proof (screenshot) is required');
+  } else if (!PAYMENT_PROOF_TYPES.includes(screenshot.type)) {
+    errors.push('Choose a PNG or JPEG payment screenshot');
   } else if (screenshot.size > MAX_PAYMENT_PROOF_BYTES) {
-    errors.push('Payment screenshot must be under 5 MB');
+    errors.push('Choose a payment screenshot of 1 MB or smaller');
   }
 
   const payment: PaymentInput = {
@@ -157,6 +159,7 @@ export async function validateRegistration(raw: Record<string, unknown>): Promis
 
   if (!data.collegeName) errors.push('collegeName is required');
   if (!data.city) errors.push('city is required');
+  if (isActiveCsi && isNmamit(data.collegeName)) errors.push('NMAMIT, Nitte students must choose No Active CSI Branch as their college category');
 
   if (isActiveCsi) {
     if (!data.csiChapterName) errors.push('csiChapterName is required');
@@ -168,8 +171,8 @@ export async function validateRegistration(raw: Record<string, unknown>): Promis
     }
   }
 
-  if (!Number.isSafeInteger(data.totalRepresentatives) || data.totalRepresentatives < 1 || data.totalRepresentatives > 2147483647) {
-    errors.push('Student count must be a positive whole number');
+  if (!Number.isSafeInteger(data.totalRepresentatives) || data.totalRepresentatives < MIN_TOTAL_REPRESENTATIVES || data.totalRepresentatives > MAX_TOTAL_REPRESENTATIVES) {
+    errors.push(`Registration must contain ${MIN_TOTAL_REPRESENTATIVES}–${MAX_TOTAL_REPRESENTATIVES} students`);
   }
 
   if (students.length !== data.totalRepresentatives) {
@@ -211,7 +214,7 @@ export async function validateRegistration(raw: Record<string, unknown>): Promis
       errors.push('Expo title and category are required');
     }
     if (indexes.length < MIN_EXPO_TEAM_MEMBERS || indexes.length > MAX_EXPO_TEAM_MEMBERS || new Set(indexes).size !== indexes.length || indexes.some((i) => !Number.isInteger(i) || i < 0 || i >= students.length)) {
-      errors.push('Expo team must contain 1-5 distinct registered students');
+      errors.push(`Expo team must contain ${MIN_EXPO_TEAM_MEMBERS}–${MAX_EXPO_TEAM_MEMBERS} distinct registered students`);
     }
     if (!file || !file.name.toLowerCase().endsWith('.pdf') || file.type !== 'application/pdf' || file.size === 0 || file.size > getMaxAbstractBytes() || Buffer.from(await file.slice(0, 5).arrayBuffer()).toString() !== '%PDF-') {
       errors.push('A valid PDF abstract within the size limit is required');

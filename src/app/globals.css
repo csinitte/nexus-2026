@@ -5755,3 +5755,20 @@ a.hero-whatsapp:hover { background: var(--accent); color: #101510; }
   .panel-slide-poster { max-height: none; aspect-ratio: auto; }
   .panel-slide-poster img { object-fit: contain; height: auto; }
 }
+
+
+.registration-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(28rem, calc(100% - 2rem));
+  padding: clamp(1rem, 5vw, 1.75rem);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-solid);
+  color: var(--heading);
+}
+
+.registration-dialog::backdrop { background: rgb(0 0 0 / 75%); }
+.registration-dialog p { margin: 0.75rem 0 1.25rem; color: var(--text); }
+.registration-dialog-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.registration-dialog .button { white-space: normal; }

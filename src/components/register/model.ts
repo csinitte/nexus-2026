@@ -11,6 +11,10 @@ import {
   MAX_EXPO_TEAM_MEMBERS,
   MIN_EXPO_TEAM_MEMBERS,
   MIN_TOTAL_REPRESENTATIVES,
+  MAX_TOTAL_REPRESENTATIVES,
+  PAYMENT_PROOF_TYPES,
+  MAX_PAYMENT_PROOF_BYTES,
+  isNmamit,
   type CollegeCategory,
 } from '@/lib/nexus/constants';
 
@@ -51,7 +55,6 @@ export type FormState = {
   /** Keys: `s0`, `s1`, … for students requiring accommodation. */
   accommodationPeople: string[];
   utrNumber: string;
-  paymentScreenshot: File | null;
   declarationAccepted: boolean;
 };
 
@@ -88,7 +91,7 @@ export const initialState: FormState = {
   facultyCoordinatorEmail: '',
   facultyCoordinatorContact: '',
   facultyAccompanying: '',
-  students: [],
+  students: Array.from({ length: MIN_TOTAL_REPRESENTATIVES }, blankStudent),
   presenterIndex: null,
   participatingInExpo: '',
   teamName: '',
@@ -103,7 +106,6 @@ export const initialState: FormState = {
   femaleAccommodationCount: '0',
   accommodationPeople: [],
   utrNumber: '',
-  paymentScreenshot: null,
   declarationAccepted: false,
 };
 
@@ -145,13 +147,14 @@ export function validateAbstract(file: File | null): string | null {
   return null;
 }
 
-export function validateStep(step: number, state: FormState, abstract: File | null): Errors {
+export function validateStep(step: number, state: FormState, abstract: File | null, screenshot: File | null = null): Errors {
   const e: Errors = {};
   const count = studentCount(state);
   const isActiveCsi = state.collegeCategory === 'active_csi';
   switch (STEPS[step]?.id) {
     case 'college':
       required(e, 'collegeName', state.collegeName, 'your college name');
+      if (isActiveCsi && isNmamit(state.collegeName)) e.collegeCategory = 'For NMAMIT, Nitte, choose No Active CSI Branch.';
       if (isActiveCsi) required(e, 'csiChapterName', state.csiChapterName, 'your CSI student branch name');
       required(e, 'city', state.city, 'your city');
       break;
@@ -164,7 +167,8 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
       }
       break;
     case 'delegation': {
-      if (count < MIN_TOTAL_REPRESENTATIVES) e.totalRepresentatives = 'Add at least one student to this registration.';
+      if (count < MIN_TOTAL_REPRESENTATIVES || count > MAX_TOTAL_REPRESENTATIVES)
+        e.totalRepresentatives = `Register ${MIN_TOTAL_REPRESENTATIVES}–${MAX_TOTAL_REPRESENTATIVES} students.`;
       const emails = new Map<string, number>();
       const names = new Map<string, number>();
       state.students.forEach((s, i) => {
@@ -205,7 +209,7 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
         const team = state.teamIndexes.length;
         const teamSize = Number(state.expoTeamSize);
         if (!Number.isInteger(teamSize) || teamSize < MIN_EXPO_TEAM_MEMBERS || teamSize > MAX_EXPO_TEAM_MEMBERS)
-          e.expoTeamSize = 'Choose an Expo team size from 1 to 5 students.';
+          e.expoTeamSize = `Choose an Expo team size of ${MIN_EXPO_TEAM_MEMBERS}–${MAX_EXPO_TEAM_MEMBERS} students.`;
         else if (team !== teamSize) e.teamIndexes = `Select ${teamSize} team member${teamSize === 1 ? '' : 's'} (currently ${team}).`;
       }
       break;
@@ -229,17 +233,22 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
     case 'payment':
       if (!state.utrNumber.trim() || state.utrNumber.trim().length < 6)
         e.utrNumber = 'Enter the UPI Transaction ID / UTR Number from your payment.';
-      if (!state.paymentScreenshot)
-        e.paymentScreenshot = 'Upload the payment proof screenshot.';
-      else if (state.paymentScreenshot.size > 5 * 1024 * 1024)
-        e.paymentScreenshot = 'Payment screenshot must be under 5 MB.';
+      const screenshotError = validatePaymentScreenshot(screenshot);
+      if (screenshotError) e.paymentScreenshot = screenshotError;
       break;
   }
   return e;
 }
 
-export function firstInvalidStep(state: FormState, abstract: File | null): number | null {
-  for (let i = 0; i < STEPS.length; i++) if (Object.keys(validateStep(i, state, abstract)).length) return i;
+export function firstInvalidStep(state: FormState, abstract: File | null, screenshot: File | null = null): number | null {
+  for (let i = 0; i < STEPS.length; i++) if (Object.keys(validateStep(i, state, abstract, screenshot)).length) return i;
+  return null;
+}
+
+export function validatePaymentScreenshot(file: File | null): string | null {
+  if (!file?.size) return 'Upload the payment proof screenshot.';
+  if (!PAYMENT_PROOF_TYPES.includes(file.type)) return 'Choose a PNG or JPEG payment screenshot.';
+  if (file.size > MAX_PAYMENT_PROOF_BYTES) return 'Choose a payment screenshot of 1 MB or smaller.';
   return null;
 }
 
@@ -289,7 +298,6 @@ export function buildPayload(state: FormState) {
     payment: {
       collegeCategory: state.collegeCategory,
       utrNumber: state.utrNumber.trim(),
-      paymentScreenshot: state.paymentScreenshot,
     },
   };
 }
@@ -299,6 +307,7 @@ export function stepForServerError(message: string): number {
   const m = message.toLowerCase();
   if (/college|chapter(name| name)|city/.test(m) && !m.includes('showcase')) return 0;
   if (m.includes('faculty')) return 1;
+  if (m.includes('payment screenshot and abstract')) return 4;
   if (m.includes('expo') || m.includes('abstract') || m.includes('pdf')) return 4;
   if (m.includes('presenter') || m.includes('showcase')) return 3;
   if (m.includes('delegation') || m.includes('student')) return 2;

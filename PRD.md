@@ -450,7 +450,7 @@ Required information:
 - Theme Relevance
 - College and Team Details
 
-Team size: 1–5 students. The selection control must offer 1, 2, 3, 4 and 5.
+Team size: 2–5 students. The selection control must offer 2, 3, 4 and 5.
 
 All eligible registered teams proceed to the exhibition. Abstracts are reviewed for theme relevance, not shortlisting.
 
@@ -590,7 +590,7 @@ Collect the following details for each student representative:
 4. Contact Number
 5. Email ID
 
-Allow the registering person to enter the number of students in this registration. Do not count the faculty coordinator.
+Each registration must contain 2–5 students. Do not count the faculty coordinator.
 
 #### Delegation validation
 
@@ -647,7 +647,7 @@ Category options:
 
 #### Expo Team
 
-Team size: 1–5 students. The selection control must offer 1, 2, 3, 4 and 5.
+Team size: 2–5 students. The selection control must offer 2, 3, 4 and 5.
 
 Allow the user to select Expo team members from the already-entered student representatives.
 
@@ -655,7 +655,7 @@ Do not ask for their names, emails and phone numbers again.
 
 Validate that:
 
-- The team contains 1–5 students.
+- The team contains 2–5 students.
 - All selected team members belong to the registered college delegation.
 - Project Expo registration is optional and multiple teams from the same college are welcome.
 
@@ -670,7 +670,7 @@ Display:
 - All eligible registered teams proceed to the exhibition.
 - Abstracts are reviewed for theme relevance, not shortlisting.
 
-Recommended PDF upload limit: 10 MB, subject to confirmation.
+PDF upload limit: 3 MB.
 
 ### Section 6 — Accommodation Requirements
 
@@ -984,7 +984,7 @@ The first release is ready when:
 - Accommodation counts include students only and cannot exceed the registration's student count.
 - Student Branch Showcase presenter details are collected.
 - Expo fields appear only when required.
-- Expo teams contain 1–5 registered students.
+- Expo teams contain 2–5 registered students.
 - Abstract PDF upload works.
 - Accommodation requests are captured.
 - A unique registration ID is generated.
@@ -1059,7 +1059,7 @@ The following decisions must be retained during development:
 4. Every registered CSI chapter participates in the Chapter Showcase. Ask only for the presentation lead's name.
 5. There is no college-wide participant or registration limit; multiple registrations from one college are welcome.
 6. Faculty coordinators are not counted as students or accommodation guests.
-7. Expo team size is 1–5 students.
+7. Expo team size is 2–5 students.
 8. Expo team members should be selected from registered student representatives rather than entered again.
 9. The Expo abstract deadline is 20 November 2026.
 10. Accommodation requests are subject to availability.

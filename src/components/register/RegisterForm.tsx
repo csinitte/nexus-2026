@@ -134,7 +134,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
   };
 
   const next = () => {
-    const errs = validateStep(step, state, abstract);
+    const errs = validateStep(step, state, abstract, screenshot);
     setErrors(errs);
     if (Object.keys(errs).length) return focusFirstError(errs);
     const target = Math.min(step + 1, STEPS.length - 1);
@@ -147,9 +147,9 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
     if (step < STEPS.length - 1) return next();
     if (inFlight.current) return; // guards against double taps (PRD: no duplicate submissions)
 
-    const invalid = firstInvalidStep(state, abstract);
+    const invalid = firstInvalidStep(state, abstract, screenshot);
     if (invalid !== null) {
-      const errs = validateStep(invalid, state, abstract);
+      const errs = validateStep(invalid, state, abstract, screenshot);
       if (invalid !== step) goTo(invalid);
       setErrors(errs);
       return focusFirstError(errs);
@@ -170,7 +170,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
         const messages: string[] = data.errors ?? [
           data.error ??
             (response.status === 413
-              ? 'The upload was too large. Please choose a smaller file.'
+              ? 'The payment screenshot and abstract were too large together. Choose smaller files and try again.'
               : 'Registration could not be completed. Please try again.'),
         ];
         setProblems(messages.map((message) => ({ message: friendly(message, response.status), step: stepForServerError(message) })));
@@ -201,6 +201,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
     if (!window.confirm('Clear everything you have entered and start again?')) return;
     dispatch({ type: 'replace', state: initialState });
     setAbstract(null);
+    setScreenshot(null);
     setVisited(0);
     setDraftRestored(false);
     setProblems([]);
@@ -337,7 +338,7 @@ function friendly(message: string, status: number): string {
     [/facultyCoordinatorName is required/i, 'Enter the faculty coordinator’s name.'],
     [/facultyCoordinatorContact is required/i, 'Enter the faculty coordinator’s contact number.'],
     [/facultyCoordinatorEmail/i, 'Enter a valid faculty coordinator email.'],
-    [/A valid PDF abstract/i, 'Upload a valid PDF abstract (10 MB or smaller).'],
+    [/A valid PDF abstract/i, 'Upload a valid PDF abstract (3 MB or smaller).'],
   ];
   return map.find(([re]) => re.test(message))?.[1] ?? message;
 }

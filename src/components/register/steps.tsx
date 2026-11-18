@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useRef, useState } from 'react';
 import { ABSTRACT_INSTRUCTIONS, EVENT } from '@/content/nexus';
 import {
   COLLEGE_CATEGORIES,
@@ -9,6 +10,10 @@ import {
   MAX_EXPO_TEAM_MEMBERS,
   MIN_EXPO_TEAM_MEMBERS,
   MIN_TOTAL_REPRESENTATIVES,
+  MAX_TOTAL_REPRESENTATIVES,
+  MAX_PAYMENT_PROOF_BYTES,
+  PAYMENT_PROOF_TYPES,
+  isNmamit,
   PAYMENT_FEES,
 } from '@/lib/nexus/constants';
 import { CheckList, ChoiceGroup, FieldError, SelectField, TextArea, TextField } from './fields';
@@ -20,6 +25,7 @@ import {
   STEPS,
   delegationPeople,
   studentCount,
+  validatePaymentScreenshot,
   type Errors,
   type FormState,
   type StudentDraft,
@@ -46,8 +52,41 @@ const YES_NO = (yes: string, no: string, yesDetail?: string, noDetail?: string) 
 
 export function CollegeStep({ state, errors, update }: StepProps) {
   const isActiveCsi = state.collegeCategory === 'active_csi';
+  const dialog = useRef<HTMLDialogElement>(null);
+  const shown = useRef(false);
+  const [confirmedHost, setConfirmedHost] = useState(false);
+  const showNmamitNotice = () => {
+    if (!dialog.current || dialog.current.open) return;
+    setConfirmedHost(false);
+    dialog.current.showModal();
+  };
   return (
-    <div className="fields">
+    <div className="fields" onBlur={(event) => {
+      if ((event.target as HTMLElement).id !== 'collegeName' || !isNmamit(state.collegeName) || shown.current) return;
+      shown.current = true;
+      showNmamitNotice();
+    }}>
+      <dialog ref={dialog} className="registration-dialog" aria-labelledby="nmamit-category-title" aria-describedby="nmamit-category-description">
+        <h3 id="nmamit-category-title">Are you from NMAMIT, Nitte?</h3>
+        <p id="nmamit-category-description" aria-live="polite">
+          {confirmedHost
+            ? 'Since NMAMIT, Nitte is hosting NEXUS, choose “No Active CSI Branch” as your registration category.'
+            : 'Confirm whether NMAM Institute of Technology, Nitte is your college.'}
+        </p>
+        <div className="registration-dialog-actions">
+          <button type="button" className="button" onClick={() => {
+            if (!confirmedHost) {
+              setConfirmedHost(true);
+              return;
+            }
+            update({ collegeCategory: 'no_active_csi' });
+            dialog.current?.close();
+          }}>{confirmedHost ? 'Use No Active CSI Branch' : 'Yes, I’m from NMAMIT'}</button>
+          {!confirmedHost && (
+            <button type="button" className="button outline" onClick={() => dialog.current?.close()}>No</button>
+          )}
+        </div>
+      </dialog>
       <TextField
         id="collegeName"
         label="College name"
@@ -61,7 +100,10 @@ export function CollegeStep({ state, errors, update }: StepProps) {
         id="collegeCategory"
         label="College category"
         value={state.collegeCategory}
-        onChange={(collegeCategory) => update({ collegeCategory: collegeCategory as typeof state.collegeCategory })}
+        onChange={(collegeCategory) => {
+          update({ collegeCategory: collegeCategory as typeof state.collegeCategory });
+          if (collegeCategory === 'active_csi' && isNmamit(state.collegeName)) showNmamitNotice();
+        }}
         options={COLLEGE_CATEGORIES.map((c) => ({ value: c, label: c === 'active_csi' ? 'Active CSI Branch' : 'No Active CSI Branch' }))}
         error={errors.collegeCategory}
         placeholder="Select college category"
@@ -100,7 +142,7 @@ export function FacultyStep({ state, errors, update }: StepProps) {
   const isActiveCsi = state.collegeCategory === 'active_csi';
   if (!isActiveCsi) {
     return (
-      <p className="step-note">Your college does not have an active CSI branch. Faculty coordinator details are not required.</p>
+      <p className="step-note">You can continue without faculty coordinator details for this registration category.</p>
     );
   }
   return (
@@ -162,7 +204,7 @@ export function DelegationStep({ state, errors, update, updateStudent }: StepPro
     <>
       <div className="limit-banner">
         <strong>Multiple teams from the same college are welcome</strong>
-        <span>Student counts apply to this registration only. The faculty coordinator is not included.</span>
+        <span>Register {MIN_TOTAL_REPRESENTATIVES}–{MAX_TOTAL_REPRESENTATIVES} students per delegation. The faculty coordinator is counted separately.</span>
       </div>
       <FieldError id="totalRepresentatives" message={errors.totalRepresentatives} />
       {state.students.map((s, i) => {
@@ -233,6 +275,7 @@ export function DelegationStep({ state, errors, update, updateStudent }: StepPro
         id="totalRepresentatives"
         type="button"
         className="button outline"
+        disabled={count >= MAX_TOTAL_REPRESENTATIVES}
         onClick={() => update({ students: [...state.students, blankStudent()] })}
       >
         Add a student <span aria-hidden="true">+</span>
@@ -313,7 +356,7 @@ export function ExpoStep({ state, errors, update, abstract, setAbstract }: StepP
               update({ expoTeamSize, teamIndexes: state.teamIndexes.slice(0, teamSize) });
             }}
             error={errors.expoTeamSize}
-            options={Array.from({ length: MAX_EXPO_TEAM_MEMBERS }, (_, i) => {
+            options={Array.from({ length: MAX_EXPO_TEAM_MEMBERS - MIN_EXPO_TEAM_MEMBERS + 1 }, (_, i) => {
               const size = i + MIN_EXPO_TEAM_MEMBERS;
               return { value: String(size), label: String(size), detail: `${size} student${size === 1 ? '' : 's'}` };
             })}
@@ -510,9 +553,30 @@ function NumberField({
   }
 export function PaymentStep({ state, errors, update, screenshot, setScreenshot }: StepProps) {
   const fee = state.collegeCategory === 'active_csi' ? PAYMENT_FEES.ACTIVE_CSI : PAYMENT_FEES.NO_ACTIVE_CSI;
-  const handleFile = (file: File | null) => {
-    setScreenshot(file);
-  };
+  const [preparing, setPreparing] = useState(false);
+  const [fileError, setFileError] = useState('');
+
+  async function handleFile(input: HTMLInputElement) {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    setScreenshot(null);
+    setFileError('');
+    setPreparing(true);
+    try {
+      const proof = file.size > MAX_PAYMENT_PROOF_BYTES && PAYMENT_PROOF_TYPES.includes(file.type)
+        ? await compressScreenshot(file)
+        : file;
+      if (!input.isConnected) return;
+      const error = validatePaymentScreenshot(proof);
+      if (error) setFileError(error);
+      else setScreenshot(proof);
+    } catch {
+      if (input.isConnected) setFileError('Could not read this screenshot. Choose another PNG or JPEG.');
+    } finally {
+      if (input.isConnected) setPreparing(false);
+    }
+  }
   return (
     <div className="fields">
       <p className="step-note">
@@ -544,28 +608,51 @@ export function PaymentStep({ state, errors, update, screenshot, setScreenshot }
         </label>
         <label
           htmlFor="paymentScreenshot"
-          className={`dropzone${errors.paymentScreenshot ? ' has-error' : ''}`}
+          className={`dropzone${(fileError || errors.paymentScreenshot) ? ' has-error' : ''}`}
         >
           <input
             id="paymentScreenshot"
             type="file"
-            accept="image/png,image/jpeg,image/jpg"
+            accept={PAYMENT_PROOF_TYPES.join(',')}
             className="sr-only"
-            onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+            disabled={preparing}
+            aria-invalid={Boolean(fileError || errors.paymentScreenshot)}
+            aria-describedby={`payment-screenshot-hint${fileError || errors.paymentScreenshot ? ' paymentScreenshot-error' : ''}`}
+            onChange={(e) => void handleFile(e.currentTarget)}
           />
-          <span className="dropzone-emoji">📄</span>
-          <span className="dropzone-text">
-            {screenshot
-              ? screenshot.name
-              : 'Drop PNG/JPG/JPEG here or click to browse'}
-            <br />
-            Max 5 MB.
+          <span className="dropzone-text" role="status">
+            {preparing ? 'Preparing screenshot…' : (screenshot?.name ?? 'Choose a PNG or JPEG screenshot')}
           </span>
         </label>
-        <FieldError id="paymentScreenshot" message={errors.paymentScreenshot} />
+        <p id="payment-screenshot-hint" className="field-hint">Large screenshots are compressed for upload. If you reload, select the file again.</p>
+        <FieldError id="paymentScreenshot" message={fileError || errors.paymentScreenshot} />
       </div>
     </div>
   );
+}
+
+async function compressScreenshot(file: File): Promise<File> {
+  const image = await createImageBitmap(file);
+  try {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d', { alpha: false });
+    if (!context) throw new Error('Image conversion unavailable');
+    for (const maxSide of [2000, 1600, 1200]) {
+      const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+      if (blob && blob.size <= MAX_PAYMENT_PROOF_BYTES) {
+        return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: blob.type });
+      }
+    }
+    return file;
+  } finally {
+    image.close();
+  }
 }
 
 export function ReviewStep({ state, errors, update, abstract, screenshot, goTo }: StepProps) {

@@ -134,7 +134,7 @@ export default function HomePage() {
               industry interactions, chapter presentations and project exhibitions.
             </p>
             <p className="deck-text">
-              Multiple teams from the same college are welcome. Project Expo is optional; teams of 1–5 students can submit a PDF abstract by{' '}
+              Multiple teams from the same college are welcome. Project Expo is optional; teams of 2–5 students can submit a PDF abstract by{' '}
               {EVENT.abstractDeadlineDisplay}.
             </p>
             <ul className="deck-stats" aria-label="Participation highlights">

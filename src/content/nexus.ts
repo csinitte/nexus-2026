@@ -222,7 +222,7 @@ export const CONTACT = {
 };
 
 export const ABSTRACT_INSTRUCTIONS = [
-  'Deadline: 20 November 2026.',
+  `Deadline: ${EVENT.abstractDeadlineDisplay}.`,
   'PDF format only, up to 3 MB.',
   'Explain the project, problem statement, proposed solution and theme relevance.',
   'Existing and newly developed projects are accepted.',

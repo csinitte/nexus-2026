@@ -7,8 +7,8 @@ export const NEXUS_EVENT = {
   venue: "NMAM Institute of Technology (NMAMIT), Nitte, Karnataka",
   eventDateIso: "2026-11-25",
   eventDateDisplay: "25 November 2026",
-  abstractDeadlineIso: "2026-11-20",
-  abstractDeadlineDisplay: "20 November 2026",
+  abstractDeadlineIso: "2026-11-23",
+  abstractDeadlineDisplay: "23 November 2026",
   website: "csinmamit.in",
   instagram: "@csi_nmamit",
   contacts: [

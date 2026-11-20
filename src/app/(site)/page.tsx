@@ -94,6 +94,18 @@ export default function HomePage() {
               ) : (
                 <p className="hero-brochure hero-brochure-pending">Brochure coming soon</p>
               )}
+              <Link className="hero-deadline" href="/expo">
+                <span className="hero-deadline-label">Deadline extended</span>
+                <span className="hero-deadline-window">
+                  <span className="hero-deadline-track">
+                    <span className="hero-deadline-slide">
+                      Expo abstracts due <time dateTime={EVENT.abstractDeadlineIso}>{EVENT.abstractDeadlineDisplay}</time>
+                    </span>
+                    <span className="hero-deadline-slide" aria-hidden="true">Upload your PDF when you register</span>
+                  </span>
+                </span>
+                <span className="hero-deadline-arrow" aria-hidden="true">↗</span>
+              </Link>
               <div className="hero-ctas">
                 <Link className="button" href="/register">
                   Register now <span aria-hidden="true">↗</span>

@@ -5578,6 +5578,51 @@ a.hero-whatsapp:hover { background: var(--accent); color: #101510; }
 .hero-copy .hero-subtitle { margin-bottom: clamp(8px, 1.4vh, 14px); }
 .hero-copy .eyebrow { margin-bottom: 0; }
 .hero-copy .hero-brochure { margin: 9px 0 14px; }
+.hero-deadline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  width: min(100%, 34rem);
+  min-height: 44px;
+  margin: 0 0 12px;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-solid));
+  color: var(--heading);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.hero-deadline-label {
+  display: grid;
+  align-self: stretch;
+  place-items: center;
+  padding: 5px 11px;
+  background: var(--accent);
+  color: #101510;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.hero-deadline-window { overflow: hidden; }
+.hero-deadline-track {
+  display: grid;
+  grid-auto-columns: 100%;
+  grid-auto-flow: column;
+}
+.hero-deadline-slide { align-content: center; padding: 6px 8px; }
+.hero-deadline time { color: var(--accent); font-weight: 700; white-space: nowrap; }
+.hero-deadline-arrow { padding-right: 10px; color: var(--accent); }
+.hero-deadline:hover { background: color-mix(in srgb, var(--accent) 22%, var(--surface-solid)); }
+.hero-deadline:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.intro-playing) .deck-hero.is-active .hero-deadline-track {
+    animation: hero-deadline-carousel 4.6s cubic-bezier(.25, .65, .25, 1);
+  }
+}
+@keyframes hero-deadline-carousel {
+  0%, 40%, 100% { transform: translateX(0); }
+  50%, 90% { transform: translateX(-100%); }
+}
 @media (max-width: 700px) {
   .hero-corners { top: calc(var(--header-h) + 12px); bottom: auto; align-items: flex-start; }
   /* Keep the artwork below the host-logo row on narrow screens. */

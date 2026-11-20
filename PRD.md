@@ -437,7 +437,7 @@ All projects, including those under Open Innovation, must align with the central
 
 #### Phase 01 — Abstract Submission
 
-Deadline: 20 November 2026
+Deadline: 23 November 2026
 
 Participants must submit their project abstract in PDF format through the NEXUS registration portal.
 
@@ -663,7 +663,7 @@ Validate that:
 
 Display:
 
-- Deadline: 20 November 2026.
+- Deadline: 23 November 2026.
 - PDF format only.
 - The abstract should explain the project, problem statement, proposed solution and theme relevance.
 - Existing and newly developed projects are accepted.
@@ -1061,7 +1061,7 @@ The following decisions must be retained during development:
 6. Faculty coordinators are not counted as students or accommodation guests.
 7. Expo team size is 2–5 students.
 8. Expo team members should be selected from registered student representatives rather than entered again.
-9. The Expo abstract deadline is 20 November 2026.
+9. The Expo abstract deadline is 23 November 2026.
 10. Accommodation requests are subject to availability.
 11. Jury management and project evaluation are deferred to a later phase.
 12. Keep registration short and collect only essential information.

@@ -1,3 +1,20 @@
+import { after } from 'next/server';
 import { parseRegistrationRequest, ValidationError } from '@/lib/nexus/validation';
-import { createRegistration } from '@/lib/nexus/registration-service';
-export async function POST(req:Request){try{return Response.json(await createRegistration(await parseRegistrationRequest(req)),{status:201});}catch(e){if(e instanceof ValidationError)return Response.json({errors:e.issues},{status:400});if(e instanceof SyntaxError)return Response.json({error:'Invalid request body'},{status:400});if(String(e).includes('active_utr_unique')||String((e as {cause?:unknown})?.cause).includes('active_utr_unique'))return Response.json({error:'This UTR number has already been used for another registration'}, {status:409});console.error(e);return Response.json({error:'Registration could not be completed'},{status:500});}}
+import { createRegistration, deliverRegistrationConfirmation } from '@/lib/nexus/registration-service';
+
+export async function POST(req: Request) {
+  try {
+    const result = await createRegistration(await parseRegistrationRequest(req));
+    const response = Response.json(result, { status: 201 });
+    after(() => deliverRegistrationConfirmation(result));
+    return response;
+  } catch (error) {
+    if (error instanceof ValidationError) return Response.json({ errors: error.issues }, { status: 400 });
+    if (error instanceof SyntaxError) return Response.json({ error: 'Invalid request body' }, { status: 400 });
+    if (String(error).includes('active_utr_unique') || String((error as { cause?: unknown })?.cause).includes('active_utr_unique')) {
+      return Response.json({ error: 'This UTR number has already been used for another registration' }, { status: 409 });
+    }
+    console.error(error);
+    return Response.json({ error: 'Registration could not be completed' }, { status: 500 });
+  }
+}

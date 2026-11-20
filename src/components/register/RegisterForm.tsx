@@ -187,7 +187,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
     } catch {
       setProblems([
         {
-          message: 'We couldn’t reach the server. Check your connection and try again — your details are still here.',
+          message: 'We didn’t receive a confirmation. Your details are still here. You can retry with the same UTR. There’s no need to pay again.',
           step: STEPS.length - 1,
         },
       ]);
@@ -208,7 +208,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
     goTo(0);
   };
 
-  if (result) return <RegistrationSuccess result={result} coordinatorEmail={state.facultyCoordinatorEmail} />;
+  if (result) return <RegistrationSuccess result={result} />;
 
   const Step = STEP_COMPONENTS[step];
   const current = STEPS[step];
@@ -330,7 +330,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
 
 function friendly(message: string, status: number): string {
   if (status === 409)
-    return 'This UTR number has already been used for another registration. Enter the UTR from this registration’s payment.';
+    return 'This UTR is already linked to a registration. If you just submitted, contact the organising team to confirm your registration ID before paying again.';
   const map: [RegExp, string][] = [
     [/collegeName is required/i, 'Enter your college name.'],
     [/csiChapterName is required/i, 'Enter your CSI branch name.'],

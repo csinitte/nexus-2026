@@ -137,25 +137,6 @@ export async function createRegistration(input: RegistrationInput) {
   }
 
   const confirmationToken = createConfirmationToken(code);
-  let delivery: { status: string };
-  try {
-    delivery = await sendRegistrationConfirmationEmail({
-      ...registration,
-      confirmationToken,
-      teamName: input.expo?.teamName,
-      contactEmail: input.students[0]?.email,
-    });
-    if (delivery.status === 'sent') {
-      await db
-        .update(collegeRegistrations)
-        .set({ confirmationEmailSentAt: new Date() })
-        .where(eq(collegeRegistrations.id, registration.id));
-    }
-  } catch (e) {
-    console.error('Confirmation email failed', e);
-    delivery = { status: 'failed' };
-  }
-
   return {
     registrationCode: code,
     message: 'Registration submitted successfully',
@@ -171,8 +152,30 @@ export async function createRegistration(input: RegistrationInput) {
         }
       : null,
     confirmationToken,
-    emailDelivery: delivery,
   };
+}
+
+export async function deliverRegistrationConfirmation(result: Awaited<ReturnType<typeof createRegistration>>) {
+  try {
+    const delivery = await sendRegistrationConfirmationEmail({
+      ...result.summary,
+      confirmationToken: result.confirmationToken,
+      teamName: result.expo?.teamName,
+      contactEmail: result.participants[0]?.email,
+    });
+    if (delivery.status === 'sent') {
+      const db = await getDb();
+      await db
+        .update(collegeRegistrations)
+        .set({ confirmationEmailSentAt: new Date() })
+        .where(eq(collegeRegistrations.id, result.summary.id));
+    }
+  } catch (cause) {
+    console.error('Registration confirmation email failed', {
+      registrationCode: result.registrationCode,
+      code: (cause as { code?: unknown } | null)?.code,
+    });
+  }
 }
 
 export async function registrationDetail(id: string) {

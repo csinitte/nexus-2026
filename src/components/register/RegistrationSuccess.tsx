@@ -7,7 +7,6 @@ export type RegistrationResult = {
   registrationCode: string;
   whatsappLink: string | null;
   confirmationToken: string | null;
-  emailDelivery?: { status: 'sent' | 'skipped' | 'failed' | string };
   summary: {
     collegeName: string;
     csiChapterName: string;
@@ -30,12 +29,11 @@ const ARRIVAL: Record<string, string> = {
   '2026-11-25_MORNING': '25 November 2026, event morning',
 };
 
-export function RegistrationSuccess({ result, coordinatorEmail }: { result: RegistrationResult; coordinatorEmail: string }) {
+export function RegistrationSuccess({ result }: { result: RegistrationResult }) {
   const s = result.summary;
   const summaryHref = result.confirmationToken
     ? `/summary#${encodeURIComponent(result.registrationCode)}:${encodeURIComponent(result.confirmationToken)}`
     : null;
-  const emailed = result.emailDelivery?.status === 'sent';
 
   return (
     <div className="success" aria-live="polite">
@@ -54,9 +52,7 @@ export function RegistrationSuccess({ result, coordinatorEmail }: { result: Regi
 
       <p>
         We look forward to welcoming your delegation to NMAMIT, Nitte, on {EVENT.eventDateDisplay}.{' '}
-        {emailed
-          ? `A confirmation has been sent to ${s.facultyCoordinatorEmail || coordinatorEmail}.`
-          : 'Please save or print this summary — keep your registration ID for any queries.'}
+        Save or print this summary and keep your registration ID for any queries.
       </p>
 
       <div className="success-actions no-print">

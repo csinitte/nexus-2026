@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Icon, type IconName } from './Icons';
 
 const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -77,7 +78,7 @@ export function SlideTabs<T extends string>({
   onChange,
   label,
 }: {
-  tabs: readonly (readonly [T, string])[];
+  tabs: readonly (readonly [T, string] | readonly [T, string, IconName])[];
   value: T;
   onChange: (t: T) => void;
   label: string;
@@ -95,7 +96,7 @@ export function SlideTabs<T extends string>({
   }, [value]);
   return (
     <div className="p2-slidetabs" role="tablist" aria-label={label} ref={wrap}>
-      {tabs.map(([id, text], i) => (
+      {tabs.map(([id, text, icon], i) => (
         <button
           key={id}
           type="button"
@@ -108,7 +109,7 @@ export function SlideTabs<T extends string>({
             e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
           }}
         >
-          <span aria-hidden="true">{String(i + 1).padStart(2, '0')}</span> {text}
+          {icon ? <Icon name={icon} size={16} /> : <span aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>} {text}
         </button>
       ))}
       <span className="p2-slidetabs-bar" style={{ transform: `translateX(${bar.left}px)`, width: bar.width }} aria-hidden="true" />

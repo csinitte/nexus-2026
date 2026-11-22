@@ -54,3 +54,8 @@ export const participants = pgTable('participants', { id: uuid('id').primaryKey(
 export const expoProjects = pgTable('expo_projects', { id:uuid('id').primaryKey().defaultRandom(), registrationId:uuid('registration_id').notNull().unique().references(() => collegeRegistrations.id,{onDelete:'cascade'}), teamName:text('team_name'), projectTitle:text('project_title').notNull(), category:text('category').notNull(), description:text('description').notNull(), abstractStorageProvider:text('abstract_storage_provider').notNull(), abstractStorageKey:text('abstract_storage_key').notNull(), abstractFileName:text('abstract_file_name').notNull(), abstractMimeType:text('abstract_mime_type').notNull(), abstractSizeBytes:integer('abstract_size_bytes').notNull(), abstractSha256:text('abstract_sha256').notNull(), reviewStatus:text('review_status').notNull().default('Not Reviewed'), internalRemarks:text('internal_remarks'), ...times() });
 export const expoTeamMembers = pgTable('expo_team_members', {projectId:uuid('project_id').notNull().references(() => expoProjects.id,{onDelete:'cascade'}),participantId:uuid('participant_id').notNull().references(() => participants.id,{onDelete:'cascade'})}, t=>[primaryKey({columns:[t.projectId,t.participantId]})]);
 export const adminUsers = pgTable('admin_users', {id:uuid('id').primaryKey().defaultRandom(), name:text('name').notNull(), email:text('email').notNull().unique(), role:text('role').notNull().default('admin'), passwordHash:text('password_hash').notNull(), active:boolean('active').notNull().default(true), lastLoginAt:timestamp('last_login_at',{withTimezone:true}), ...times()});
+
+export const juryControl = pgTable('jury_control', {
+  id: integer('id').primaryKey(),
+  state: jsonb('state').notNull(),
+});

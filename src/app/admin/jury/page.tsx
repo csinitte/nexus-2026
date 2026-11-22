@@ -3,7 +3,7 @@ import { JuryAdmin } from '@/components/phase2/JuryAdmin';
 import '@/components/phase2/phase2.css';
 
 export const metadata: Metadata = {
-  title: 'Jury control (preview)',
+  title: 'Jury control',
   robots: { index: false, follow: false },
 };
 

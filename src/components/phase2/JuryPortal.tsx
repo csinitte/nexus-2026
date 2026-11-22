@@ -2,52 +2,29 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { Wordmark } from '@/components/site/Wordmark';
-import { PreviewBanner } from './PreviewBanner';
 import { Ring } from './Fx';
 import { ScoreRadar } from './ScoreRadar';
 import { WaveField } from './WaveField';
 import { Icon } from './Icons';
-import { CRITERIA, MAX_PER_CRITERION, MAX_TOTAL, PANEL_NAMES, SLOT, SLOT_TOTAL, TEAMS, blankScores, total, type Juror, type Scores, type Team } from './mock';
-import { jury, useJury } from './juryStore';
-import { PHASE_LABEL, clock, remainingOf, unlockAudio, usePhaseAlerts, type Phase } from './juryTimer';
+import { CRITERIA, MAX_PER_CRITERION, MAX_TOTAL, PANEL_NAMES, SLOT, SLOT_TOTAL, blankScores, total, type Juror, type Scores, type Team } from './jury-types';
+import { jury, signInJuror, signOutJuror, useJury, useJuryConnection } from './juryStore';
+import { PHASE_LABEL, beep, clock, remainingOf, unlockAudio, usePhaseAlerts, type Phase } from './juryTimer';
 
 const pad = (n: number) => String(n).padStart(2, '0');
-const SESSION_KEY = 'nexus-jury-login';
-
 export function JuryPortal() {
-  const st = useJury();
-  const [jurorId, setJurorId] = useState<string | null>(null);
+  const { state, status, error } = useJuryConnection('portal');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [signOutError, setSignOutError] = useState('');
+  const juror = state.me;
 
-  // Stay signed in for this tab.
-  useEffect(() => {
+  async function signOut() {
     try {
-      const saved = sessionStorage.getItem(SESSION_KEY);
-      if (saved) queueMicrotask(() => setJurorId(saved));
+      await signOutJuror();
+      setOpenId(null);
+      setSignOutError('');
     } catch {
-      /* ignore */
+      setSignOutError('Could not sign out. Please try again.');
     }
-  }, []);
-
-  const juror = st.jurors.find((j) => j.id === jurorId) ?? null;
-
-  function signIn(j: Juror) {
-    unlockAudio();
-    try {
-      sessionStorage.setItem(SESSION_KEY, j.id);
-    } catch {
-      /* ignore */
-    }
-    setJurorId(j.id);
-  }
-  function signOut() {
-    try {
-      sessionStorage.removeItem(SESSION_KEY);
-    } catch {
-      /* ignore */
-    }
-    setJurorId(null);
-    setOpenId(null);
   }
 
   return (
@@ -64,8 +41,9 @@ export function JuryPortal() {
         )}
       </header>
       <main id="main" className="section page p2-app-main" tabIndex={-1}>
-        <PreviewBanner note={juror ? 'Demo data — the timer is controlled from /admin/jury' : 'Demo logins are listed in /admin/jury'} />
-        {juror ? <JurorHome juror={juror} openId={openId} setOpenId={setOpenId} /> : <SignIn onSignedIn={signIn} />}
+        {(error || signOutError) && <p className="form-alert" role="alert">{signOutError || error}</p>}
+        {status === 'loading' ? <p role="status">Checking your jury session…</p> :
+          juror ? <JurorHome juror={juror} openId={openId} setOpenId={setOpenId} /> : <SignIn />}
       </main>
     </div>
   );
@@ -73,17 +51,26 @@ export function JuryPortal() {
 
 /* ---------- Sign in ---------- */
 
-function SignIn({ onSignedIn }: { onSignedIn: (j: Juror) => void }) {
-  const st = useJury();
+function SignIn() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  function submit(e: FormEvent) {
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: FormEvent) {
     e.preventDefault();
-    const j = st.jurors.find((x) => x.username.toLowerCase() === username.trim().toLowerCase());
-    if (!j || j.password !== password.trim()) return setError('Username or password is wrong. Check the login the organisers shared with you.');
-    onSignedIn(j);
+    if (busy) return;
+    unlockAudio();
+    setBusy(true);
+    setError('');
+    try {
+      await signInJuror(username, password);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Sign-in failed. Try again.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -118,8 +105,8 @@ function SignIn({ onSignedIn }: { onSignedIn: (j: Juror) => void }) {
               {error}
             </p>
           )}
-          <button className="button">
-            Sign in <span aria-hidden="true">↗</span>
+          <button className="button" disabled={busy}>
+            {busy ? 'Signing in…' : 'Sign in'} <span aria-hidden="true">↗</span>
           </button>
         </form>
 
@@ -170,9 +157,9 @@ function JurorHome({ juror, openId, setOpenId }: { juror: Juror; openId: string 
   }, [toast]);
 
   const order = st.order[juror.panel];
-  const mine = order.map((id) => TEAMS.find((t) => t.id === id)!);
+  const mine = order.map((id) => st.teams.find((t) => t.id === id)!);
   const done = mine.filter((t) => st.evals[t.id]?.[juror.id]).length;
-  const current = session.teamId ? TEAMS.find((t) => t.id === session.teamId) ?? null : null;
+  const current = session.teamId ? st.teams.find((t) => t.id === session.teamId) ?? null : null;
   const open = openId ? mine.find((t) => t.id === openId) ?? null : null;
 
   return (
@@ -184,7 +171,7 @@ function JurorHome({ juror, openId, setOpenId }: { juror: Juror; openId: string 
           </span>
           <div>
             <strong>{toast.phase === 'qa' ? 'Presentation time is over' : 'Q&A time is over'}</strong>
-            <p>{toast.phase === 'qa' ? `Q&A has started for ${TEAMS.find((t) => t.id === toast.team)?.title ?? 'this team'} — 5 minutes.` : 'Please finish and submit your score.'}</p>
+            <p>{toast.phase === 'qa' ? `Q&A has started for ${st.teams.find((t) => t.id === toast.team)?.title ?? 'this team'} — 5 minutes.` : 'Please finish and submit your score.'}</p>
           </div>
           <button type="button" className="p2-copy" onClick={() => setToast(null)}>
             OK
@@ -192,6 +179,7 @@ function JurorHome({ juror, openId, setOpenId }: { juror: Juror; openId: string 
         </div>
       )}
 
+      <button type="button" className="text-link" onClick={() => { unlockAudio(); beep(1); }}>Test timer sound</button>
       {current && <LiveStrip compact={open?.id === current.id} team={current} phase={phase} elapsed={elapsed} running={session.running} onScore={() => setOpenId(current.id)} scored={!!st.evals[current.id]?.[juror.id]} showScore={open?.id !== current.id} />}
 
       {open ? (
@@ -202,9 +190,8 @@ function JurorHome({ juror, openId, setOpenId }: { juror: Juror; openId: string 
           index={order.indexOf(open.id)}
           initial={st.evals[open.id]?.[juror.id]}
           onBack={() => setOpenId(null)}
-          onSubmit={(scores, comment) => {
-            jury.submitEval(open.id, juror.id, scores, comment);
-            setOpenId(null);
+          onSubmit={async (scores, comment) => {
+            if (await jury.submitEval(open.id, scores, comment) !== false) setOpenId(null);
           }}
         />
       ) : (

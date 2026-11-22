@@ -61,7 +61,7 @@ export default function ExpoPage() {
             <span className="expo-step-number">01</span><div><span className="expo-step-label">BY {EVENT.abstractDeadlineDisplay.toUpperCase()}</span><h3>Submit your abstract</h3><p>Register your team and upload a PDF about your project.</p><span className="expo-step-note">{EXPO.teamSize} per team · Reviewed for theme relevance</span></div>
           </article>
           <article className="expo-step">
-            <span className="expo-step-number">02</span><div><span className="expo-step-label">{EVENT.eventDateDisplay.toUpperCase()} · {EVENT.venueShort.toUpperCase()}</span><h3>Show it at NEXUS</h3><p>Present your project and demonstrate it to the jury at NMAMIT.</p><span className="expo-step-note">7 min presentation & demo · 3 min jury Q&amp;A</span></div>
+            <span className="expo-step-number">02</span><div><span className="expo-step-label">{EVENT.eventDateDisplay.toUpperCase()} · {EVENT.venueShort.toUpperCase()}</span><h3>Show it at NEXUS</h3><p>Present your project and demonstrate it to the jury at NMAMIT.</p><span className="expo-step-note">5 min presentation & demo · 5 min jury Q&amp;A</span></div>
           </article>
         </div>
         <p className="expo-journey-footnote">All eligible registered teams proceed to the exhibition; abstracts are not used for shortlisting.</p>

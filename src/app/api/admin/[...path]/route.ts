@@ -1,4 +1,4 @@
-import { and, eq, ilike, or } from 'drizzle-orm';
+import { and, asc, eq, ilike, ne, or } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { adminUsers, collegeRegistrations as reg, participants, expoProjects as expo } from '@/db/schema';
 import { authenticate, session, sessionCookie, signToken } from '@/lib/nexus/admin-auth';
@@ -15,7 +15,21 @@ async function handle(req:Request,ctx:Context){try{
  const user=await session(req);if(!user)return error('Unauthorized',401);if(path==='auth/me'&&req.method==='GET')return Response.json({user});
  if(req.method==='PATCH'&&!['admin','coordinator'].includes(user.role))return error('Forbidden',403);
  const url=new URL(req.url);const parts=path.split('/');
- if(path==='overview'&&req.method==='GET'){const registrations=await db.select().from(reg);const people=await db.select().from(participants);const projects=await db.select().from(expo);const active=registrations.filter(r=>r.registrationStatus!=='cancelled');const ids=new Set(active.map(r=>r.id));return Response.json({totalCollegeRegistrations:active.length,totalStudentRepresentatives:people.filter(p=>ids.has(p.registrationId)&&p.participantType==='student').length,totalAccompanyingFacultyCoordinators:active.filter(r=>r.facultyAccompanying).length,totalRegisteredDelegations:active.length,totalChapterShowcaseEntries:active.length,totalExpoProjects:projects.filter(p=>ids.has(p.registrationId)).length,totalAccommodationRequests:active.filter(r=>r.accommodationRequired).length});}
+ if(path==='overview'&&req.method==='GET'){const registrations=await db.select().from(reg);const people=await db.select().from(participants);const projects=await db.select().from(expo);const active=registrations.filter(r=>r.registrationStatus!=='cancelled');const ids=new Set(active.map(r=>r.id));return Response.json({totalCollegeRegistrations:active.length,totalStudentRepresentatives:people.filter(p=>ids.has(p.registrationId)&&p.participantType==='student').length,totalAccompanyingFacultyCoordinators:active.filter(r=>r.facultyAccompanying).length,totalRegisteredDelegations:active.length,totalChapterShowcaseEntries:active.filter(r=>r.chapterShowcasePresenter).length,totalExpoProjects:projects.filter(p=>ids.has(p.registrationId)).length,totalAccommodationRequests:active.filter(r=>r.accommodationRequired).length});}
+ if(req.method==='GET' && ['showcase','showcase/export','representatives','representatives/export'].includes(path)){
+  const active=ne(reg.registrationStatus,'cancelled');
+  const rows=path.startsWith('showcase')
+   ? (await db.select({registrationId:reg.id,code:reg.registrationCode,college:reg.collegeName,chapter:reg.csiChapterName,presenter:reg.chapterShowcasePresenter})
+      .from(reg).where(and(active,ne(reg.chapterShowcasePresenter,''))).orderBy(asc(reg.collegeName)))
+   : (await db.select({registrationId:reg.id,code:reg.registrationCode,college:reg.collegeName,name:participants.fullName,department:participants.department,year:participants.year,email:participants.email,phone:participants.contactNumber})
+      .from(participants).innerJoin(reg,eq(participants.registrationId,reg.id))
+      .where(and(active,eq(participants.participantType,'student'))).orderBy(asc(reg.collegeName),asc(participants.participantIndex)));
+  if(path.endsWith('/export')){
+   const name=path.split('/')[0];
+   return new Response(csv(rows.map(({registrationId,...row})=>{ void registrationId; return row; })),{headers:{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':`attachment; filename="${name}.csv"`,'Cache-Control':'no-store'}});
+  }
+  return Response.json(rows,{headers:{'Cache-Control':'no-store'}});
+ }
  if((path==='registrations'||path==='registrations/export')&&req.method==='GET'){const q=url.searchParams.get('q');const status=url.searchParams.get('status');const ex=url.searchParams.get('expo');const ac=url.searchParams.get('accommodation');const filters=[];if(q)filters.push(or(ilike(reg.collegeName,`%${q}%`),ilike(reg.registrationCode,`%${q}%`)));if(status)filters.push(eq(reg.registrationStatus,status));if(ex==='true'||ex==='false')filters.push(eq(reg.participatingInExpo,ex==='true'));if(ac==='true'||ac==='false')filters.push(eq(reg.accommodationRequired,ac==='true'));const rows=await db.select().from(reg).where(and(...filters));if(path.endsWith('/export'))return new Response(csv(rows),{headers:{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="registrations.csv"'}});return Response.json(rows);}
  if(parts[0]==='registrations'&&parts.length===2){const id=parts[1];if(req.method==='GET'){const result=await registrationDetail(id);return result?Response.json(result):error('Not found',404);}if(req.method==='PATCH'){
  const current=await registrationDetail(id);if(!current)return error('Not found',404);
@@ -23,8 +37,8 @@ async function handle(req:Request,ctx:Context){try{
  const updates:Record<string,unknown>={updatedAt:new Date()};
  for(const key of allowed)if(key in body){if(key==='csiChapterId'&&(body[key]===null||body[key]==='')){updates[key]=null;continue}if(typeof body[key]!=='string'||!body[key].trim()||(key==='registrationStatus'&&!REGISTRATION_STATUSES.includes(body[key] as never)))return error(`Invalid ${key}`,400);updates[key]=body[key].trim();}
  if(updates.facultyCoordinatorEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(updates.facultyCoordinatorEmail)))return error('Invalid faculty coordinator email',400);
- const presenter=String(updates.chapterShowcasePresenter??current.registration.chapterShowcasePresenter).toLowerCase();
- if(!current.participants.some(p=>p.participantType==='student'&&[p.fullName.toLowerCase(),p.email.toLowerCase()].includes(presenter)))return error('Showcase presenter must be a registered student',400);
+ const presenter=String(updates.chapterShowcasePresenter??current.registration.chapterShowcasePresenter??'').toLowerCase();
+ if(presenter&&!current.participants.some(p=>p.participantType==='student'&&[p.fullName.toLowerCase(),p.email.toLowerCase()].includes(presenter)))return error('Showcase presenter must be a registered student',400);
  const accommodationChanged=['accommodationRequired','arrivalPlan','maleAccommodationCount','femaleAccommodationCount','accommodationParticipantNames'].some(key=>key in body);
  const accommodationRequired=body.accommodationRequired??current.registration.accommodationRequired;
  if(typeof accommodationRequired!=='boolean')return error('Invalid accommodation requirement',400);

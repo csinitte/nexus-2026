@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { SLOT, SLOT_TOTAL } from './mock';
+import { SLOT, SLOT_TOTAL } from './jury-types';
 import { elapsedOf, type PanelSession } from './juryStore';
 
 export type Phase = 'idle' | 'ready' | 'present' | 'qa' | 'over';

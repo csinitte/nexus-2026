@@ -463,8 +463,8 @@ All eligible teams present and demonstrate their projects before the jury.
 
 Presentation format:
 
-- 7 minutes — Project Presentation and Demonstration.
-- 3 minutes — Jury Interaction and Q&A.
+- 5 minutes — Project Presentation and Demonstration.
+- 5 minutes — Jury Interaction and Q&A.
 
 ### Exhibition Guidelines
 

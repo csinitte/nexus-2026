@@ -221,6 +221,11 @@ test('admin login, overview, search, verification and export', async () => {
   expect((await patch.json()).registrationStatus).toBe('verified');
   const exported = await route.GET(new Request('http://localhost/api/admin/registrations/export', { headers }), context('registrations', 'export'));
   expect(await exported.text()).toContain('Admin College');
+  const reps = await route.GET(new Request('http://localhost/api/admin/representatives', { headers }), context('representatives'));
+  expect((await reps.json()).filter((row: { college: string }) => row.college === 'Admin College')).toHaveLength(2);
+  const showcase = await route.GET(new Request('http://localhost/api/admin/showcase/export', { headers }), context('showcase', 'export'));
+  expect(await showcase.text()).toContain('Admin College');
+  expect((await route.GET(new Request('http://localhost/api/admin/representatives'), context('representatives'))).status).toBe(401);
   expect((await route.GET(new Request('http://localhost/api/admin/overview'), context('overview'))).status).toBe(401);
 });
 
@@ -320,3 +325,91 @@ test('confirmation tokens are scoped and expire securely', async () => {
   expect(verifyConfirmationToken(token, 'NEXUS26-9999')).toBe(false);
   expect(verifyConfirmationToken(token + 'x', 'NEXUS26-1234')).toBe(false);
 });
+
+test('jury credentials, panel isolation, shared timer and final scoring', async () => {
+  const { GET, POST } = await import('../src/app/api/jury/[scope]/route');
+  const { createRegistration } = await import('../src/lib/nexus/registration-service');
+  const { phaseOf } = await import('../src/components/phase2/juryTimer');
+  const { elapsedOf } = await import('../src/components/phase2/jury-types');
+  for (const [i, cancelled] of [[1, false], [2, false], [3, true]] as const) {
+    const created = await createRegistration(await validateRegistration({
+      ...base(`12345678988${i}`), collegeName: `Jury Test College ${i}`, participatingInExpo: true,
+      expo: { teamName: `Jury Team ${i}`, projectTitle: `Jury Project ${i}`, category: 'Open Innovation', teamMembers: [0, 1], abstract: pdf() },
+    }));
+    if (cancelled) {
+      const { getDb } = await import('../src/db');
+      const { collegeRegistrations } = await import('../src/db/schema');
+      const { eq } = await import('drizzle-orm');
+      await (await getDb()).update(collegeRegistrations).set({ registrationStatus: 'cancelled' }).where(eq(collegeRegistrations.id, created.summary.id));
+    }
+  }
+  process.env.NEXUS_SESSION_SECRET = 'test-secret-for-admin-and-jury-session';
+  process.env.NEXUS_ADMIN_EMAIL = 'jury-admin@example.com';
+  process.env.NEXUS_ADMIN_PASSWORD = 'test-only-admin-password';
+  const admin = signToken({ id: 'bootstrap', email: process.env.NEXUS_ADMIN_EMAIL, name: 'Admin', role: 'admin', exp: Date.now() + 60_000 });
+  const api = (scope: string, headers: Record<string, string> = {}, body?: object) => {
+    const req = new Request(`http://localhost/api/jury/${scope}`, {
+      headers: { 'Content-Type': 'application/json', ...headers },
+      ...(body && { method: 'POST', body: JSON.stringify(body) }),
+    });
+    return (body ? POST : GET)(req, { params: Promise.resolve({ scope }) });
+  };
+  const adminHeaders = { Authorization: `Bearer ${admin}` };
+  const adminAction = async (action: string, fields: object = {}) => {
+    const response = await api('admin', adminHeaders, { action, ...fields });
+    const body = await response.json();
+    expect(response.status, JSON.stringify(body)).toBe(200);
+    return body;
+  };
+  expect((await api('admin')).status).toBe(401);
+  expect((await api('portal')).status).toBe(401);
+  expect((await api('admin', { ...adminHeaders, 'Sec-Fetch-Site':'cross-site' }, { action:'clearAssignments' })).status).toBe(403);
+
+  const live = await (await api('admin', adminHeaders)).json();
+  expect(live.jurors.map((j: { name: string }) => j.name)).toEqual(['Dr. Krishnaraj', 'Dr. Sujay Kumar', 'Vineetha Pais']);
+  expect(live.teams.some((team: { title: string }) => team.title === 'Jury Project 3')).toBe(false);
+  expect(JSON.stringify(live)).not.toContain('passwordHash');
+  const { credential: other } = await adminAction('addJuror', { panel: 2, name: 'Panel Two Judge', designation: '', email: '' });
+  const credentials = [other];
+  for (const id of ['krishnaraj', 'sujay', 'vineetha']) credentials.push((await adminAction('resetPassword', { id })).credential);
+  const login = async ({ username, password }: typeof other) => {
+    const response = await api('login', {}, { username, password });
+    expect(response.status).toBe(200);
+    return { Cookie: response.headers.get('set-cookie')!.split(';')[0] };
+  };
+  const cookies = await Promise.all(credentials.map(login));
+  expect((await api('admin', cookies[0])).status).toBe(401);
+  const { state } = await adminAction('randomAssign');
+  expect(Math.abs(state.order[1].length - state.order[2].length)).toBeLessThanOrEqual(1);
+  expect(new Set([...state.order[1], ...state.order[2]]).size).toBe(state.teams.length);
+
+  const team = state.order[1][0];
+  await adminAction('selectTeam', { panel: 1, teamId: team });
+  const { state: started } = await adminAction('start', { panel: 1 });
+  const judgeView = await (await api('portal', cookies[1])).json();
+  expect(judgeView.session[1]).toEqual(started.session[1]);
+  expect(judgeView.order[2]).toEqual([]);
+  expect(judgeView.jurors).toEqual([]);
+  const timer = judgeView.session[1];
+  expect(phaseOf(timer, elapsedOf(timer, timer.startedAt + 300_000))).toBe('qa');
+  expect(phaseOf(timer, elapsedOf(timer, timer.startedAt + 600_000))).toBe('over');
+  const scores = { innovation: 8, relevance: 7, technical: 6, demo: 8, presentation: 9 };
+  expect((await api('portal', cookies[0], { action:'submitEval', teamId:team, scores, comment:'' })).status).toBe(403);
+  expect((await api('portal', cookies[1], { action:'submitEval', teamId:team, scores:{ ...scores, demo:11 }, comment:'' })).status).toBe(400);
+  expect((await api('admin', adminHeaders, { action:'randomAssign' })).status).toBe(409);
+
+  const votes = await Promise.all(credentials.flatMap((judge, index) =>
+    state.order[judge.panel].map((teamId: string) => api('portal', cookies[index], { action:'submitEval', teamId, scores, comment:'Judge notes' }))));
+  expect(votes.every((vote) => vote.status === 200)).toBe(true);
+  const all = await (await api('admin', adminHeaders)).json();
+  expect(Object.keys(all.evals[team])).toHaveLength(3);
+  expect(all.evals[team].krishnaraj.comment).toBe('Judge notes');
+  const privateView = await (await api('portal', cookies[1])).json();
+  expect(Object.keys(privateView.evals[team])).toEqual(['krishnaraj']);
+  await adminAction('toggleFinalist', { teamId: team });
+  expect((await adminAction('setFinalsLocked', { locked: true })).state.finalists).toEqual([team]);
+  expect((await api('portal', cookies[1], { action:'submitEval', teamId:team, scores, comment:'' })).status).toBe(409);
+  const { credential: rotated } = await adminAction('resetPassword', { id: 'krishnaraj' });
+  expect((await api('portal', cookies[1])).status).toBe(401);
+  expect((await api('portal', await login(rotated))).status).toBe(200);
+}, 30_000);

@@ -3,13 +3,12 @@
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Wordmark } from '@/components/site/Wordmark';
-import { PreviewBanner } from './PreviewBanner';
 import { Ring } from './Fx';
 import { StageClock } from './StageClock';
 import { WaveField } from './WaveField';
 import { Icon, type IconName } from './Icons';
-import { CRITERIA, MAX_PER_CRITERION, MAX_TOTAL, PANEL_NAMES, SLOT, TEAMS, total, type Juror, type PanelId } from './mock';
-import { averageOf, jury, useJury, type JuryState } from './juryStore';
+import { CRITERIA, MAX_PER_CRITERION, MAX_TOTAL, PANEL_NAMES, SLOT, total, type Team, type IssuedCredential, type PanelId } from './jury-types';
+import { averageOf, jury, useJuryConnection, type JuryState } from './juryStore';
 import { PHASE_LABEL, clock, phaseOf, remainingOf, unlockAudio, useNow, usePhaseAlerts } from './juryTimer';
 import { elapsedOf } from './juryStore';
 
@@ -24,14 +23,24 @@ type Tab = (typeof TABS)[number][0];
 
 const PANELS: PanelId[] = [1, 2];
 const pad = (n: number) => String(n).padStart(2, '0');
-const teamById = (id: string) => TEAMS.find((t) => t.id === id)!;
+const teamById = (st: JuryState, id: string) => st.teams.find((t) => t.id === id)!;
 
 export function JuryAdmin() {
-  const st = useJury();
+  const { state: st, status, error } = useJuryConnection('admin');
   const [tab, setTab] = useState<Tab>('jury');
 
+  if (status !== 'ready') return (
+    <div className="admin-shell">
+      <main id="main" className="admin-main">
+        <h1>Jury control</h1>
+        <p role="status">{status === 'loading' ? 'Checking organiser access…' : error || 'Sign in to the admin dashboard first.'}</p>
+        <Link className="button" href="/admin">Open admin dashboard</Link>
+      </main>
+    </div>
+  );
+
   const assigned = st.order[1].length + st.order[2].length;
-  const evaluated = TEAMS.filter((t) => {
+  const evaluated = st.teams.filter((t) => {
     const p = st.order[1].includes(t.id) ? 1 : st.order[2].includes(t.id) ? 2 : null;
     if (!p) return false;
     const need = st.jurors.filter((j) => j.panel === p).length;
@@ -41,9 +50,9 @@ export function JuryAdmin() {
 
   const kpis = [
     { icon: 'jury' as IconName, label: 'Jury members', value: st.jurors.length, max: st.jurors.length || 1, note: `${st.jurors.filter((j) => j.panel === 1).length} in Panel 1 · ${st.jurors.filter((j) => j.panel === 2).length} in Panel 2` },
-    { icon: 'grid' as IconName, label: 'Teams assigned', value: assigned, max: TEAMS.length, note: `of ${TEAMS.length} Expo teams` },
-    { icon: 'check' as IconName, label: 'Fully scored', value: evaluated, max: TEAMS.length, note: 'all panel jurors submitted' },
-    { icon: 'trophy' as IconName, label: 'Finalists', value: st.finalists.length, max: TEAMS.length, note: st.finalsLocked ? 'confirmed' : 'not confirmed yet' },
+    { icon: 'grid' as IconName, label: 'Teams assigned', value: assigned, max: st.teams.length, note: `of ${st.teams.length} Expo teams` },
+    { icon: 'check' as IconName, label: 'Fully scored', value: evaluated, max: st.teams.length, note: 'all panel jurors submitted' },
+    { icon: 'trophy' as IconName, label: 'Finalists', value: st.finalists.length, max: st.teams.length, note: st.finalsLocked ? 'confirmed' : 'not confirmed yet' },
   ];
 
   return (
@@ -59,7 +68,8 @@ export function JuryAdmin() {
         </Link>
       </header>
       <main id="main" className="section page p2-app-main" tabIndex={-1}>
-        <PreviewBanner note="Demo data — open /jury in another tab to see judges update live" />
+        {error && <p className="form-alert" role="alert">{error}</p>}
+        <Link className="text-link" href="/admin">Back to organiser dashboard</Link>
         <section className="p2-art-hero p2-admin-hero">
           <div className="p2-art-hero-copy">
             <p className="p2-art-kicker">
@@ -97,15 +107,7 @@ export function JuryAdmin() {
           {tab === 'board' && <BoardTab st={st} />}
         </section>
 
-        <details className="p2-demo-tools">
-          <summary className="p2-meta">Demo tools (for testing)</summary>
-          <button type="button" className="text-link" onClick={() => jury.fillSampleScores()}>
-            Fill sample scores
-          </button>
-          <button type="button" className="text-link" onClick={() => jury.resetDemo()}>
-            Reset demo
-          </button>
-        </details>
+
       </main>
     </div>
   );
@@ -148,9 +150,9 @@ function StepGuide({
   const anyStarted = PANELS.some((p) => st.session[p].teamId);
   const done: Record<Tab, boolean> = {
     jury: st.jurors.length >= 2 && PANELS.every((p) => st.jurors.some((j) => j.panel === p)),
-    panels: assigned === TEAMS.length,
-    live: evaluated === TEAMS.length,
-    scores: evaluated === TEAMS.length,
+    panels: assigned > 0 && assigned === st.teams.length,
+    live: evaluated > 0 && evaluated === st.teams.length,
+    scores: evaluated > 0 && evaluated === st.teams.length,
     board: st.finalsLocked,
   };
   const order: Tab[] = ['jury', 'panels', 'live', 'scores', 'board'];
@@ -165,7 +167,7 @@ function StepGuide({
     },
     panels: {
       title: 'Split the teams into 2 panels',
-      text: `One click shuffles all ${TEAMS.length} teams and splits them evenly.`,
+      text: `One click shuffles all ${st.teams.length} teams and splits them evenly.`,
       cta: 'Assign teams randomly',
       act: () => {
         jury.randomAssign();
@@ -175,7 +177,7 @@ function StepGuide({
     live: {
       title: anyStarted ? 'Judging in progress' : 'Start judging',
       text: anyStarted
-        ? `${evaluated} of ${TEAMS.length} teams fully scored. Use Next team when a team finishes.`
+        ? `${evaluated} of ${st.teams.length} teams fully scored. Use Next team when a team finishes.`
         : 'Press Start on each panel below. Each team gets 5 min presentation + 5 min Q&A.',
       cta: anyStarted ? 'Open live timer' : 'Start the timer',
       act: () => setTab('live'),
@@ -285,12 +287,12 @@ function JuryTab({ st }: { st: JuryState }) {
   const [designation, setDesignation] = useState('');
   const [email, setEmail] = useState('');
   const [panel, setPanel] = useState<PanelId>(2);
-  const [shown, setShown] = useState<string[]>([]);
-  const [created, setCreated] = useState<Juror | null>(null);
+  const [created, setCreated] = useState<IssuedCredential | null>(null);
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
-    const j = jury.addJuror({ name: name.trim(), designation: designation.trim() || `Jury · ${PANEL_NAMES[panel]}`, email: email.trim(), panel });
+    const j = await jury.addJuror({ name: name.trim(), designation: designation.trim() || `Jury · ${PANEL_NAMES[panel]}`, email: email.trim(), panel });
+    if (!j) return;
     setCreated(j);
     setName('');
     setDesignation('');
@@ -303,7 +305,6 @@ function JuryTab({ st }: { st: JuryState }) {
         <PanelHead title="Jury" accent="members." meta={`${st.jurors.length} jurors · each gets a username and password for /jury`} />
         <ul className="p2-rows">
           {st.jurors.map((j) => {
-            const visible = shown.includes(j.id);
             return (
               <li key={j.id} className="p2-juror">
                 <span className="p2-initials" aria-hidden="true">
@@ -317,13 +318,6 @@ function JuryTab({ st }: { st: JuryState }) {
                     <span>
                       <small>User</small> {j.username}
                     </span>
-                    <span>
-                      <small>Pass</small> {visible ? j.password : '••••••••••'}
-                    </span>
-                    <button type="button" className="p2-copy" onClick={() => setShown((s) => (visible ? s.filter((x) => x !== j.id) : [...s, j.id]))}>
-                      {visible ? 'Hide' : 'Show'}
-                    </button>
-                    <CopyButton text={`NEXUS jury login\nUsername: ${j.username}\nPassword: ${j.password}`} />
                   </div>
                 </div>
                 <div className="p2-row-end p2-row-stack">
@@ -331,8 +325,11 @@ function JuryTab({ st }: { st: JuryState }) {
                     <option value={1}>Panel 1</option>
                     <option value={2}>Panel 2</option>
                   </select>
-                  <button type="button" className="text-link" onClick={() => jury.resetPassword(j.id)}>
-                    New password
+                  <button type="button" className="text-link" onClick={async () => {
+                    const credential = await jury.resetPassword(j.id);
+                    if (credential) setCreated(credential);
+                  }}>
+                    Issue new password
                   </button>
                   <button type="button" className="text-link p2-danger" onClick={() => jury.removeJuror(j.id)}>
                     Remove
@@ -373,7 +370,8 @@ function JuryTab({ st }: { st: JuryState }) {
         </button>
         {created && (
           <div className="p2-newcred" role="status">
-            <p className="p2-label">Login created · {created.name}</p>
+            <p className="p2-label">Login issued · {created.name}</p>
+            <p>Copy this password now. It won’t be shown again.</p>
             <p>
               <small>Username</small> <b>{created.username}</b>
             </p>
@@ -396,7 +394,7 @@ function PanelsTab({ st }: { st: JuryState }) {
   const [drawing, setDrawing] = useState(false);
   return (
     <>
-      <PanelHead title="Two" accent="panels." meta={assigned ? `${assigned} teams split across both panels · order = presentation order` : `${TEAMS.length} teams waiting to be assigned`}>
+      <PanelHead title="Two" accent="panels." meta={assigned ? `${assigned} teams split across both panels · order = presentation order` : `${st.teams.length} teams waiting to be assigned`}>
         {assigned > 0 && (
           <button type="button" className="text-link" onClick={() => jury.clearAssignments()}>
             Clear
@@ -405,7 +403,7 @@ function PanelsTab({ st }: { st: JuryState }) {
         <button
           type="button"
           className="button small"
-          disabled={drawing}
+          disabled={drawing || !st.teams.length}
           onClick={() => {
             if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
               jury.randomAssign();
@@ -423,7 +421,7 @@ function PanelsTab({ st }: { st: JuryState }) {
           <Icon name="shuffle" size={16} /> {assigned ? 'Shuffle again' : 'Assign teams randomly'}
         </button>
       </PanelHead>
-      {drawing && <DrawOverlay />}
+      {drawing && st.teams.length > 0 && <DrawOverlay teams={st.teams} />}
       <div className={`p2-panels${drawing ? ' is-drawing' : ''}`} key={flash}>
         {PANELS.map((p) => {
           const jurors = st.jurors.filter((j) => j.panel === p);
@@ -453,12 +451,12 @@ function PanelsTab({ st }: { st: JuryState }) {
               {st.order[p].length === 0 ? (
                 <div className="p2-empty-col">
                   <p>No teams yet</p>
-                  <small>Use “Assign teams randomly” to split all {TEAMS.length} teams.</small>
+                  <small>Use “Assign teams randomly” to split all {st.teams.length} teams.</small>
                 </div>
               ) : (
                 <ol className="p2-teamlist">
                   {st.order[p].map((id, i) => {
-                    const t = teamById(id);
+                    const t = teamById(st, id);
                     return (
                       <li key={id} style={{ animationDelay: `${i * 45}ms` }}>
                         <span className="p2-order">{pad(i + 1)}</span>
@@ -485,16 +483,16 @@ function PanelsTab({ st }: { st: JuryState }) {
 }
 
 /** Lucky-draw moment while teams are split into panels. */
-function DrawOverlay() {
+function DrawOverlay({ teams }: { teams: Team[] }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setI((n) => n + 1), 70);
     return () => clearInterval(t);
   }, []);
-  const half = Math.ceil(TEAMS.length / 2);
-  const dealt = Math.min(TEAMS.length, Math.floor(i / 2.4));
+  const half = Math.ceil(teams.length / 2);
+  const dealt = Math.min(teams.length, Math.floor(i / 2.4));
   const p1 = Math.min(half, Math.ceil(dealt / 2));
-  const p2 = Math.min(TEAMS.length - half, Math.floor(dealt / 2));
+  const p2 = Math.min(teams.length - half, Math.floor(dealt / 2));
   return (
     <div className="p2-draw" role="status" aria-live="polite">
       <span className="p2-draw-count">
@@ -506,12 +504,12 @@ function DrawOverlay() {
         <div className="p2-draw-window" aria-hidden="true">
           {[-1, 0, 1].map((o) => (
             <span key={o} className={o === 0 ? 'is-mid' : undefined}>
-              {TEAMS[(i + o + TEAMS.length) % TEAMS.length].title}
+              {teams[(i + o + teams.length) % teams.length].title}
             </span>
           ))}
         </div>
         <span className="p2-draw-bar" aria-hidden="true">
-          <span style={{ width: `${(dealt / TEAMS.length) * 100}%` }} />
+          <span style={{ width: `${(dealt / teams.length) * 100}%` }} />
         </span>
       </div>
       <span className="p2-draw-count">
@@ -550,7 +548,7 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
   const { phase, elapsed } = usePhaseAlerts(session, (to) =>
     setAlert(to === 'qa' ? 'Presentation over — Q&A started. Judges notified.' : 'Time up — judges notified to finish scoring.'),
   );
-  const team = session.teamId ? teamById(session.teamId) : null;
+  const team = session.teamId ? teamById(st, session.teamId) : null;
   const jurors = st.jurors.filter((j) => j.panel === panel);
   const submitted = team ? Object.keys(st.evals[team.id] ?? {}).filter((id) => jurors.some((j) => j.id === id)).length : 0;
   const order = st.order[panel];
@@ -576,7 +574,7 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
           const scored = Object.keys(st.evals[id] ?? {}).filter((jid) => jurors.some((j) => j.id === jid)).length;
           const state = id === session.teamId ? 'is-current' : jurors.length && scored >= jurors.length ? 'is-done' : '';
           return (
-            <li key={id} className={state || undefined} title={`${pad(i + 1)} · ${teamById(id).title}${state === 'is-done' ? ' · scored' : ''}`}>
+            <li key={id} className={state || undefined} title={`${pad(i + 1)} · ${teamById(st, id).title}${state === 'is-done' ? ' · scored' : ''}`}>
               <button type="button" onClick={() => jury.selectTeam(panel, id)} aria-label={`Select team ${i + 1}`}>
                 {pad(i + 1)}
               </button>
@@ -600,7 +598,7 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
           </span>
           <span>
             <small>Start Team 01</small>
-            {teamById(order[0]).title}
+            {teamById(st, order[0]).title}
           </span>
         </button>
       )}
@@ -646,7 +644,7 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
           </div>
           {order[idx + 1] && (
             <p className="p2-upnext">
-              <span>Up next</span> {teamById(order[idx + 1]).title}
+              <span>Up next</span> {teamById(st, order[idx + 1]).title}
             </p>
           )}
         </>
@@ -677,7 +675,7 @@ function ScoresTab({ st }: { st: JuryState }) {
       ) : (
         <ul className="p2-scorecards">
           {order.map((id, i) => {
-            const t = teamById(id);
+            const t = teamById(st, id);
             const ev = st.evals[id] ?? {};
             const avg = averageOf(st, id);
             const n = Object.keys(ev).length;
@@ -778,7 +776,7 @@ function BoardTab({ st }: { st: JuryState }) {
           <ol>
             {st.finalists.map((id) => (
               <li key={id}>
-                {teamById(id).title}
+                {teamById(st, id).title}
                 <small>P{st.order[1].includes(id) ? 1 : 2}</small>
               </li>
             ))}
@@ -788,25 +786,30 @@ function BoardTab({ st }: { st: JuryState }) {
 
       <div className="p2-panels">
         {PANELS.map((p) => {
-          const ranked = [...st.order[p]]
-            .map((id) => ({ id, avg: averageOf(st, id), n: Object.keys(st.evals[id] ?? {}).length }))
-            .sort((a, b) => b.avg - a.avg);
+          const judges = st.jurors.filter((judge) => judge.panel === p);
+          const ranked = st.order[p]
+            .map((id) => ({
+              id, avg: averageOf(st, id),
+              complete: judges.length > 0 && judges.every((judge) => st.evals[id]?.[judge.id]),
+            }))
+            .sort((a, b) => Number(b.complete) - Number(a.complete) || b.avg - a.avg);
+          const complete = ranked.filter((row) => row.complete);
           return (
             <section key={p} className="p2-panelcol">
               <header>
                 <span className="p2-panel-no">0{p}</span>
                 <div>
                   <h3>{PANEL_NAMES[p]}</h3>
-                  <p className="p2-meta">{ranked.filter((r) => r.n).length} of {ranked.length} teams scored</p>
+                  <p className="p2-meta">{complete.length} of {ranked.length} teams scored</p>
                 </div>
               </header>
-              {ranked.filter((r) => r.n).length >= 3 && (
+              {complete.length >= 3 && (
                 <div className="p2-podium-row" aria-label={`${PANEL_NAMES[p]} top three`}>
                   {[1, 0, 2].map((k) => {
                     const r = ranked[k];
                     return (
                       <div key={r.id} className={`p2-podium-step is-${k + 1}`}>
-                        <p className="p2-podium-name">{teamById(r.id).title}</p>
+                        <p className="p2-podium-name">{teamById(st, r.id).title}</p>
                         <span className="p2-podium-score">{r.avg.toFixed(1)}</span>
                         <div className="p2-podium-block">
                           <span>{k + 1}</span>
@@ -823,23 +826,23 @@ function BoardTab({ st }: { st: JuryState }) {
               ) : (
                 <ol className="p2-lb">
                   {ranked.map((r, i) => {
-                    const t = teamById(r.id);
+                    const t = teamById(st, r.id);
                     const picked = st.finalists.includes(r.id);
                     return (
-                      <li key={r.id} className={`${r.n ? '' : 'is-pending'}${picked ? ' is-picked' : ''}`}>
-                        <span className="p2-lb-rank">{r.n ? pad(i + 1) : '—'}</span>
+                      <li key={r.id} className={`${r.complete ? '' : 'is-pending'}${picked ? ' is-picked' : ''}`}>
+                        <span className="p2-lb-rank">{r.complete ? pad(i + 1) : '—'}</span>
                         <div>
                           <strong>
                             {t.title}
-                            {i === 0 && r.n > 0 && <em className="p2-leading">Leading</em>}
+                            {i === 0 && r.complete && <em className="p2-leading">Leading</em>}
                           </strong>
                           <span className="p2-lb-bar" aria-hidden="true">
                             <span style={{ width: `${(r.avg / MAX_TOTAL) * 100}%` }} />
                           </span>
                         </div>
-                        <span className="p2-lb-score">{r.n ? r.avg.toFixed(1) : '—'}</span>
+                        <span className="p2-lb-score">{r.complete ? r.avg.toFixed(1) : '—'}</span>
                         <label className="p2-pick" title={picked ? 'Remove from final' : 'Send to final'}>
-                          <input type="checkbox" checked={picked} disabled={st.finalsLocked || !r.n} onChange={() => jury.toggleFinalist(r.id)} />
+                          <input type="checkbox" checked={picked} disabled={st.finalsLocked || !r.complete} onChange={() => jury.toggleFinalist(r.id)} />
                           <span>{picked ? '✓ Final' : 'Final'}</span>
                         </label>
                       </li>

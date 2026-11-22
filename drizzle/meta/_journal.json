@@ -36,6 +36,13 @@
       "when": 1794884222492,
       "tag": "0004_slimy_deadpool",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795341056168,
+      "tag": "0005_jury_control",
+      "breakpoints": true
     }
   ]
 }

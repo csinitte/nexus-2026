@@ -3,7 +3,7 @@ import { JuryPortal } from '@/components/phase2/JuryPortal';
 import '@/components/phase2/phase2.css';
 
 export const metadata: Metadata = {
-  title: 'Jury portal (preview)',
+  title: 'Jury portal',
   robots: { index: false, follow: false },
 };
 

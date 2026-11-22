@@ -1,4 +1,4 @@
-import { SLOT, SLOT_TOTAL } from './mock';
+import { SLOT, SLOT_TOTAL } from './jury-types';
 import { PHASE_LABEL, clock, remainingOf, type Phase } from './juryTimer';
 
 /**

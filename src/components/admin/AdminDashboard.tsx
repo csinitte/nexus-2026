@@ -3,10 +3,15 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { EXPO_PROJECT_CATEGORIES, EXPO_REVIEW_STATUSES } from '@/lib/nexus/constants';
 import { Wordmark } from '@/components/site/Wordmark';
+import { AdminDirectory } from './AdminDirectory';
 import { RegistrationDetailPanel } from './RegistrationDetailPanel';
 import { api, type AdminUser, type ExpoProject, type Overview, type Registration, type RegistrationDetail } from './types';
 
-type Tab = 'registrations' | 'expo';
+const tabs = [
+  ['registrations', 'Registrations'], ['representatives', 'Representatives'],
+  ['showcase', 'Chapter Showcase'], ['expo', 'Expo projects'],
+] as const;
+type Tab = (typeof tabs)[number][0];
 type Status = 'checking' | 'signed-out' | 'ready';
 
 export function AdminDashboard() {
@@ -128,7 +133,7 @@ export function AdminDashboard() {
         </ul>
 
         <div className="admin-tabs" role="tablist" aria-label="Dashboard sections">
-          {(['registrations', 'expo'] as Tab[]).map((t) => (
+          {tabs.map(([t, label]) => (
             <button
               key={t}
               type="button"
@@ -140,15 +145,17 @@ export function AdminDashboard() {
                 setDetail(null);
               }}
             >
-              {t === 'registrations' ? `Registrations (${rows.length})` : `Expo projects (${projects.length})`}
+              {label}
             </button>
           ))}
         </div>
 
         {tab === 'registrations' ? (
           <RegistrationsTable rows={rows} onOpen={openDetail} canEdit={canEdit} onChanged={load} />
+        ) : tab === 'expo' ? (
+          <ExpoTable projects={projects.filter((project) => rows.some((row) => row.id === project.registrationId && row.registrationStatus !== 'cancelled'))} rows={rows} canEdit={canEdit} onChanged={load} onOpen={openDetail} />
         ) : (
-          <ExpoTable projects={projects} rows={rows} canEdit={canEdit} onChanged={load} onOpen={openDetail} />
+          <AdminDirectory key={tab} kind={tab} onOpen={openDetail} />
         )}
 
         {detail && (
@@ -261,7 +268,7 @@ function RegistrationsTable({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter(
-      (r) => (!q || `${r.collegeName} ${r.registrationCode}`.toLowerCase().includes(q)) && (!status || r.registrationStatus === status),
+      (r) => (!q || `${r.collegeName} ${r.registrationCode}`.toLowerCase().includes(q)) && (status ? r.registrationStatus === status : r.registrationStatus !== 'cancelled'),
     );
   }, [rows, query, status]);
 
@@ -285,7 +292,7 @@ function RegistrationsTable({
         <label>
           <span className="sr-only">Filter by status</span>
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">All statuses</option>
+            <option value="">Active registrations</option>
             <option value="submitted">Submitted</option>
             <option value="verified">Verified</option>
             <option value="cancelled">Cancelled</option>

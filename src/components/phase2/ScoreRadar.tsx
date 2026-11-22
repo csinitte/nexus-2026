@@ -1,4 +1,4 @@
-import { CRITERIA, MAX_PER_CRITERION, type Scores } from './mock';
+import { CRITERIA, MAX_PER_CRITERION, type Scores } from './jury-types';
 
 /** The judge's scores as a 5-point shape — it grows as each criterion is tapped. */
 export function ScoreRadar({ scores, size = 200 }: { scores: Scores; size?: number }) {

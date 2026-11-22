@@ -49,3 +49,9 @@ The Vercel deployment does not apply PostgreSQL migrations automatically. Before
 Registration submissions accept JSON or multipart form data. Use `students` for the array of student representatives and `expo` for the optional project, with `teamMembers` containing student indexes, names, or email addresses. For multipart, send a JSON `payload` field and an `abstract` PDF file. For JSON, `expo.abstract` accepts `{ "fileName": "abstract.pdf", "mimeType": "application/pdf", "base64": "..." }`. The registration summary endpoint requires the signed confirmation token as a bearer token; set `NEXUS_SESSION_SECRET` to enable signed tokens. The confirmation screen also provides a downloadable summary. Admin login returns a bearer token and an HTTP-only cookie; CSV exports are available at `/api/admin/registrations/export` and `/api/admin/expo?format=csv`.
 
 Run `bun test`, `bun run lint`, and `bun run build` to verify changes. Never serve `.data` as static content or commit credentials.
+
+## Expo judging
+
+Apply the jury database migration before deploying this workflow. Organisers open **Jury control** from the admin dashboard. Panel 1 starts with Dr. Krishnaraj, Dr. Sujay Kumar, and Vineetha Pais. Use **Issue new password** for each of those judges and **Add & create login** for the judges on Panel 2. Passwords are shown once. Share them privately and have judges sign in at `/jury`.
+
+Assign the Expo teams before starting either panel. Each panel gets its own timer and score queue. Judges can use **Test timer sound** to enable and check audio on their device. Organisers can review scores and comments, compare each panel’s leaderboard and confirm the finalists once all assigned judges have scored.

@@ -1,0 +1,37 @@
+.jury-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+  margin: 0 0 18px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  background: linear-gradient(90deg, rgba(140, 234, 90, 0.06), transparent 55%), var(--surface-solid);
+}
+.jury-entry-mark {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  background: var(--accent);
+  transform: rotate(45deg);
+  box-shadow: 0 0 12px rgba(140, 234, 90, 0.6);
+}
+.jury-entry p {
+  flex: 1 1 320px;
+  margin: 0;
+  font-size: 14px;
+  color: var(--text);
+}
+.jury-entry-label {
+  margin-right: 12px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.jury-entry-link {
+  margin-left: auto;
+  white-space: nowrap;
+}

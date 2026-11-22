@@ -96,6 +96,9 @@ export function AdminDashboard() {
         <span className="admin-role">
           Organiser dashboard · {user?.email} <em>{user?.role}</em>
         </span>
+        <a className="button small" href="/admin/jury">
+          Jury control
+        </a>
         <button type="button" className="button outline small" onClick={signOut}>
           Sign out
         </button>

@@ -196,6 +196,7 @@ export function SiteFooter() {
               <Link href="/register" className="footer-nav-link">Register now</Link>
               <Link href="/expo" className="footer-nav-link">Expo details</Link>
               <Link href="/showcase" className="footer-nav-link">Branch showcase details</Link>
+              <Link href="/jury" className="footer-nav-link">Jury login</Link>
               {EVENT.brochureUrl && (
                 <a href={EVENT.brochureUrl} download className="footer-nav-link">Download brochure</a>
               )}

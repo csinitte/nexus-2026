@@ -4,6 +4,7 @@ import { NextPage, PageIntro } from '@/components/site/PageParts';
 import { EVENT, EXPO } from '@/content/nexus';
 import { PrizePool } from '@/components/prize/PrizePool';
 import { TrackGallery } from '@/components/expo/TrackGallery';
+import { JuryEntry } from '@/components/phase2/JuryEntry';
 
 export const metadata: Metadata = {
   title: 'Student Project Expo',
@@ -29,6 +30,8 @@ export default function ExpoPage() {
         <p>Bring an existing project, prototype, software or hardware idea. All projects should fit the event theme.</p>
         <p>Project Expo participation is optional. Teams may include 2–5 students, and multiple teams from the same college are welcome.</p>
       </PageIntro>
+
+      <JuryEntry />
 
       <dl className="detail-strip" data-reveal>
         <div>

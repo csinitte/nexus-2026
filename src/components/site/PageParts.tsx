@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { RegistrationLink } from '@/components/site/RegistrationLink';
 import { NAV_ITEMS } from '@/content/nexus';
 
 /** Numbered rule above each section, e.g. "02 / The programme — 25 November 2026". */
@@ -53,7 +54,10 @@ export function PageIntro({
 /** Follows the fixed PRD page order; the last information page points to registration. */
 export function NextPage({ current }: { current: string }) {
   const i = NAV_ITEMS.findIndex((item) => item.href === current);
-  const next = NAV_ITEMS[i + 1] ?? { href: '/register', label: 'Register Now' };
+  const next = NAV_ITEMS[i + 1];
+  if (!next) {
+    return <RegistrationLink className="next-page" arrow="→" data-reveal />;
+  }
   return (
     <Link className="next-page" href={next.href} data-reveal>
       <span>Next</span>

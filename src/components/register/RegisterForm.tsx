@@ -14,6 +14,7 @@ import {
   type StudentDraft,
 } from './model';
 import { STEP_COMPONENTS } from './steps';
+import { rememberRegistration } from './registration-receipt';
 import { RegistrationSuccess, type RegistrationResult } from './RegistrationSuccess';
 
 const DRAFT_KEY = 'nexus26-registration-draft-v1';
@@ -182,7 +183,9 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
       } catch {
         /* ignore */
       }
-      setResult(data as RegistrationResult);
+      const registration = data as RegistrationResult;
+      rememberRegistration(registration.registrationCode);
+      setResult(registration);
       window.scrollTo({ top: 0 });
     } catch {
       setProblems([

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { RegistrationLink } from '@/components/site/RegistrationLink';
 import { Wordmark } from '@/components/site/Wordmark';
 
 export default function NotFound() {
@@ -16,9 +17,7 @@ export default function NotFound() {
         <Link className="button" href="/">
           Back to NEXUS <span aria-hidden="true">↗</span>
         </Link>
-        <Link className="button outline" href="/register">
-          Register now
-        </Link>
+        <RegistrationLink className="button outline"/>
       </div>
     </main>
   );

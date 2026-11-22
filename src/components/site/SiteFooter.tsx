@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { RegistrationLink } from '@/components/site/RegistrationLink';
 import { COORDINATOR, EVENT, getWhatsappLink } from '@/content/nexus';
 import { Wordmark } from './Wordmark';
 
@@ -193,7 +194,7 @@ export function SiteFooter() {
           <nav className="footer-col-nav" aria-label="Participate">
             <h3 className="footer-nav-heading">PARTICIPATE</h3>
             <div className="footer-nav-list">
-              <Link href="/register" className="footer-nav-link">Register now</Link>
+              <RegistrationLink className="footer-nav-link" />
               <Link href="/expo" className="footer-nav-link">Expo details</Link>
               <Link href="/showcase" className="footer-nav-link">Branch showcase details</Link>
               <Link href="/jury" className="footer-nav-link">Jury login</Link>

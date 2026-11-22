@@ -30,6 +30,7 @@ export default function RegisterPage() {
                 Secure your <em>spot.</em>
               </h1>
               <p className="lead">Register your college delegation for NEXUS 2026. It takes about five minutes.</p>
+              <p><Link className="text-link" href="/summary">Already registered? Find your registration</Link></p>
               <ul className="intro-facts">
                 <li>
                   <strong>Multiple teams</strong>

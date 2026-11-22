@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { RegistrationLink } from '@/components/site/RegistrationLink';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { NAV_ITEMS } from '@/content/nexus';
@@ -38,9 +39,7 @@ export function SiteHeader() {
         ))}
       </nav>
       <div className="header-actions">
-        <Link className="cta-register" href="/register">
-          Register now <span aria-hidden="true">↗</span>
-        </Link>
+        <RegistrationLink className="cta-register" arrow="↗"/>
         <button
           type="button"
           className="menu-toggle"
@@ -64,9 +63,7 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <Link className="button" href="/register">
-          Register now <span aria-hidden="true">↗</span>
-        </Link>
+        <RegistrationLink className="button" arrow="↗"/>
       </div>
     </header>
   );

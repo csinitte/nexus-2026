@@ -149,6 +149,27 @@ ok(await page.getByText(/Accommodation is subject to availability/).isVisible(),
 ok(await page.getByText(/not jury approval/).isVisible(), 'confirmation does not imply Expo jury approval');
 ok((await page.evaluate(() => localStorage.getItem('nexus26-registration-draft-v1'))) === null, 'draft is cleared after submitting');
 if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT, fullPage: true });
+const summaryLink = await page.getByRole('link', { name: 'Open summary link' }).getAttribute('href');
+await page.goto(`${base}/?intro=0`);
+const headerLink = page.getByRole('banner').getByRole('link', { name: 'View registration' });
+await headerLink.click();
+await page.getByText(code, { exact: true }).waitFor();
+await page.reload();
+await page.getByText(code, { exact: true }).waitFor();
+ok(await page.getByRole('link', { name: 'Register another team' }).isVisible(), 'saved receipt survives reload and allows another team');
+
+const returning = await browser.newPage({ viewport: { width, height: 900 } });
+await returning.goto(`${base}/register`);
+await returning.getByRole('link', { name: /Already registered/ }).click();
+await returning.getByText(/open the secure link in your confirmation email/i).waitFor();
+console.log('✓ returning users on a fresh browser can find recovery guidance');
+await returning.goto(`${base}${summaryLink}`);
+await returning.getByText(code, { exact: true }).waitFor();
+ok(await returning.getByText('Submitted for Verification', { exact: true }).isVisible(), 'secure summary shows payment status');
+await returning.goto(`${base}/?intro=0`);
+await returning.getByRole('banner').getByRole('link', { name: 'View registration' }).waitFor();
+console.log('✓ opening a valid older summary enables the returning CTA');
+await returning.close();
 ok(errors.length === 0, `no page errors${errors.length ? `: ${errors.join('; ')}` : ''}`);
 
 await browser.close();

@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { RegistrationLink } from '@/components/site/RegistrationLink';
 import { IntroGate } from '@/components/intro/IntroGate';
 import { LogoStory } from '@/components/story/LogoStory';
 import { OBJECTS } from '@/components/story/shapes';
@@ -107,9 +108,7 @@ export default function HomePage() {
                 <span className="hero-deadline-arrow" aria-hidden="true">↗</span>
               </Link>
               <div className="hero-ctas">
-                <Link className="button" href="/register">
-                  Register now <span aria-hidden="true">↗</span>
-                </Link>
+                <RegistrationLink className="button" arrow="↗"/>
                 <a className="button outline" href="#about" data-deck-go="1">
                   Explore NEXUS <span aria-hidden="true">↓</span>
                 </a>
@@ -217,9 +216,7 @@ export default function HomePage() {
           <DeckCenter index={3} />
           <div className="deck-side right">
             <DeckLinks items={EXPLORE.slice(2)} start={3} />
-            <Link className="button" href="/register">
-              Register now <span aria-hidden="true">↗</span>
-            </Link>
+            <RegistrationLink className="button" arrow="↗"/>
           </div>
         </article>
 

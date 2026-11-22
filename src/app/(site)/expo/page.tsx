@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { RegistrationLink } from '@/components/site/RegistrationLink';
 import { NextPage, PageIntro } from '@/components/site/PageParts';
 import { EVENT, EXPO } from '@/content/nexus';
 import { PrizePool } from '@/components/prize/PrizePool';
@@ -77,9 +77,7 @@ export default function ExpoPage() {
           <p className="eyebrow">Ready to exhibit?</p>
           <p>Register your delegation and upload your abstract by {EVENT.abstractDeadlineDisplay}.</p>
         </div>
-        <Link className="button" href="/register">
-          Register for Project Expo <span aria-hidden="true">↗</span>
-        </Link>
+        <RegistrationLink className="button" arrow="↗">Register for Project Expo</RegistrationLink>
       </div>
       <NextPage current="/expo" />
     </section>

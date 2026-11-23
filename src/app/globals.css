@@ -4478,6 +4478,7 @@ html:not(.deck-ready) .deck-hint {
 }
 .admin-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   margin-bottom: 20px;
   border-bottom: 1px solid var(--line);
@@ -4523,7 +4524,7 @@ html:not(.deck-ready) .deck-hint {
   border-collapse: collapse;
   font-size: 14px;
 }
-.table-wrap th {
+.table-wrap thead th {
   position: sticky;
   top: 0;
   padding: 12px 14px;
@@ -4538,11 +4539,15 @@ html:not(.deck-ready) .deck-hint {
   color: var(--dim);
   white-space: nowrap;
 }
-.table-wrap td {
+.table-wrap td,
+.table-wrap tbody th {
   padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   vertical-align: top;
   color: var(--fg);
+}
+.table-wrap tbody th {
+  text-align: left;
 }
 .table-wrap td small {
   display: block;

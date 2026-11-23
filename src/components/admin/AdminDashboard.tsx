@@ -5,11 +5,12 @@ import { EXPO_PROJECT_CATEGORIES, EXPO_REVIEW_STATUSES } from '@/lib/nexus/const
 import { Wordmark } from '@/components/site/Wordmark';
 import { AdminDirectory } from './AdminDirectory';
 import { RegistrationDetailPanel } from './RegistrationDetailPanel';
-import { api, type AdminUser, type ExpoProject, type Overview, type Registration, type RegistrationDetail } from './types';
+import { api, ARRIVAL_LABELS, type AdminUser, type ExpoProject, type Overview, type Registration, type RegistrationDetail } from './types';
 
 const tabs = [
   ['registrations', 'Registrations'], ['representatives', 'Representatives'],
   ['showcase', 'Chapter Showcase'], ['expo', 'Expo projects'],
+  ['accommodation', 'Accommodation'],
 ] as const;
 type Tab = (typeof tabs)[number][0];
 type Status = 'checking' | 'signed-out' | 'ready';
@@ -154,6 +155,8 @@ export function AdminDashboard() {
           <RegistrationsTable rows={rows} onOpen={openDetail} canEdit={canEdit} onChanged={load} />
         ) : tab === 'expo' ? (
           <ExpoTable projects={projects.filter((project) => rows.some((row) => row.id === project.registrationId && row.registrationStatus !== 'cancelled'))} rows={rows} canEdit={canEdit} onChanged={load} onOpen={openDetail} />
+        ) : tab === 'accommodation' ? (
+          <AccommodationTable rows={rows} onOpen={openDetail} />
         ) : (
           <AdminDirectory key={tab} kind={tab} onOpen={openDetail} />
         )}
@@ -351,6 +354,47 @@ function RegistrationsTable({
         </table>
         {filtered.length === 0 && <p className="empty">{rows.length ? 'No registrations match your search.' : 'No registrations yet.'}</p>}
       </div>
+    </section>
+  );
+}
+
+function AccommodationTable({ rows, onOpen }: { rows: Registration[]; onOpen: (id: string) => void }) {
+  const requests = rows.filter((row) => row.accommodationRequired && row.registrationStatus !== 'cancelled');
+
+  return (
+    <section aria-label="Accommodation requests" className="table-wrap">
+      {requests.length === 0 ? (
+        <p className="empty">No active accommodation requests.</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">College</th>
+              <th scope="col">Arrival plan</th>
+              <th scope="col">Male students</th>
+              <th scope="col">Female students</th>
+              <th scope="col">Students requesting accommodation</th>
+              <th scope="col">Registration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {requests.map((request) => (
+              <tr key={request.id}>
+                <th scope="row">{request.collegeName}</th>
+                <td>{request.arrivalPlan ? ARRIVAL_LABELS[request.arrivalPlan] ?? request.arrivalPlan : '—'}</td>
+                <td>{request.maleAccommodationCount}</td>
+                <td>{request.femaleAccommodationCount}</td>
+                <td>{request.accommodationParticipantNames.join(', ') || '—'}</td>
+                <td>
+                  <button type="button" className="link-button" onClick={() => onOpen(request.id)}>
+                    {request.registrationCode}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </section>
   );
 }

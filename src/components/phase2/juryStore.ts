@@ -1,14 +1,26 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import { emptyProgress, total, type IssuedCredential, type JuryState, type PanelId, type Scores } from './jury-types';
+import {
+  emptyProgress,
+  total,
+  type IssuedCredential,
+  type IssuedVolunteerCredential,
+  type JuryState,
+  type PanelId,
+  type Scores,
+} from './jury-types';
 
 export { elapsedOf } from './jury-types';
 export type { JuryState, PanelSession } from './jury-types';
 
-type Scope = 'admin' | 'portal';
+type Scope = 'admin' | 'portal' | 'volunteer';
 type Connection = { state: JuryState; status: 'loading' | 'ready' | 'signed-out' | 'error'; error: string };
-const empty: Connection = { state: { ...emptyProgress(), teams: [], jurors: [], me: null }, status: 'loading', error: '' };
+const empty: Connection = {
+  state: { ...emptyProgress(), teams: [], jurors: [], volunteers: [], me: null, volunteerMe: null },
+  status: 'loading',
+  error: '',
+};
 
 async function request<T>(scope: string, body?: object): Promise<T> {
   const response = await fetch(`/api/jury/${scope}`, {
@@ -48,7 +60,7 @@ function makeStore(scope: Scope) {
     const atStart = generation;
     try {
       const state = await request<JuryState>(scope);
-      if (atStart === generation) publish({ ...current, state, status: 'ready' });
+      if (atStart === generation) publish({ ...current, state, status: 'ready', error: '' });
     } catch (error) {
       if (atStart === generation) handle(error);
     } finally {
@@ -76,11 +88,14 @@ function makeStore(scope: Scope) {
     generation++;
     const mutation = queue.then(async () => {
       try {
-        const result = await request<{ state: JuryState; credential?: IssuedCredential }>(scope, { action, ...fields });
+        const result = await request<{ state: JuryState; credential?: IssuedCredential | IssuedVolunteerCredential }>(
+          scope,
+          { action, ...fields }
+        );
         publish({ state: result.state, status: 'ready', error: '' });
         return result.credential ?? null;
       } catch (error) {
-        if ((error as { status?: number })?.status === 403 && scope === 'portal') {
+        if ((error as { status?: number })?.status === 403 && (scope === 'portal' || scope === 'volunteer')) {
           publish({ ...current, error: (error as Error).message });
         } else handle(error);
         return false as const;
@@ -99,7 +114,12 @@ function makeStore(scope: Scope) {
 
   return { subscribe, refresh, mutate, clear, read: () => current };
 }
-const stores = { admin: makeStore('admin'), portal: makeStore('portal') };
+
+const stores: Record<Scope, ReturnType<typeof makeStore>> = {
+  admin: makeStore('admin'),
+  portal: makeStore('portal'),
+  volunteer: makeStore('volunteer'),
+};
 
 export function useJuryConnection(scope: Scope) {
   const store = stores[scope];
@@ -108,6 +128,14 @@ export function useJuryConnection(scope: Scope) {
 
 export function useJury() {
   return useJuryConnection('portal').state;
+}
+
+export function useVolunteerConnection() {
+  return useJuryConnection('volunteer');
+}
+
+export function useVolunteer() {
+  return useJuryConnection('volunteer').state;
 }
 
 export async function signInJuror(username: string, password: string) {
@@ -121,17 +149,38 @@ export async function signOutJuror() {
   stores.portal.clear();
 }
 
-export function averageOf(st: JuryState, teamId: string) {
+export async function signInVolunteer(username: string, password: string) {
+  await request('volunteer-login', { username, password });
+  stores.volunteer.clear();
+  await stores.volunteer.refresh();
+}
+
+export async function signOutVolunteer() {
+  await request('volunteer-logout', {});
+  stores.volunteer.clear();
+}
+
+/** Arithmetic average of all submitted judge scores for that team (Max 100). Excludes pending. */
+export function averageOf(st: JuryState, teamId: string): number {
   const list = Object.values(st.evals[teamId] ?? {});
-  return list.length ? list.reduce((sum, evaluation) => sum + total(evaluation.scores), 0) / list.length : 0;
+  if (!list.length) return 0;
+  const sum = list.reduce((acc, evaluation) => acc + total(evaluation.scores), 0);
+  return Math.round((sum / list.length) * 100) / 100;
 }
 
 const send = stores.admin.mutate;
+
 export const jury = {
   addJuror: (input: { name: string; designation: string; email: string; panel: PanelId }) => send('addJuror', input),
   removeJuror: (id: string) => send('removeJuror', { id }),
   resetPassword: (id: string) => send('resetPassword', { id }),
   setJurorPanel: (id: string, panel: PanelId) => send('setJurorPanel', { id, panel }),
+
+  addVolunteer: (input: { name: string; panel: PanelId }) => send('addVolunteer', input),
+  removeVolunteer: (id: string) => send('removeVolunteer', { id }),
+  resetVolunteerPassword: (id: string) => send('resetVolunteerPassword', { id }),
+  setVolunteerPanel: (id: string, panel: PanelId) => send('setVolunteerPanel', { id, panel }),
+
   randomAssign: () => send('randomAssign'),
   moveTeam: (teamId: string, panel: PanelId) => send('moveTeam', { teamId, panel }),
   clearAssignments: () => send('clearAssignments'),
@@ -142,5 +191,14 @@ export const jury = {
   next: (panel: PanelId) => send('next', { panel }),
   toggleFinalist: (teamId: string) => send('toggleFinalist', { teamId }),
   setFinalsLocked: (locked: boolean) => send('setFinalsLocked', { locked }),
-  submitEval: (teamId: string, scores: Scores, comment: string) => stores.portal.mutate('submitEval', { teamId, scores, comment }),
+  submitEval: (teamId: string, scores: Scores, comment: string) =>
+    stores.portal.mutate('submitEval', { teamId, scores, comment }),
+};
+
+export const volunteerTimer = {
+  selectTeam: (panel: PanelId, teamId: string) => stores.volunteer.mutate('selectTeam', { panel, teamId }),
+  start: (panel: PanelId) => stores.volunteer.mutate('start', { panel }),
+  pause: (panel: PanelId) => stores.volunteer.mutate('pause', { panel }),
+  resetTimer: (panel: PanelId) => stores.volunteer.mutate('resetTimer', { panel }),
+  next: (panel: PanelId) => stores.volunteer.mutate('next', { panel }),
 };

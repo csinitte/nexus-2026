@@ -5,11 +5,17 @@ import { collegeRegistrations, expoProjects, expoTeamMembers, juryControl, parti
 import { hashPassword, safeEqual, verifyPassword } from './admin-auth';
 import {
   CRITERIA, MAX_PER_CRITERION, SLOT_TOTAL, elapsedOf, emptyProgress, emptySession, makeUsername,
-  type IssuedCredential, type Juror, type JuryProgress, type JuryState, type PanelId, type Scores, type Team,
+  type IssuedCredential, type IssuedVolunteerCredential, type Juror, type Volunteer, type JuryProgress,
+  type JuryState, type PanelId, type Scores, type Team,
 } from '@/components/phase2/jury-types';
 
 type StoredJuror = Juror & { passwordHash: string | null };
-type Control = JuryProgress & { jurors: StoredJuror[]; started?: boolean };
+type StoredVolunteer = Volunteer & { passwordHash: string | null };
+type Control = JuryProgress & {
+  jurors: StoredJuror[];
+  volunteers?: StoredVolunteer[];
+  started?: boolean;
+};
 export type JuryInput = Record<string, unknown>;
 
 const panels = [1, 2] as const;
@@ -22,6 +28,7 @@ const blankControl = (): Control => ({
   ].map(([username, name]) => ({
     id: username, username, name, panel: 1, designation: 'Jury · Panel 1', email: '', passwordHash: null,
   })),
+  volunteers: [],
 });
 
 export class JuryError extends Error {
@@ -30,6 +37,10 @@ export class JuryError extends Error {
 
 function publicJuror({ id, name, designation, email, panel, username }: StoredJuror): Juror {
   return { id, name, designation, email, panel, username };
+}
+
+function publicVolunteer({ id, name, username, panel }: StoredVolunteer): Volunteer {
+  return { id, name, username, panel };
 }
 
 async function getTeams(): Promise<Team[]> {
@@ -64,16 +75,49 @@ function activeTeams(state: Control, teams: Team[]) {
 async function readControl(): Promise<Control> {
   const db = await getDb();
   const [row] = await db.select().from(juryControl).where(eq(juryControl.id, 1));
-  return (row?.state as Control | undefined) ?? blankControl();
+  const state = (row?.state as Control | undefined) ?? blankControl();
+  if (!state.volunteers) state.volunteers = [];
+  return state;
 }
 
-function snapshot(state: Control, teams: Team[], viewer: StoredJuror | 'admin'): JuryState {
+type Viewer = StoredJuror | StoredVolunteer | 'admin';
+
+function snapshot(state: Control, teams: Team[], viewer: Viewer): JuryState {
   activeTeams(state, teams);
   if (viewer === 'admin') {
-    const { jurors, ...progress } = state;
-    return { ...progress, jurors: jurors.map(publicJuror), teams, me: null };
+    const { jurors, volunteers = [], ...progress } = state;
+    return {
+      ...progress,
+      jurors: jurors.map(publicJuror),
+      volunteers: volunteers.map(publicVolunteer),
+      teams,
+      me: null,
+      volunteerMe: null,
+    };
   }
-  const { id, panel } = viewer;
+
+  // Check if viewer is a volunteer
+  if ('username' in viewer && !('designation' in viewer)) {
+    const volunteer = viewer as StoredVolunteer;
+    const { panel } = volunteer;
+    const mine = new Set(state.order[panel]);
+    const summary = emptyProgress();
+    summary.order[panel] = state.order[panel];
+    summary.session[panel] = state.session[panel];
+    summary.evals = state.evals; // volunteers can see evaluation progress counters
+    return {
+      ...summary,
+      jurors: [],
+      volunteers: [],
+      me: null,
+      volunteerMe: publicVolunteer(volunteer),
+      teams: teams.filter((team) => mine.has(team.id)),
+    };
+  }
+
+  // Viewer is a juror
+  const juror = viewer as StoredJuror;
+  const { id, panel } = juror;
   const mine = new Set(state.order[panel]);
   const summary = emptyProgress();
   summary.order[panel] = state.order[panel];
@@ -84,21 +128,36 @@ function snapshot(state: Control, teams: Team[], viewer: StoredJuror | 'admin'):
   }
   return {
     ...summary,
-    jurors: [], me: { ...publicJuror(viewer), email: '' },
+    jurors: [],
+    volunteers: [],
+    me: { ...publicJuror(juror), email: '' },
+    volunteerMe: null,
     teams: teams.filter((team) => mine.has(team.id)),
   };
 }
 
 const sessionSeconds = 12 * 60 * 60;
-const cookieName = 'nexus_jury';
+const jurorCookieName = 'nexus_jury';
+const volunteerCookieName = 'nexus_volunteer';
+
 function sign(juror: StoredJuror, expires: number) {
   const secret = process.env.NEXUS_SESSION_SECRET;
   if (!secret || secret.length < 32) throw new JuryError('Jury authentication is not configured.', 503);
   return createHmac('sha256', secret).update(JSON.stringify(['jury', juror.id, expires, juror.passwordHash])).digest('base64url');
 }
 
+function signVolunteer(volunteer: StoredVolunteer, expires: number) {
+  const secret = process.env.NEXUS_SESSION_SECRET;
+  if (!secret || secret.length < 32) throw new JuryError('Volunteer authentication is not configured.', 503);
+  return createHmac('sha256', secret).update(JSON.stringify(['volunteer', volunteer.id, expires, volunteer.passwordHash])).digest('base64url');
+}
+
 export function juryCookie(token: string, maxAge = sessionSeconds) {
-  return `${cookieName}=${token}; Path=/api/jury; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+  return `${jurorCookieName}=${token}; Path=/api/jury; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+}
+
+export function volunteerCookie(token: string, maxAge = sessionSeconds) {
+  return `${volunteerCookieName}=${token}; Path=/api/jury; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
 }
 
 export async function juryLogin(input: JuryInput) {
@@ -114,9 +173,22 @@ export async function juryLogin(input: JuryInput) {
   return `${juror.id}.${expires}.${sign(juror, expires)}`;
 }
 
-function requireJuror(req: Request, state: Control) {
-  const cookie = req.headers.get('cookie')?.split(';').map((s) => s.trim()).find((s) => s.startsWith(cookieName + '='));
-  const [id, expiration, signature, extra] = cookie?.slice(cookieName.length + 1).split('.') ?? [];
+export async function volunteerLogin(input: JuryInput) {
+  if (!input || typeof input !== 'object') throw new JuryError('Invalid volunteer credentials.', 400);
+  const username = field(input.username, 120).toLowerCase();
+  const password = field(input.password, 140);
+  const state = await readControl();
+  const volunteer = (state.volunteers ?? []).find((v) => v.username.toLowerCase() === username);
+  if (!volunteer?.passwordHash || !verifyPassword(password, volunteer.passwordHash)) {
+    throw new JuryError('Username or password is wrong. Check the credentials from the organisers.', 401);
+  }
+  const expires = Date.now() + sessionSeconds * 1_000;
+  return `${volunteer.id}.${expires}.${signVolunteer(volunteer, expires)}`;
+}
+
+function requireJuror(req: Request, state: Control): StoredJuror {
+  const cookie = req.headers.get('cookie')?.split(';').map((s) => s.trim()).find((s) => s.startsWith(jurorCookieName + '='));
+  const [id, expiration, signature, extra] = cookie?.slice(jurorCookieName.length + 1).split('.') ?? [];
   const expires = Number(expiration);
   const juror = state.jurors.find((j) => j.id === id);
   if (extra || !juror?.passwordHash || !signature || !Number.isSafeInteger(expires) || expires <= Date.now()
@@ -124,9 +196,22 @@ function requireJuror(req: Request, state: Control) {
   return juror;
 }
 
-export async function getJuryState(req: Request, admin: boolean) {
+function requireVolunteer(req: Request, state: Control): StoredVolunteer {
+  const cookie = req.headers.get('cookie')?.split(';').map((s) => s.trim()).find((s) => s.startsWith(volunteerCookieName + '='));
+  const [id, expiration, signature, extra] = cookie?.slice(volunteerCookieName.length + 1).split('.') ?? [];
+  const expires = Number(expiration);
+  const volunteer = (state.volunteers ?? []).find((v) => v.id === id);
+  if (extra || !volunteer?.passwordHash || !signature || !Number.isSafeInteger(expires) || expires <= Date.now()
+    || !safeEqual(signature, signVolunteer(volunteer, expires))) throw new JuryError('Sign in to the volunteer timer portal.', 401);
+  return volunteer;
+}
+
+export async function getJuryState(req: Request, scope: 'admin' | 'portal' | 'volunteer') {
   const state = await readControl();
-  const viewer = admin ? 'admin' : requireJuror(req, state);
+  let viewer: Viewer;
+  if (scope === 'admin') viewer = 'admin';
+  else if (scope === 'volunteer') viewer = requireVolunteer(req, state);
+  else viewer = requireJuror(req, state);
   return snapshot(state, await getTeams(), viewer);
 }
 
@@ -144,6 +229,12 @@ function issue(juror: StoredJuror): IssuedCredential {
   const password = randomBytes(18).toString('base64url');
   juror.passwordHash = hashPassword(password);
   return { ...publicJuror(juror), password };
+}
+
+function issueVolunteer(volunteer: StoredVolunteer): IssuedVolunteerCredential {
+  const password = randomBytes(12).toString('base64url');
+  volunteer.passwordHash = hashPassword(password);
+  return { ...publicVolunteer(volunteer), password };
 }
 
 function assign(teams: Team[]): Control['order'] {
@@ -170,6 +261,38 @@ function addJuror(state: Control, input: JuryInput) {
   return issue(juror);
 }
 
+function addVolunteer(state: Control, input: JuryInput): IssuedVolunteerCredential {
+  const name = field(input.name, 120);
+  const panel = asPanel(input.panel);
+  if (!name) throw new JuryError('Enter a volunteer name.');
+  state.volunteers ??= [];
+  const volunteer: StoredVolunteer = {
+    id: randomUUID(),
+    username: makeUsername(name, state.volunteers.map((v) => v.username)),
+    name,
+    panel,
+    passwordHash: null,
+  };
+  state.volunteers.push(volunteer);
+  return issueVolunteer(volunteer);
+}
+
+function updateVolunteerRoster(state: Control, input: JuryInput) {
+  state.volunteers ??= [];
+  const volunteer = state.volunteers.find((v) => v.id === input.id);
+  if (!volunteer) throw new JuryError('This volunteer is no longer on the roster.', 404);
+  if (input.action === 'resetVolunteerPassword') return issueVolunteer(volunteer);
+  if (input.action === 'removeVolunteer') {
+    state.volunteers = state.volunteers.filter((v) => v.id !== volunteer.id);
+    return;
+  }
+  if (input.action === 'setVolunteerPanel') {
+    volunteer.panel = asPanel(input.panel);
+    return;
+  }
+  throw new JuryError('Unknown volunteer action.');
+}
+
 function hasStarted(state: Control) {
   return Boolean(state.started) || Object.values(state.evals).some((evaluations) => Object.keys(evaluations).length > 0)
     || panels.some((panel) => state.session[panel].running || state.session[panel].accumulated > 0);
@@ -184,41 +307,53 @@ function updateRoster(state: Control, input: JuryInput) {
   else juror.panel = asPanel(input.panel);
 }
 
-function updateTimer(state: Control, input: JuryInput) {
+function updateTimer(state: Control, input: JuryInput, actor?: { volunteer?: StoredVolunteer }) {
   const panel = asPanel(input.panel);
+  if (actor?.volunteer && actor.volunteer.panel !== panel) {
+    throw new JuryError(`You are assigned to Panel ${actor.volunteer.panel} and cannot control Panel ${panel} timer.`, 403);
+  }
   const current = state.session[panel];
   const now = Date.now();
+  const volunteerInfo = actor?.volunteer
+    ? { volunteerId: actor.volunteer.id, volunteerName: actor.volunteer.name }
+    : { volunteerId: current.volunteerId ?? null, volunteerName: current.volunteerName ?? null };
+
   switch (input.action) {
     case 'selectTeam': {
       const teamId = field(input.teamId, 80);
       if (!state.order[panel].includes(teamId)) throw new JuryError('This team is outside this panel.');
       if (current.running && elapsedOf(current, now) < SLOT_TOTAL) throw new JuryError('Pause the timer before picking a different team.', 409);
-      state.session[panel] = { ...emptySession(), teamId };
+      state.session[panel] = { ...emptySession(), teamId, ...volunteerInfo };
       break;
     }
     case 'start':
       if (!current.teamId) throw new JuryError('Choose a team first.');
       if (elapsedOf(current, now) >= SLOT_TOTAL) throw new JuryError('Reset the timer before restarting.', 409);
-      if (!state.jurors.some((juror) => juror.panel === panel && juror.passwordHash)) {
-        throw new JuryError('Issue a login to at least one judge in this panel before starting.');
-      }
       if (!current.running) {
         state.started = true;
-        state.session[panel] = { ...current, running: true, startedAt: now };
+        state.session[panel] = { ...current, running: true, startedAt: now, ...volunteerInfo };
       }
       break;
     case 'pause':
-      if (current.running) state.session[panel] = { ...current, running: false, startedAt: null, accumulated: elapsedOf(current, now) };
+      if (current.running) {
+        state.session[panel] = {
+          ...current,
+          running: false,
+          startedAt: null,
+          accumulated: elapsedOf(current, now),
+          ...volunteerInfo,
+        };
+      }
       break;
     case 'resetTimer':
-      state.session[panel] = { ...emptySession(), teamId: current.teamId };
+      state.session[panel] = { ...emptySession(), teamId: current.teamId, ...volunteerInfo };
       break;
     case 'next': {
       const index = current.teamId ? state.order[panel].indexOf(current.teamId) : -1;
-      state.session[panel] = { ...emptySession(), teamId: state.order[panel][index + 1] ?? null };
+      state.session[panel] = { ...emptySession(), teamId: state.order[panel][index + 1] ?? null, ...volunteerInfo };
       break;
     }
-    default: throw new JuryError('Unknown jury action.');
+    default: throw new JuryError('Unknown timer action.');
   }
 }
 
@@ -231,6 +366,12 @@ function adminUpdate(state: Control, teams: Team[], input: JuryInput) {
     case 'resetPassword':
     case 'setJurorPanel':
       return updateRoster(state, input);
+    case 'addVolunteer':
+      return addVolunteer(state, input);
+    case 'removeVolunteer':
+    case 'resetVolunteerPassword':
+    case 'setVolunteerPanel':
+      return updateVolunteerRoster(state, input);
     case 'randomAssign':
     case 'clearAssignments':
     case 'moveTeam': {
@@ -282,17 +423,19 @@ function submitEvaluation(state: Control, juror: StoredJuror, input: JuryInput) 
   const submitted = input.scores as Partial<Scores> | null | undefined;
   const scores = {} as Scores;
   for (const { id } of CRITERIA) {
-    const value = submitted?.[id];
-    if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > MAX_PER_CRITERION) {
-      throw new JuryError('Give each criterion a score from 1 to 10.');
+    const raw = submitted?.[id];
+    const value = typeof raw === 'number' ? raw : parseFloat(String(raw));
+    if (isNaN(value) || value < 0 || value > MAX_PER_CRITERION) {
+      throw new JuryError(`Score each criterion between 0 and ${MAX_PER_CRITERION}.`);
     }
-    scores[id] = value;
+    // Allow up to two decimal places
+    scores[id] = Math.round(value * 100) / 100;
   }
-  const comment = field(input.comment, 1000);
+  const comment = field(input.comment ?? '', 1000);
   state.evals[teamId] = { ...state.evals[teamId], [juror.id]: { scores, comment, at: Date.now() } };
 }
 
-export async function updateJuryState(req: Request, input: JuryInput, admin: boolean) {
+export async function updateJuryState(req: Request, input: JuryInput, scope: 'admin' | 'portal' | 'volunteer') {
   if (!input || typeof input.action !== 'string') throw new JuryError('Choose a jury action.');
   const db = await getDb();
   const teams = await getTeams();
@@ -300,12 +443,27 @@ export async function updateJuryState(req: Request, input: JuryInput, admin: boo
     await tx.insert(juryControl).values({ id: 1, state: blankControl() }).onConflictDoNothing();
     const [row] = await tx.select().from(juryControl).where(eq(juryControl.id, 1)).for('update');
     const state = row.state as Control;
+    if (!state.volunteers) state.volunteers = [];
     activeTeams(state, teams);
-    let credential: IssuedCredential | undefined;
-    const viewer = admin ? 'admin' : requireJuror(req, state);
-    if (viewer === 'admin') credential = adminUpdate(state, teams, input);
-    else submitEvaluation(state, viewer, input);
+    let credential: IssuedCredential | IssuedVolunteerCredential | undefined;
+
+    if (scope === 'admin') {
+      credential = adminUpdate(state, teams, input);
+      await tx.update(juryControl).set({ state }).where(eq(juryControl.id, 1));
+      return { state: snapshot(state, teams, 'admin'), credential };
+    }
+
+    if (scope === 'volunteer') {
+      const volunteer = requireVolunteer(req, state);
+      updateTimer(state, input, { volunteer });
+      await tx.update(juryControl).set({ state }).where(eq(juryControl.id, 1));
+      return { state: snapshot(state, teams, volunteer) };
+    }
+
+    // Juror portal
+    const juror = requireJuror(req, state);
+    submitEvaluation(state, juror, input);
     await tx.update(juryControl).set({ state }).where(eq(juryControl.id, 1));
-    return { state: snapshot(state, teams, viewer), credential };
+    return { state: snapshot(state, teams, juror), credential };
   });
 }

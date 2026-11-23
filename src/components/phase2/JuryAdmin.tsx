@@ -1,22 +1,35 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import Link from 'next/link';
 import { Wordmark } from '@/components/site/Wordmark';
 import { Ring } from './Fx';
-import { StageClock } from './StageClock';
 import { WaveField } from './WaveField';
 import { Icon, type IconName } from './Icons';
-import { CRITERIA, MAX_PER_CRITERION, MAX_TOTAL, PANEL_NAMES, SLOT, total, type Team, type IssuedCredential, type PanelId } from './jury-types';
-import { averageOf, jury, useJuryConnection, type JuryState } from './juryStore';
-import { PHASE_LABEL, clock, phaseOf, remainingOf, unlockAudio, useNow, usePhaseAlerts } from './juryTimer';
-import { elapsedOf } from './juryStore';
+import {
+  CRITERIA,
+  MAX_TOTAL,
+  PANEL_NAMES,
+  SLOT,
+  criterionWeightedScore,
+  totalWeightedScore,
+  type IssuedCredential,
+  type IssuedVolunteerCredential,
+  type JuryState,
+  type PanelId,
+  type Team,
+  type Volunteer,
+} from './jury-types';
+import { averageOf, elapsedOf, jury, useJuryConnection } from './juryStore';
+import { PHASE_LABEL, clock, remainingOf, unlockAudio, useNow, usePhaseAlerts } from './juryTimer';
+import { StageClock } from './StageClock';
 
 const TABS = [
-  ['jury', 'Jury & logins', 'key'],
-  ['panels', 'Panels', 'panels'],
-  ['live', 'Live timer', 'timer'],
-  ['scores', 'Scores & comments', 'comments'],
+  ['jury', 'Jury roster', 'jury'],
+  ['volunteers', 'Stage volunteers', 'timer'],
+  ['panels', 'Panel assignments', 'grid'],
+  ['live', 'Live stage timer', 'play'],
+  ['scores', 'Scores & matrix', 'scores'],
   ['board', 'Leaderboards', 'podium'],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -29,15 +42,19 @@ export function JuryAdmin() {
   const { state: st, status, error } = useJuryConnection('admin');
   const [tab, setTab] = useState<Tab>('jury');
 
-  if (status !== 'ready') return (
-    <div className="admin-shell">
-      <main id="main" className="admin-main">
-        <h1>Jury control</h1>
-        <p role="status">{status === 'loading' ? 'Checking organiser access…' : error || 'Sign in to the admin dashboard first.'}</p>
-        <Link className="button" href="/admin">Open admin dashboard</Link>
-      </main>
-    </div>
-  );
+  if (status !== 'ready') {
+    return (
+      <div className="admin-shell">
+        <main id="main" className="admin-main">
+          <h1>Jury control</h1>
+          <p role="status">{status === 'loading' ? 'Checking organiser access…' : error || 'Sign in to the admin dashboard first.'}</p>
+          <Link className="button" href="/admin">
+            Open admin dashboard
+          </Link>
+        </main>
+      </div>
+    );
+  }
 
   const assigned = st.order[1].length + st.order[2].length;
   const evaluated = st.teams.filter((t) => {
@@ -47,12 +64,37 @@ export function JuryAdmin() {
     return need > 0 && Object.keys(st.evals[t.id] ?? {}).length >= need;
   }).length;
   const live = PANELS.filter((p) => st.session[p].running).length;
+  const volunteersCount = st.volunteers?.length ?? 0;
 
   const kpis = [
-    { icon: 'jury' as IconName, label: 'Jury members', value: st.jurors.length, max: st.jurors.length || 1, note: `${st.jurors.filter((j) => j.panel === 1).length} in Panel 1 · ${st.jurors.filter((j) => j.panel === 2).length} in Panel 2` },
-    { icon: 'grid' as IconName, label: 'Teams assigned', value: assigned, max: st.teams.length, note: `of ${st.teams.length} Expo teams` },
-    { icon: 'check' as IconName, label: 'Fully scored', value: evaluated, max: st.teams.length, note: 'all panel jurors submitted' },
-    { icon: 'trophy' as IconName, label: 'Finalists', value: st.finalists.length, max: st.teams.length, note: st.finalsLocked ? 'confirmed' : 'not confirmed yet' },
+    {
+      icon: 'jury' as IconName,
+      label: 'Jury members',
+      value: st.jurors.length,
+      max: st.jurors.length || 1,
+      note: `${st.jurors.filter((j) => j.panel === 1).length} in Panel 1 · ${st.jurors.filter((j) => j.panel === 2).length} in Panel 2`,
+    },
+    {
+      icon: 'timer' as IconName,
+      label: 'Stage volunteers',
+      value: volunteersCount,
+      max: Math.max(volunteersCount, 2),
+      note: `${(st.volunteers ?? []).filter((v) => v.panel === 1).length} in P1 · ${(st.volunteers ?? []).filter((v) => v.panel === 2).length} in P2`,
+    },
+    {
+      icon: 'grid' as IconName,
+      label: 'Teams assigned',
+      value: assigned,
+      max: st.teams.length || 1,
+      note: `of ${st.teams.length} Expo teams`,
+    },
+    {
+      icon: 'check' as IconName,
+      label: 'Fully scored',
+      value: evaluated,
+      max: st.teams.length || 1,
+      note: 'all panel jurors submitted',
+    },
   ];
 
   return (
@@ -63,21 +105,35 @@ export function JuryAdmin() {
           Jury control <em>admin</em>
         </span>
         <LiveChips st={st} />
-        <Link className="button outline small" href="/jury" target="_blank">
-          Open jury portal ↗
-        </Link>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Link className="button outline small" href="/volunteer" target="_blank">
+            Volunteer timer ↗
+          </Link>
+          <Link className="button outline small" href="/jury" target="_blank">
+            Jury portal ↗
+          </Link>
+        </div>
       </header>
       <main id="main" className="section page p2-app-main" tabIndex={-1}>
-        {error && <p className="form-alert" role="alert">{error}</p>}
-        <Link className="text-link" href="/admin">Back to organiser dashboard</Link>
+        {error && (
+          <p className="form-alert" role="alert">
+            {error}
+          </p>
+        )}
+        <Link className="text-link" href="/admin">
+          Back to organiser dashboard
+        </Link>
         <section className="p2-art-hero p2-admin-hero">
           <div className="p2-art-hero-copy">
             <p className="p2-art-kicker">
-              Student Project Expo · Jury{live ? ` · ${live} panel${live > 1 ? 's' : ''} live` : ''}
+              Student Project Expo · Jury Management{live ? ` · ${live} panel${live > 1 ? 's' : ''} live` : ''}
             </p>
             <h1>
               Jury <em>control.</em>
             </h1>
+            <p>
+              Official 7-criteria evaluation rubric (100% total). Panel 1 and Panel 2 isolation with synchronized volunteer timers.
+            </p>
           </div>
           <WaveField />
         </section>
@@ -101,13 +157,12 @@ export function JuryAdmin() {
 
         <section key={tab} id={`panel-${tab}`} aria-label={TABS.find((t) => t[0] === tab)?.[1]} className="p2-panel">
           {tab === 'jury' && <JuryTab st={st} />}
+          {tab === 'volunteers' && <VolunteersTab st={st} />}
           {tab === 'panels' && <PanelsTab st={st} />}
           {tab === 'live' && <LiveTab st={st} />}
           {tab === 'scores' && <ScoresTab st={st} />}
           {tab === 'board' && <BoardTab st={st} />}
         </section>
-
-
       </main>
     </div>
   );
@@ -125,7 +180,8 @@ function LiveChips({ st }: { st: JuryState }) {
         const ph = phaseOf(s, el);
         return (
           <span key={p} className={`p2-livechip is-${ph}${s.running ? ' is-running' : ''}`}>
-            <i aria-hidden="true" />P{p} · {PHASE_LABEL[ph]} <b>{clock(remainingOf(ph, el))}</b>
+            <i aria-hidden="true" />
+            P{p} · {PHASE_LABEL[ph]} <b>{clock(remainingOf(ph, el))}</b>
           </span>
         );
       })}
@@ -133,7 +189,15 @@ function LiveChips({ st }: { st: JuryState }) {
   );
 }
 
-/** One clear "do this next" card + a 5-step progress line, so admins never have to guess the order. */
+function phaseOf(s: JuryState['session'][PanelId], elapsed: number) {
+  if (!s.teamId) return 'idle';
+  if (elapsed <= 0 && !s.running) return 'ready';
+  if (elapsed < SLOT.presentSeconds) return 'present';
+  if (elapsed < SLOT.presentSeconds + SLOT.qaSeconds) return 'qa';
+  return 'over';
+}
+
+/** 6-step progress line so admins navigate the jury workflow smoothly. */
 function StepGuide({
   st,
   tab,
@@ -150,96 +214,46 @@ function StepGuide({
   const anyStarted = PANELS.some((p) => st.session[p].teamId);
   const done: Record<Tab, boolean> = {
     jury: st.jurors.length >= 2 && PANELS.every((p) => st.jurors.some((j) => j.panel === p)),
+    volunteers: (st.volunteers?.length ?? 0) >= 2,
     panels: assigned > 0 && assigned === st.teams.length,
     live: evaluated > 0 && evaluated === st.teams.length,
     scores: evaluated > 0 && evaluated === st.teams.length,
     board: st.finalsLocked,
   };
-  const order: Tab[] = ['jury', 'panels', 'live', 'scores', 'board'];
-  const current = order.find((t) => !done[t]) ?? 'board';
-
-  const next: Record<Tab, { title: string; text: string; cta: string; act: () => void }> = {
-    jury: {
-      title: 'Add your jury',
-      text: 'Each juror gets a login automatically. Put them in Panel 1 or Panel 2.',
-      cta: 'Add jury members',
-      act: () => setTab('jury'),
-    },
-    panels: {
-      title: 'Split the teams into 2 panels',
-      text: `One click shuffles all ${st.teams.length} teams and splits them evenly.`,
-      cta: 'Assign teams randomly',
-      act: () => {
-        jury.randomAssign();
-        setTab('panels');
-      },
-    },
-    live: {
-      title: anyStarted ? 'Judging in progress' : 'Start judging',
-      text: anyStarted
-        ? `${evaluated} of ${st.teams.length} teams fully scored. Use Next team when a team finishes.`
-        : 'Press Start on each panel below. Each team gets 5 min presentation + 5 min Q&A.',
-      cta: anyStarted ? 'Open live timer' : 'Start the timer',
-      act: () => setTab('live'),
-    },
-    scores: {
-      title: 'Check scores',
-      text: 'See every judge’s marks and comments.',
-      cta: 'View scores',
-      act: () => setTab('scores'),
-    },
-    board: {
-      title: st.finalsLocked ? 'Final teams confirmed 🎉' : 'Pick the final teams',
-      text: st.finalsLocked ? `${st.finalists.length} teams go to the final.` : 'Look at each panel’s ranking, tick the finalists, then confirm.',
-      cta: st.finalsLocked ? 'View final teams' : 'Choose finalists',
-      act: () => setTab('board'),
-    },
-  };
-  const n = next[current];
-  const labels: Record<Tab, string> = { jury: 'Jury', panels: 'Panels', live: 'Judging', scores: 'Scores', board: 'Final teams' };
 
   return (
-    <section className="p2-guide" aria-label="What to do next">
-      <ol className="p2-guide-steps">
-        {order.map((t, i) => (
-          <li key={t} className={`${done[t] ? 'is-done' : ''}${t === current ? ' is-current' : ''}${t === tab ? ' is-open' : ''}`.trim() || undefined}>
-            <button type="button" onClick={() => setTab(t)}>
-              <span className="p2-guide-dot">{done[t] ? <Icon name="check" size={16} /> : i + 1}</span>
-              <span className="p2-guide-label">{labels[t]}</span>
-            </button>
-          </li>
-        ))}
-      </ol>
-      <div className="p2-guide-next">
-        <div>
-          <p className="p2-label">
-            Next step <span>· {order.indexOf(current) + 1} of 5</span>
-          </p>
-          <h2>{n.title}</h2>
-          <p>{n.text}</p>
-        </div>
-        {tab !== current || current === 'board' ? (
+    <nav className="p2-slidetabs-wrap" aria-label="Jury Admin Sections">
+      <div className="p2-slidetabs" role="tablist">
+        {TABS.map(([id, label, icon]) => (
           <button
+            key={id}
             type="button"
-            className="button"
-            onClick={() => {
-              n.act();
-              requestAnimationFrame(() => document.getElementById(`panel-${current}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-            }}
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => setTab(id)}
+            className={done[id] ? 'is-done' : undefined}
           >
-            {n.cta} <span aria-hidden="true">→</span>
+            <Icon name={icon as IconName} size={16} />
+            <span>{label}</span>
+            {done[id] && <i className="p2-tab-check" aria-hidden="true">✓</i>}
           </button>
-        ) : (
-          <span className="p2-guide-here">
-            <Icon name="next" size={14} /> You’re on it — see below
-          </span>
-        )}
+        ))}
       </div>
-    </section>
+    </nav>
   );
 }
 
-function PanelHead({ title, accent, meta, children }: { title: string; accent: string; meta?: ReactNode; children?: ReactNode }) {
+function PanelHead({
+  title,
+  accent,
+  meta,
+  children,
+}: {
+  title: string;
+  accent: string;
+  meta?: ReactNode;
+  children?: ReactNode;
+}) {
   return (
     <div className="p2-panel-head">
       <div>
@@ -263,8 +277,6 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-/* ---------- 01 Jury & logins ---------- */
-
 function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) {
   const [done, setDone] = useState(false);
   return (
@@ -282,6 +294,8 @@ function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) 
   );
 }
 
+/* ---------- 01 Jury & Logins ---------- */
+
 function JuryTab({ st }: { st: JuryState }) {
   const [name, setName] = useState('');
   const [designation, setDesignation] = useState('');
@@ -291,9 +305,14 @@ function JuryTab({ st }: { st: JuryState }) {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const j = await jury.addJuror({ name: name.trim(), designation: designation.trim() || `Jury · ${PANEL_NAMES[panel]}`, email: email.trim(), panel });
+    const j = await jury.addJuror({
+      name: name.trim(),
+      designation: designation.trim() || `Jury · ${PANEL_NAMES[panel]}`,
+      email: email.trim(),
+      panel,
+    });
     if (!j) return;
-    setCreated(j);
+    setCreated(j as IssuedCredential);
     setName('');
     setDesignation('');
     setEmail('');
@@ -302,130 +321,338 @@ function JuryTab({ st }: { st: JuryState }) {
   return (
     <div className="p2-two">
       <div>
-        <PanelHead title="Jury" accent="members." meta={`${st.jurors.length} jurors · each gets a username and password for /jury`} />
+        <PanelHead
+          title="Jury"
+          accent="members."
+          meta={`${st.jurors.length} judges registered · each receives credentials for /jury`}
+        />
         <ul className="p2-rows">
-          {st.jurors.map((j) => {
-            return (
-              <li key={j.id} className="p2-juror">
-                <span className="p2-initials" aria-hidden="true">
-                  {initials(j.name)}
-                  <b>P{j.panel}</b>
-                </span>
-                <div>
-                  <h3>{j.name}</h3>
-                  <p className="muted">{j.designation}</p>
-                  <div className="p2-cred">
-                    <span>
-                      <small>User</small> {j.username}
-                    </span>
-                  </div>
+          {st.jurors.map((j) => (
+            <li key={j.id} className="p2-juror">
+              <span className="p2-initials" aria-hidden="true">
+                {initials(j.name)}
+                <b>P{j.panel}</b>
+              </span>
+              <div>
+                <h3>{j.name}</h3>
+                <p className="muted">{j.designation}</p>
+                <div className="p2-cred">
+                  <span>
+                    <small>User</small> {j.username}
+                  </span>
                 </div>
-                <div className="p2-row-end p2-row-stack">
-                  <select className="p2-select small" value={j.panel} onChange={(e) => jury.setJurorPanel(j.id, Number(e.target.value) as PanelId)} aria-label={`Panel for ${j.name}`}>
-                    <option value={1}>Panel 1</option>
-                    <option value={2}>Panel 2</option>
-                  </select>
-                  <button type="button" className="text-link" onClick={async () => {
+              </div>
+              <div className="p2-row-end p2-row-stack">
+                <select
+                  className="p2-select small"
+                  value={j.panel}
+                  onChange={(e) => jury.setJurorPanel(j.id, Number(e.target.value) as PanelId)}
+                  aria-label={`Panel for ${j.name}`}
+                >
+                  <option value={1}>Panel 1</option>
+                  <option value={2}>Panel 2</option>
+                </select>
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={async () => {
                     const credential = await jury.resetPassword(j.id);
-                    if (credential) setCreated(credential);
-                  }}>
-                    Issue new password
-                  </button>
-                  <button type="button" className="text-link p2-danger" onClick={() => jury.removeJuror(j.id)}>
-                    Remove
-                  </button>
-                </div>
-              </li>
-            );
-          })}
+                    if (credential) setCreated(credential as IssuedCredential);
+                  }}
+                >
+                  Issue new password
+                </button>
+                <button type="button" className="text-link p2-danger" onClick={() => jury.removeJuror(j.id)}>
+                  Remove
+                </button>
+              </div>
+            </li>
+          ))}
         </ul>
       </div>
 
-      <form className="p2-side-form" onSubmit={submit}>
-        <p className="p2-label">Add a jury member</p>
-        <p className="muted">A login is created straight away. Share it with them before the Expo.</p>
-        <div className="field wide">
-          <label htmlFor="j-name">Full name</label>
-          <input id="j-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Dr. Ramesh Rao" required />
-        </div>
-        <div className="field wide">
-          <label htmlFor="j-desig">Designation (optional)</label>
-          <input id="j-desig" value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="Professor, CSE · NMAMIT" />
-        </div>
-        <div className="field wide">
-          <label htmlFor="j-email">Email (optional)</label>
-          <input id="j-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </div>
-        <fieldset className="p2-chipset p2-chipset-radio">
-          <legend>Panel</legend>
-          {PANELS.map((p) => (
-            <label key={p}>
-              <input type="radio" name="j-panel" checked={panel === p} onChange={() => setPanel(p)} />
-              <span>{PANEL_NAMES[p]}</span>
-            </label>
-          ))}
-        </fieldset>
-        <button className="button">
-          Add & create login <span aria-hidden="true">↗</span>
-        </button>
+      <div>
+        <form className="p2-side-form" onSubmit={submit}>
+          <p className="p2-label">Add a jury member</p>
+          <p className="muted">A login is created immediately. Provide credentials to the judge.</p>
+          <div className="field wide">
+            <label htmlFor="j-name">Full name</label>
+            <input
+              id="j-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Dr. Ramesh Rao"
+              required
+            />
+          </div>
+          <div className="field wide">
+            <label htmlFor="j-desig">Designation</label>
+            <input
+              id="j-desig"
+              value={designation}
+              onChange={(e) => setDesignation(e.target.value)}
+              placeholder="e.g. Professor, CSE Dept"
+            />
+          </div>
+          <div className="field wide">
+            <label htmlFor="j-email">Email (optional)</label>
+            <input
+              id="j-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="judge@college.edu"
+            />
+          </div>
+          <div className="field wide">
+            <label htmlFor="j-panel">Panel</label>
+            <select
+              id="j-panel"
+              className="p2-select"
+              value={panel}
+              onChange={(e) => setPanel(Number(e.target.value) as PanelId)}
+            >
+              <option value={1}>Panel 1</option>
+              <option value={2}>Panel 2</option>
+            </select>
+          </div>
+          <button className="button">Add judge &amp; issue login</button>
+        </form>
+
         {created && (
-          <div className="p2-newcred" role="status">
-            <p className="p2-label">Login issued · {created.name}</p>
-            <p>Copy this password now. It won’t be shown again.</p>
-            <p>
-              <small>Username</small> <b>{created.username}</b>
-            </p>
-            <p>
-              <small>Password</small> <b>{created.password}</b>
-            </p>
-            <CopyButton text={`NEXUS jury login\nUsername: ${created.username}\nPassword: ${created.password}`} label="Copy login" />
+          <div className="p2-issued" role="dialog" aria-label="Issued Judge Credentials">
+            <div className="p2-issued-head">
+              <h3>Login issued for {created.name}</h3>
+              <button type="button" className="text-link" onClick={() => setCreated(null)}>
+                Dismiss
+              </button>
+            </div>
+            <p className="muted">Share these details with the judge to log into /jury:</p>
+            <dl className="p2-issued-cred">
+              <div>
+                <dt>Portal URL</dt>
+                <dd>
+                  <code>/jury</code>
+                </dd>
+              </div>
+              <div>
+                <dt>Username</dt>
+                <dd>
+                  <code>{created.username}</code>
+                </dd>
+              </div>
+              <div>
+                <dt>Password</dt>
+                <dd>
+                  <code>{created.password}</code>
+                </dd>
+              </div>
+              <div>
+                <dt>Panel</dt>
+                <dd>
+                  <strong>{PANEL_NAMES[created.panel]}</strong>
+                </dd>
+              </div>
+            </dl>
+            <CopyButton
+              text={`NEXUS 2026 Jury Login:\nURL: /jury\nUsername: ${created.username}\nPassword: ${created.password}\nPanel: ${PANEL_NAMES[created.panel]}`}
+              label="Copy credentials"
+            />
           </div>
         )}
-      </form>
+      </div>
     </div>
   );
 }
 
-/* ---------- 02 Panels ---------- */
+/* ---------- 02 Stage Volunteers ---------- */
+
+function VolunteersTab({ st }: { st: JuryState }) {
+  const [name, setName] = useState('');
+  const [panel, setPanel] = useState<PanelId>(1);
+  const [created, setCreated] = useState<IssuedVolunteerCredential | null>(null);
+
+  const volunteers = st.volunteers ?? [];
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    const v = await jury.addVolunteer({ name: name.trim(), panel });
+    if (!v) return;
+    setCreated(v as IssuedVolunteerCredential);
+    setName('');
+  }
+
+  return (
+    <div className="p2-two">
+      <div>
+        <PanelHead
+          title="Stage"
+          accent="volunteers."
+          meta={`${volunteers.length} volunteers · each controls timer for their assigned panel at /volunteer`}
+        />
+        {volunteers.length === 0 ? (
+          <p className="empty">No stage volunteers created yet. Add volunteers using the form on the right.</p>
+        ) : (
+          <ul className="p2-rows">
+            {volunteers.map((v) => (
+              <li key={v.id} className="p2-juror">
+                <span className="p2-initials" aria-hidden="true">
+                  {initials(v.name)}
+                  <b>P{v.panel}</b>
+                </span>
+                <div>
+                  <h3>{v.name}</h3>
+                  <p className="muted">Volunteer · {PANEL_NAMES[v.panel]}</p>
+                  <div className="p2-cred">
+                    <span>
+                      <small>Username</small> {v.username}
+                    </span>
+                  </div>
+                </div>
+                <div className="p2-row-end p2-row-stack">
+                  <select
+                    className="p2-select small"
+                    value={v.panel}
+                    onChange={(e) => jury.setVolunteerPanel(v.id, Number(e.target.value) as PanelId)}
+                    aria-label={`Panel for volunteer ${v.name}`}
+                  >
+                    <option value={1}>Panel 1</option>
+                    <option value={2}>Panel 2</option>
+                  </select>
+                  <button
+                    type="button"
+                    className="text-link"
+                    onClick={async () => {
+                      const credential = await jury.resetVolunteerPassword(v.id);
+                      if (credential) setCreated(credential as IssuedVolunteerCredential);
+                    }}
+                  >
+                    Issue new password
+                  </button>
+                  <button type="button" className="text-link p2-danger" onClick={() => jury.removeVolunteer(v.id)}>
+                    Remove
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <form className="p2-side-form" onSubmit={submit}>
+          <p className="p2-label">Add a stage volunteer</p>
+          <p className="muted">
+            The volunteer will receive a login to access <strong>/volunteer</strong> to start, pause, resume, reset, and advance the 10-minute timer for their panel.
+          </p>
+          <div className="field wide">
+            <label htmlFor="v-name">Volunteer full name</label>
+            <input
+              id="v-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Rahul Sharma"
+              required
+            />
+          </div>
+          <div className="field wide">
+            <label htmlFor="v-panel">Assigned Panel</label>
+            <select
+              id="v-panel"
+              className="p2-select"
+              value={panel}
+              onChange={(e) => setPanel(Number(e.target.value) as PanelId)}
+            >
+              <option value={1}>Panel 1</option>
+              <option value={2}>Panel 2</option>
+            </select>
+          </div>
+          <button className="button">Add volunteer &amp; issue credentials</button>
+        </form>
+
+        {created && (
+          <div className="p2-issued" role="dialog" aria-label="Issued Volunteer Credentials">
+            <div className="p2-issued-head">
+              <h3>Login issued for {created.name}</h3>
+              <button type="button" className="text-link" onClick={() => setCreated(null)}>
+                Dismiss
+              </button>
+            </div>
+            <p className="muted">Share these details with the volunteer to log into /volunteer:</p>
+            <dl className="p2-issued-cred">
+              <div>
+                <dt>Volunteer URL</dt>
+                <dd>
+                  <code>/volunteer</code>
+                </dd>
+              </div>
+              <div>
+                <dt>Username</dt>
+                <dd>
+                  <code>{created.username}</code>
+                </dd>
+              </div>
+              <div>
+                <dt>Password</dt>
+                <dd>
+                  <code>{created.password}</code>
+                </dd>
+              </div>
+              <div>
+                <dt>Assigned Panel</dt>
+                <dd>
+                  <strong>{PANEL_NAMES[created.panel]}</strong>
+                </dd>
+              </div>
+            </dl>
+            <CopyButton
+              text={`NEXUS 2026 Volunteer Timer Login:\nURL: /volunteer\nUsername: ${created.username}\nPassword: ${created.password}\nAssigned Panel: ${PANEL_NAMES[created.panel]}`}
+              label="Copy credentials"
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 03 Panel Assignments ---------- */
 
 function PanelsTab({ st }: { st: JuryState }) {
-  const assigned = st.order[1].length + st.order[2].length;
-  const [flash, setFlash] = useState(0);
-  const [drawing, setDrawing] = useState(false);
+  const [shuffling, setShuffling] = useState(false);
+
+  function assignRandomly() {
+    setShuffling(true);
+    setTimeout(() => {
+      jury.randomAssign();
+      setShuffling(false);
+    }, 1200);
+  }
+
   return (
     <>
-      <PanelHead title="Two" accent="panels." meta={assigned ? `${assigned} teams split across both panels · order = presentation order` : `${st.teams.length} teams waiting to be assigned`}>
-        {assigned > 0 && (
-          <button type="button" className="text-link" onClick={() => jury.clearAssignments()}>
-            Clear
-          </button>
-        )}
+      <PanelHead
+        title="Panel"
+        accent="assignments."
+        meta={`Split ${st.teams.length} teams across Panel 1 and Panel 2`}
+      >
+        <button type="button" className="button small" onClick={assignRandomly} disabled={shuffling || !st.teams.length}>
+          {shuffling ? 'Assigning…' : 'Shuffle & split evenly'}
+        </button>
         <button
           type="button"
-          className="button small"
-          disabled={drawing || !st.teams.length}
-          onClick={() => {
-            if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-              jury.randomAssign();
-              setFlash((f) => f + 1);
-              return;
-            }
-            setDrawing(true);
-            setTimeout(() => {
-              jury.randomAssign();
-              setDrawing(false);
-              setFlash((f) => f + 1);
-            }, 2200);
-          }}
+          className="button outline small"
+          onClick={() => jury.clearAssignments()}
+          disabled={!st.order[1].length && !st.order[2].length}
         >
-          <Icon name="shuffle" size={16} /> {assigned ? 'Shuffle again' : 'Assign teams randomly'}
+          Clear
         </button>
       </PanelHead>
-      {drawing && st.teams.length > 0 && <DrawOverlay teams={st.teams} />}
-      <div className={`p2-panels${drawing ? ' is-drawing' : ''}`} key={flash}>
+
+      <div className="p2-panels">
         {PANELS.map((p) => {
-          const jurors = st.jurors.filter((j) => j.panel === p);
-          const other: PanelId = p === 1 ? 2 : 1;
+          const other = p === 1 ? 2 : 1;
+          const judges = st.jurors.filter((j) => j.panel === p);
           return (
             <section key={p} className="p2-panelcol">
               <header>
@@ -433,32 +660,26 @@ function PanelsTab({ st }: { st: JuryState }) {
                 <div>
                   <h3>{PANEL_NAMES[p]}</h3>
                   <p className="p2-meta">
-                    {st.order[p].length} teams · {jurors.length} jurors
+                    {st.order[p].length} teams · {judges.length} judges
                   </p>
                 </div>
               </header>
-              <ul className="p2-jurorchips">
-                {jurors.map((j) => (
-                  <li key={j.id}>
-                    <span className="p2-initials small" aria-hidden="true">
-                      {initials(j.name)}
-                    </span>
-                    {j.name}
-                  </li>
+              <ul className="p2-juror-chips">
+                {judges.map((j) => (
+                  <li key={j.id}>{j.name}</li>
                 ))}
-                {jurors.length === 0 && <li className="muted">No jurors yet — add them in Jury & logins</li>}
               </ul>
               {st.order[p].length === 0 ? (
                 <div className="p2-empty-col">
-                  <p>No teams yet</p>
-                  <small>Use “Assign teams randomly” to split all {st.teams.length} teams.</small>
+                  <p>No teams assigned yet</p>
+                  <small>Use “Shuffle &amp; split evenly” to distribute all {st.teams.length} teams.</small>
                 </div>
               ) : (
                 <ol className="p2-teamlist">
                   {st.order[p].map((id, i) => {
                     const t = teamById(st, id);
                     return (
-                      <li key={id} style={{ animationDelay: `${i * 45}ms` }}>
+                      <li key={id}>
                         <span className="p2-order">{pad(i + 1)}</span>
                         <div>
                           <strong>{t.title}</strong>
@@ -466,7 +687,12 @@ function PanelsTab({ st }: { st: JuryState }) {
                             {t.code} · {t.college}
                           </small>
                         </div>
-                        <button type="button" className="p2-copy" onClick={() => jury.moveTeam(id, other)} title={`Move to ${PANEL_NAMES[other]}`}>
+                        <button
+                          type="button"
+                          className="p2-copy"
+                          onClick={() => jury.moveTeam(id, other)}
+                          title={`Move to ${PANEL_NAMES[other]}`}
+                        >
                           → P{other}
                         </button>
                       </li>
@@ -482,56 +708,19 @@ function PanelsTab({ st }: { st: JuryState }) {
   );
 }
 
-/** Lucky-draw moment while teams are split into panels. */
-function DrawOverlay({ teams }: { teams: Team[] }) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setI((n) => n + 1), 70);
-    return () => clearInterval(t);
-  }, []);
-  const half = Math.ceil(teams.length / 2);
-  const dealt = Math.min(teams.length, Math.floor(i / 2.4));
-  const p1 = Math.min(half, Math.ceil(dealt / 2));
-  const p2 = Math.min(teams.length - half, Math.floor(dealt / 2));
-  return (
-    <div className="p2-draw" role="status" aria-live="polite">
-      <span className="p2-draw-count">
-        <small>Panel 1</small>
-        <b>{pad(p1)}</b>
-      </span>
-      <div className="p2-draw-reel">
-        <p className="p2-label">Drawing teams</p>
-        <div className="p2-draw-window" aria-hidden="true">
-          {[-1, 0, 1].map((o) => (
-            <span key={o} className={o === 0 ? 'is-mid' : undefined}>
-              {teams[(i + o + teams.length) % teams.length].title}
-            </span>
-          ))}
-        </div>
-        <span className="p2-draw-bar" aria-hidden="true">
-          <span style={{ width: `${(dealt / teams.length) * 100}%` }} />
-        </span>
-      </div>
-      <span className="p2-draw-count">
-        <small>Panel 2</small>
-        <b>{pad(p2)}</b>
-      </span>
-    </div>
-  );
-}
-
-/* ---------- 03 Live timer ---------- */
+/* ---------- 04 Live Stage Timer (Admin Override) ---------- */
 
 function LiveTab({ st }: { st: JuryState }) {
   if (!st.order[1].length && !st.order[2].length) {
-    return <p className="empty">Assign teams to panels first (Panels tab), then run each panel’s timer here.</p>;
+    return <p className="empty">Assign teams to panels first (Panel assignments tab), then run timers here or via /volunteer.</p>;
   }
+
   return (
     <>
       <PanelHead
-        title="Live"
-        accent="timer."
-        meta={`${SLOT.presentSeconds / 60} min presentation + ${SLOT.qaSeconds / 60} min Q&A per team · judges get a beep and a message when each part ends`}
+        title="Live Stage"
+        accent="timer controls."
+        meta="Stage volunteers control timers from /volunteer. Admins retain global override control."
       />
       <div className="p2-panels">
         {PANELS.map((p) => (
@@ -546,11 +735,17 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
   const session = st.session[panel];
   const [alert, setAlert] = useState('');
   const { phase, elapsed } = usePhaseAlerts(session, (to) =>
-    setAlert(to === 'qa' ? 'Presentation over — Q&A started. Judges notified.' : 'Time up — judges notified to finish scoring.'),
+    setAlert(
+      to === 'qa'
+        ? 'Presentation over (5:00) — Q&A started. Alert chime sounded.'
+        : 'Time up (10:00) — 10-minute presentation slot completed.'
+    )
   );
   const team = session.teamId ? teamById(st, session.teamId) : null;
   const jurors = st.jurors.filter((j) => j.panel === panel);
-  const submitted = team ? Object.keys(st.evals[team.id] ?? {}).filter((id) => jurors.some((j) => j.id === id)).length : 0;
+  const submitted = team
+    ? Object.keys(st.evals[team.id] ?? {}).filter((id) => jurors.some((j) => j.id === id)).length
+    : 0;
   const order = st.order[panel];
   const idx = team ? order.indexOf(team.id) : -1;
 
@@ -560,7 +755,10 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
         <span className="p2-panel-no">0{panel}</span>
         <div>
           <h3>{PANEL_NAMES[panel]}</h3>
-          <p className="p2-meta">{team ? `Team ${idx + 1} of ${order.length}` : `${order.length} teams queued`}</p>
+          <p className="p2-meta">
+            {team ? `Team ${idx + 1} of ${order.length}` : `${order.length} teams queued`}
+            {session.volunteerName ? ` · Stage Vol: ${session.volunteerName}` : ''}
+          </p>
         </div>
         <span className={`p2-phase is-${phase}`}>
           {session.running && <i aria-hidden="true" />}
@@ -572,9 +770,14 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
       <ol className="p2-qdots" aria-label="Presentation order">
         {order.map((id, i) => {
           const scored = Object.keys(st.evals[id] ?? {}).filter((jid) => jurors.some((j) => j.id === jid)).length;
-          const state = id === session.teamId ? 'is-current' : jurors.length && scored >= jurors.length ? 'is-done' : '';
+          const state =
+            id === session.teamId ? 'is-current' : jurors.length && scored >= jurors.length ? 'is-done' : '';
           return (
-            <li key={id} className={state || undefined} title={`${pad(i + 1)} · ${teamById(st, id).title}${state === 'is-done' ? ' · scored' : ''}`}>
+            <li
+              key={id}
+              className={state || undefined}
+              title={`${pad(i + 1)} · ${teamById(st, id).title}${state === 'is-done' ? ' · scored' : ''}`}
+            >
               <button type="button" onClick={() => jury.selectTeam(panel, id)} aria-label={`Select team ${i + 1}`}>
                 {pad(i + 1)}
               </button>
@@ -632,10 +835,25 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
                 <Icon name="play" size={14} /> {elapsed > 0 ? 'Resume' : 'Start'}
               </button>
             )}
-            <button type="button" className="text-link" onClick={() => (setAlert(''), jury.resetTimer(panel))}>
+            <button
+              type="button"
+              className="text-link"
+              onClick={() => {
+                setAlert('');
+                jury.resetTimer(panel);
+              }}
+            >
               <Icon name="reset" size={14} /> Reset
             </button>
-            <button type="button" className="text-link" onClick={() => (setAlert(''), jury.next(panel))} disabled={idx >= order.length - 1}>
+            <button
+              type="button"
+              className="text-link"
+              onClick={() => {
+                setAlert('');
+                jury.next(panel);
+              }}
+              disabled={idx >= order.length - 1}
+            >
               <Icon name="next" size={14} /> Next team
             </button>
             <span className="p2-meta p2-submitted">
@@ -644,7 +862,7 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
           </div>
           {order[idx + 1] && (
             <p className="p2-upnext">
-              <span>Up next</span> {teamById(st, order[idx + 1]).title}
+              <span>Up next:</span> {teamById(st, order[idx + 1]).title}
             </p>
           )}
         </>
@@ -653,15 +871,20 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
   );
 }
 
-/* ---------- 04 Scores & comments ---------- */
+/* ---------- 05 Scores & 7-Criteria Matrix ---------- */
 
 function ScoresTab({ st }: { st: JuryState }) {
   const [panel, setPanel] = useState<PanelId>(1);
   const jurors = st.jurors.filter((j) => j.panel === panel);
   const order = st.order[panel];
+
   return (
     <>
-      <PanelHead title="Scores &" accent="comments." meta={`Every judge’s score out of ${MAX_TOTAL} and their remarks`}>
+      <PanelHead
+        title="Evaluation"
+        accent="matrix &amp; scores."
+        meta={`Official 7-criteria matrix out of ${MAX_TOTAL} pts. Averages calculated for submitted judges.`}
+      >
         <div className="p2-seg" role="tablist" aria-label="Panel">
           {PANELS.map((p) => (
             <button key={p} type="button" role="tab" aria-selected={panel === p} onClick={() => setPanel(p)}>
@@ -670,6 +893,7 @@ function ScoresTab({ st }: { st: JuryState }) {
           ))}
         </div>
       </PanelHead>
+
       {order.length === 0 ? (
         <p className="empty">No teams in {PANEL_NAMES[panel]} yet.</p>
       ) : (
@@ -678,53 +902,118 @@ function ScoresTab({ st }: { st: JuryState }) {
             const t = teamById(st, id);
             const ev = st.evals[id] ?? {};
             const avg = averageOf(st, id);
-            const n = Object.keys(ev).length;
+            const submittedJurors = jurors.filter((j) => ev[j.id]);
+            const n = submittedJurors.length;
+
             return (
-              <li key={id}>
+              <li key={id} className="p2-matrix-card">
                 <header>
                   <span className="p2-order">{pad(i + 1)}</span>
                   <div>
                     <h3>{t.title}</h3>
                     <p className="p2-meta">
-                      {t.code} · {t.college}
+                      {t.code} · {t.college} · {t.members.join(', ')}
                     </p>
                   </div>
-                  <span className="p2-avg">
-                    {n ? avg.toFixed(1) : '—'}
-                    <small>avg · {n}/{jurors.length}</small>
-                  </span>
+                  <div className="p2-team-score-summary">
+                    <span className="p2-avg">
+                      {n ? avg.toFixed(2) : '—'}
+                      <small>
+                        / 100 avg ({n}/{jurors.length} judges)
+                      </small>
+                    </span>
+                  </div>
                 </header>
-                <table>
-                  <thead>
-                    <tr>
-                      <th scope="col">Judge</th>
-                      {CRITERIA.map((c) => (
-                        <th key={c.id} scope="col" title={c.label}>
-                          {c.label.split(' ')[0]}
-                        </th>
-                      ))}
-                      <th scope="col">Total</th>
-                      <th scope="col">Comment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {jurors.map((j) => {
-                      const e = ev[j.id];
-                      return (
-                        <tr key={j.id} className={e ? undefined : 'is-pending'}>
-                          <td>{j.name}</td>
-                          {CRITERIA.map((c) => (
-                            <td key={c.id}>
-                              <MiniScale value={e ? e.scores[c.id] : 0} />
+
+                <div className="p2-table-wrap">
+                  <table className="p2-matrix-table">
+                    <thead>
+                      <tr>
+                        <th scope="col" style={{ width: '150px' }}>Judge</th>
+                        {CRITERIA.map((c) => (
+                          <th key={c.id} scope="col" title={c.label}>
+                            <div className="p2-th-crit">
+                              <span>{c.shortLabel}</span>
+                              <small>{c.weightage}%</small>
+                            </div>
+                          </th>
+                        ))}
+                        <th scope="col" style={{ width: '90px' }}>Weighted Total</th>
+                        <th scope="col" style={{ minWidth: '220px' }}>Comments &amp; Feedback</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {jurors.map((j) => {
+                        const e = ev[j.id];
+                        const totalScore = e ? totalWeightedScore(e.scores) : null;
+                        return (
+                          <tr key={j.id} className={e ? undefined : 'is-pending'}>
+                            <td className="p2-judge-name">
+                              <strong>{j.name}</strong>
+                              <small className="muted">{j.designation || 'Jury'}</small>
                             </td>
-                          ))}
-                          <td className="mono p2-total-cell">{e ? total(e.scores) : '—'}</td>
-                          <td className="p2-comment">{e ? e.comment || <span className="muted">No comment</span> : <span className="muted">Not scored yet</span>}</td>
+                            {CRITERIA.map((c) => {
+                              const mark = e ? e.scores[c.id] : undefined;
+                              const weighted = mark !== undefined ? criterionWeightedScore(mark, c.weightage) : null;
+                              return (
+                                <td key={c.id} className="p2-mark-cell">
+                                  {mark !== undefined ? (
+                                    <div className="p2-cell-score">
+                                      <span className="p2-cell-mark">{mark.toFixed(2)}</span>
+                                      <small className="p2-cell-weight">{weighted?.toFixed(2)} pts</small>
+                                    </div>
+                                  ) : (
+                                    <span className="muted">—</span>
+                                  )}
+                                </td>
+                              );
+                            })}
+                            <td className="mono p2-total-cell">
+                              {totalScore !== null ? (
+                                <strong>{totalScore.toFixed(2)}</strong>
+                              ) : (
+                                <span className="muted">Pending</span>
+                              )}
+                            </td>
+                            <td className="p2-comment">
+                              {e ? (
+                                <p className="p2-comment-text">{e.comment || <span className="muted">No remarks</span>}</p>
+                              ) : (
+                                <span className="muted">Not scored yet</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                      {/* Criteria Averages Row */}
+                      {n > 0 && (
+                        <tr className="p2-avg-row">
+                          <td>
+                            <strong>Average ({n} judges)</strong>
+                          </td>
+                          {CRITERIA.map((c) => {
+                            const cAvg =
+                              submittedJurors.reduce((acc, j) => acc + (ev[j.id]?.scores[c.id] ?? 0), 0) / n;
+                            const wAvg = criterionWeightedScore(cAvg, c.weightage);
+                            return (
+                              <td key={c.id} className="p2-mark-cell">
+                                <div className="p2-cell-score is-avg">
+                                  <span className="p2-cell-mark">{cAvg.toFixed(2)}</span>
+                                  <small className="p2-cell-weight">{wAvg.toFixed(2)} pts</small>
+                                </div>
+                              </td>
+                            );
+                          })}
+                          <td className="mono p2-total-cell is-avg">
+                            <strong>{avg.toFixed(2)}</strong>
+                          </td>
+                          <td className="muted">Arithmetic average of submitted scores</td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </li>
             );
           })}
@@ -734,37 +1023,31 @@ function ScoresTab({ st }: { st: JuryState }) {
   );
 }
 
-/** The judge's 1–10 boxes, read-only: the chosen point is lit, the ones below it are filled. */
-function MiniScale({ value }: { value: number }) {
-  return (
-    <span className="p2-mini" aria-label={value ? `${value} out of ${MAX_PER_CRITERION}` : 'Not scored'}>
-      <span className="p2-mini-boxes" aria-hidden="true">
-        {Array.from({ length: MAX_PER_CRITERION }, (_, k) => k + 1).map((v) => (
-          <i key={v} className={v === value ? 'is-picked' : v < value ? 'is-filled' : undefined}>
-            {v === value ? v : ''}
-          </i>
-        ))}
-      </span>
-    </span>
-  );
-}
-
-/* ---------- 05 Leaderboards + finalists ---------- */
+/* ---------- 06 Leaderboards + Finalists ---------- */
 
 function BoardTab({ st }: { st: JuryState }) {
   return (
     <>
       <PanelHead
-        title="Panel"
+        title="Official"
         accent="leaderboards."
-        meta={st.finalsLocked ? `${st.finalists.length} final teams confirmed` : 'Ranked by average jury score · tick the teams that go to the final'}
+        meta={
+          st.finalsLocked
+            ? `${st.finalists.length} final teams confirmed`
+            : 'Ranked by average weighted score out of 100 · select finalist teams for final pitch'
+        }
       >
         {st.finalsLocked ? (
           <button type="button" className="button small outline" onClick={() => jury.setFinalsLocked(false)}>
-            Edit finalists
+            Unlock finalists
           </button>
         ) : (
-          <button type="button" className="button small" disabled={!st.finalists.length} onClick={() => jury.setFinalsLocked(true)}>
+          <button
+            type="button"
+            className="button small"
+            disabled={!st.finalists.length}
+            onClick={() => jury.setFinalsLocked(true)}
+          >
             Confirm {st.finalists.length || ''} final teams
           </button>
         )}
@@ -788,40 +1071,35 @@ function BoardTab({ st }: { st: JuryState }) {
         {PANELS.map((p) => {
           const judges = st.jurors.filter((judge) => judge.panel === p);
           const ranked = st.order[p]
-            .map((id) => ({
-              id, avg: averageOf(st, id),
-              complete: judges.length > 0 && judges.every((judge) => st.evals[id]?.[judge.id]),
-            }))
+            .map((id) => {
+              const evals = st.evals[id] ?? {};
+              const submittedCount = Object.keys(evals).filter((jid) => judges.some((j) => j.id === jid)).length;
+              return {
+                id,
+                avg: averageOf(st, id),
+                submittedCount,
+                complete: judges.length > 0 && submittedCount === judges.length,
+              };
+            })
             .sort((a, b) => Number(b.complete) - Number(a.complete) || b.avg - a.avg);
+
           const complete = ranked.filter((row) => row.complete);
+
           return (
             <section key={p} className="p2-panelcol">
               <header>
                 <span className="p2-panel-no">0{p}</span>
                 <div>
                   <h3>{PANEL_NAMES[p]}</h3>
-                  <p className="p2-meta">{complete.length} of {ranked.length} teams scored</p>
+                  <p className="p2-meta">
+                    {complete.length} of {ranked.length} teams fully scored
+                  </p>
                 </div>
               </header>
-              {complete.length >= 3 && (
-                <div className="p2-podium-row" aria-label={`${PANEL_NAMES[p]} top three`}>
-                  {[1, 0, 2].map((k) => {
-                    const r = ranked[k];
-                    return (
-                      <div key={r.id} className={`p2-podium-step is-${k + 1}`}>
-                        <p className="p2-podium-name">{teamById(st, r.id).title}</p>
-                        <span className="p2-podium-score">{r.avg.toFixed(1)}</span>
-                        <div className="p2-podium-block">
-                          <span>{k + 1}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+
               {ranked.length === 0 ? (
                 <div className="p2-empty-col">
-                  <p>No teams yet</p>
+                  <p>No teams assigned yet</p>
                 </div>
               ) : (
                 <ol className="p2-lb">
@@ -831,18 +1109,26 @@ function BoardTab({ st }: { st: JuryState }) {
                     return (
                       <li key={r.id} className={`${r.complete ? '' : 'is-pending'}${picked ? ' is-picked' : ''}`}>
                         <span className="p2-lb-rank">{r.complete ? pad(i + 1) : '—'}</span>
-                        <div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <strong>
                             {t.title}
                             {i === 0 && r.complete && <em className="p2-leading">Leading</em>}
                           </strong>
+                          <p className="p2-meta" style={{ margin: '2px 0 4px', fontSize: '11px' }}>
+                            {t.code} · {t.college} · {r.submittedCount}/{judges.length} judges
+                          </p>
                           <span className="p2-lb-bar" aria-hidden="true">
-                            <span style={{ width: `${(r.avg / MAX_TOTAL) * 100}%` }} />
+                            <span style={{ width: `${Math.min(100, (r.avg / MAX_TOTAL) * 100)}%` }} />
                           </span>
                         </div>
-                        <span className="p2-lb-score">{r.complete ? r.avg.toFixed(1) : '—'}</span>
+                        <span className="p2-lb-score">{r.submittedCount > 0 ? r.avg.toFixed(2) : '—'}</span>
                         <label className="p2-pick" title={picked ? 'Remove from final' : 'Send to final'}>
-                          <input type="checkbox" checked={picked} disabled={st.finalsLocked || !r.complete} onChange={() => jury.toggleFinalist(r.id)} />
+                          <input
+                            type="checkbox"
+                            checked={picked}
+                            disabled={st.finalsLocked || !r.complete}
+                            onChange={() => jury.toggleFinalist(r.id)}
+                          />
                           <span>{picked ? '✓ Final' : 'Final'}</span>
                         </label>
                       </li>

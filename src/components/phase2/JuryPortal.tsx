@@ -6,11 +6,25 @@ import { Ring } from './Fx';
 import { ScoreRadar } from './ScoreRadar';
 import { WaveField } from './WaveField';
 import { Icon } from './Icons';
-import { CRITERIA, MAX_PER_CRITERION, MAX_TOTAL, PANEL_NAMES, SLOT, SLOT_TOTAL, blankScores, total, type Juror, type Scores, type Team } from './jury-types';
+import {
+  CRITERIA,
+  MAX_PER_CRITERION,
+  MAX_TOTAL,
+  PANEL_NAMES,
+  SLOT,
+  SLOT_TOTAL,
+  blankScores,
+  criterionWeightedScore,
+  totalWeightedScore,
+  type Juror,
+  type Scores,
+  type Team,
+} from './jury-types';
 import { jury, signInJuror, signOutJuror, useJury, useJuryConnection } from './juryStore';
 import { PHASE_LABEL, beep, clock, remainingOf, unlockAudio, usePhaseAlerts, type Phase } from './juryTimer';
 
 const pad = (n: number) => String(n).padStart(2, '0');
+
 export function JuryPortal() {
   const { state, status, error } = useJuryConnection('portal');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -42,8 +56,13 @@ export function JuryPortal() {
       </header>
       <main id="main" className="section page p2-app-main" tabIndex={-1}>
         {(error || signOutError) && <p className="form-alert" role="alert">{signOutError || error}</p>}
-        {status === 'loading' ? <p role="status">Checking your jury session…</p> :
-          juror ? <JurorHome juror={juror} openId={openId} setOpenId={setOpenId} /> : <SignIn />}
+        {status === 'loading' ? (
+          <p role="status">Checking your jury session…</p>
+        ) : juror ? (
+          <JurorHome juror={juror} openId={openId} setOpenId={setOpenId} />
+        ) : (
+          <SignIn />
+        )}
       </main>
     </div>
   );
@@ -55,7 +74,6 @@ function SignIn() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
   const [busy, setBusy] = useState(false);
 
   async function submit(e: FormEvent) {
@@ -77,11 +95,14 @@ function SignIn() {
     <>
       <section className="p2-art-hero p2-login-hero">
         <div className="p2-art-hero-copy">
-          <p className="p2-art-kicker">Student Project Expo · Jury</p>
+          <p className="p2-art-kicker">Student Project Expo · Jury Portal</p>
           <h1>
-            Jury <em>portal.</em>
+            Jury <em>evaluation.</em>
           </h1>
-          <p>Score your panel’s teams from your phone or laptop. The organisers run the timer — you’ll hear a beep when each part ends.</p>
+          <p>
+            Official NEXUS 2026 scoring portal. Enter numeric marks (0–10) across the 7 evaluation criteria.
+            The stage volunteer runs the timer with acoustic alerts at 5:00 and 10:00.
+          </p>
         </div>
         <WaveField />
       </section>
@@ -92,13 +113,27 @@ function SignIn() {
             <label htmlFor="jury-user">
               <Icon name="user" size={15} /> Username
             </label>
-            <input id="jury-user" autoComplete="username" autoCapitalize="none" value={username} onChange={(e) => setUsername(e.target.value)} required />
+            <input
+              id="jury-user"
+              autoComplete="username"
+              autoCapitalize="none"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
           </div>
           <div className="field wide">
             <label htmlFor="jury-password">
               <Icon name="lock" size={15} /> Password
             </label>
-            <input id="jury-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <input
+              id="jury-password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
           {error && (
             <p className="form-alert" role="alert">
@@ -106,32 +141,38 @@ function SignIn() {
             </p>
           )}
           <button className="button" disabled={busy}>
-            {busy ? 'Signing in…' : 'Sign in'} <span aria-hidden="true">↗</span>
+            {busy ? 'Signing in…' : 'Sign in to Jury Portal'} <span aria-hidden="true">↗</span>
           </button>
         </form>
 
         <ol className="p2-how" aria-label="How judging works">
           <li>
-            <span className="p2-how-icon"><Icon name="lock" size={26} /></span>
+            <span className="p2-how-icon">
+              <Icon name="lock" size={26} />
+            </span>
             <div>
               <h3>Sign in</h3>
-              <p>Use the username and password the organisers shared with you.</p>
+              <p>Use the panel-assigned credentials provided by the organisers.</p>
             </div>
           </li>
           <li>
-            <span className="p2-how-icon"><Icon name="timer" size={26} /></span>
+            <span className="p2-how-icon">
+              <Icon name="timer" size={26} />
+            </span>
             <div>
-              <h3>Watch the timer</h3>
+              <h3>Live Stage Timer</h3>
               <p>
-                Each team: {SLOT.presentSeconds / 60} min presentation, then {SLOT.qaSeconds / 60} min Q&amp;A. A beep marks each switch.
+                Each team gets {SLOT.presentSeconds / 60}m presentation + {SLOT.qaSeconds / 60}m Q&amp;A. Alerts chime at 5:00 and 10:00.
               </p>
             </div>
           </li>
           <li>
-            <span className="p2-how-icon"><Icon name="check" size={26} /></span>
+            <span className="p2-how-icon">
+              <Icon name="check" size={26} />
+            </span>
             <div>
-              <h3>Score & comment</h3>
-              <p>Rate {CRITERIA.length} criteria out of {MAX_PER_CRITERION} and add a short remark for the organisers.</p>
+              <h3>7-Criteria Scoring</h3>
+              <p>Rate 0–10 with decimals (e.g. 8.5) and provide feedback. Total score is weighted out of 100.</p>
             </div>
           </li>
         </ol>
@@ -140,12 +181,21 @@ function SignIn() {
   );
 }
 
-/* ---------- Signed in ---------- */
+/* ---------- Signed in Juror Dashboard ---------- */
 
-function JurorHome({ juror, openId, setOpenId }: { juror: Juror; openId: string | null; setOpenId: (id: string | null) => void }) {
+function JurorHome({
+  juror,
+  openId,
+  setOpenId,
+}: {
+  juror: Juror;
+  openId: string | null;
+  setOpenId: (id: string | null) => void;
+}) {
   const st = useJury();
   const session = st.session[juror.panel];
   const [toast, setToast] = useState<{ phase: Phase; team: string } | null>(null);
+
   const { phase, elapsed } = usePhaseAlerts(session, (to) => {
     setToast({ phase: to, team: session.teamId ?? '' });
   });
@@ -157,8 +207,9 @@ function JurorHome({ juror, openId, setOpenId }: { juror: Juror; openId: string 
   }, [toast]);
 
   const order = st.order[juror.panel];
-  const mine = order.map((id) => st.teams.find((t) => t.id === id)!);
+  const mine = order.map((id) => st.teams.find((t) => t.id === id)!).filter(Boolean);
   const done = mine.filter((t) => st.evals[t.id]?.[juror.id]).length;
+  const pending = mine.length - done;
   const current = session.teamId ? st.teams.find((t) => t.id === session.teamId) ?? null : null;
   const open = openId ? mine.find((t) => t.id === openId) ?? null : null;
 
@@ -170,32 +221,49 @@ function JurorHome({ juror, openId, setOpenId }: { juror: Juror; openId: string 
             <Icon name="bell" size={30} />
           </span>
           <div>
-            <strong>{toast.phase === 'qa' ? 'Presentation time is over' : 'Q&A time is over'}</strong>
-            <p>{toast.phase === 'qa' ? `Q&A has started for ${st.teams.find((t) => t.id === toast.team)?.title ?? 'this team'} — 5 minutes.` : 'Please finish and submit your score.'}</p>
+            <strong>{toast.phase === 'qa' ? 'Presentation time ended (5:00)' : 'Time completed (10:00)'}</strong>
+            <p>
+              {toast.phase === 'qa'
+                ? `Q&A session is now underway for ${st.teams.find((t) => t.id === toast.team)?.title ?? 'this team'} (5 minutes remaining).`
+                : 'Presentation and Q&A time are complete. Please finalize and submit your evaluation.'}
+            </p>
           </div>
           <button type="button" className="p2-copy" onClick={() => setToast(null)}>
-            OK
+            Acknowledge
           </button>
         </div>
       )}
 
-      <button type="button" className="text-link" onClick={() => { unlockAudio(); beep(1); }}>Test timer sound</button>
-      {current && <LiveStrip compact={open?.id === current.id} team={current} phase={phase} elapsed={elapsed} running={session.running} onScore={() => setOpenId(current.id)} scored={!!st.evals[current.id]?.[juror.id]} showScore={open?.id !== current.id} />}
+      {/* Live Stage Strip */}
+      {current && (
+        <LiveStrip
+          compact={open?.id === current.id}
+          team={current}
+          phase={phase}
+          elapsed={elapsed}
+          running={session.running}
+          onScore={() => setOpenId(current.id)}
+          scored={!!st.evals[current.id]?.[juror.id]}
+          showScore={open?.id !== current.id}
+        />
+      )}
 
       {open ? (
         <ScoreSheet
           key={open.id}
-          live={session.teamId === open.id ? { phase, elapsed } : null}
+          live={session.teamId === open.id ? { phase, elapsed, running: session.running } : null}
           team={open}
           index={order.indexOf(open.id)}
           initial={st.evals[open.id]?.[juror.id]}
           onBack={() => setOpenId(null)}
           onSubmit={async (scores, comment) => {
-            if (await jury.submitEval(open.id, scores, comment) !== false) setOpenId(null);
+            const res = await jury.submitEval(open.id, scores, comment);
+            if (res !== false) setOpenId(null);
           }}
         />
       ) : (
         <>
+          {/* Dashboard Metrics Header */}
           <div className="schedule-timeline-intro p2-art-hero p2-art-hero-sm">
             <WaveField density={0.8} />
             <div className="p2-art-hero-copy">
@@ -203,28 +271,80 @@ function JurorHome({ juror, openId, setOpenId }: { juror: Juror; openId: string 
                 {juror.name} · {PANEL_NAMES[juror.panel]}
               </p>
               <h2>
-                Your <em>teams.</em>
+                Assigned <em>teams.</em>
               </h2>
             </div>
             <div className="p2-queue-progress">
-              <Ring value={done} max={mine.length || 1} size={64} stroke={5}>
+              <Ring value={done} max={mine.length || 1} size={68} stroke={5}>
                 {done}/{mine.length}
               </Ring>
               <p>
-                <strong>{pad(done)}</strong> of {pad(mine.length)} scored
+                <strong>{pad(done)}</strong> of {pad(mine.length)} evaluated
               </p>
             </div>
           </div>
+
+          {/* Module 3 Key Metrics Cards */}
+          <div className="p2-juror-stats" aria-label="Jury Dashboard Overview">
+            <div className="p2-stat-card">
+              <span className="p2-stat-label">Judge</span>
+              <strong className="p2-stat-val">{juror.name}</strong>
+              <small className="p2-stat-sub">{juror.designation || 'Evaluation Committee'}</small>
+            </div>
+            <div className="p2-stat-card">
+              <span className="p2-stat-label">Assigned Panel</span>
+              <strong className="p2-stat-val accent">{PANEL_NAMES[juror.panel]}</strong>
+              <small className="p2-stat-sub">{mine.length} total teams</small>
+            </div>
+            <div className="p2-stat-card">
+              <span className="p2-stat-label">Evaluation Status</span>
+              <strong className="p2-stat-val">
+                {done} <span className="muted">/ {mine.length}</span>
+              </strong>
+              <small className="p2-stat-sub">
+                {pending === 0 ? 'All completed ✓' : `${pending} pending`}
+              </small>
+            </div>
+            <div className="p2-stat-card">
+              <span className="p2-stat-label">Stage Activity</span>
+              <strong className="p2-stat-val">
+                {current ? PHASE_LABEL[phase] : 'Idle'}
+              </strong>
+              <small className="p2-stat-sub">
+                {current ? `${clock(remainingOf(phase, elapsed))} · ${current.code}` : 'Awaiting start'}
+              </small>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '0.5rem 0' }}>
+            <button
+              type="button"
+              className="text-link"
+              onClick={() => {
+                unlockAudio();
+                beep(1);
+              }}
+            >
+              🔔 Test alert chime
+            </button>
+          </div>
+
           {mine.length === 0 ? (
-            <p className="empty">Teams haven’t been assigned to your panel yet. This page updates by itself once the organisers do it.</p>
+            <p className="empty">
+              Teams have not been assigned to {PANEL_NAMES[juror.panel]} yet. This list updates automatically when the admin assigns teams.
+            </p>
           ) : (
             <ol className="p2-queue">
               {mine.map((t, i) => {
                 const ev = st.evals[t.id]?.[juror.id];
                 const live = session.teamId === t.id;
                 const upNext = !!session.teamId && order.indexOf(session.teamId) + 1 === i;
+                const scoreValue = ev ? totalWeightedScore(ev.scores) : 0;
                 return (
-                  <li key={t.id} className={`${ev ? 'is-done' : ''}${live ? ' is-live' : ''}`.trim() || undefined}>
+                  <li
+                    key={t.id}
+                    className={`${ev ? 'is-done' : ''}${live ? ' is-live' : ''}`.trim() || undefined}
+                  >
                     <span className="p2-queue-table">
                       <small>{live ? 'Now' : 'Order'}</small>
                       {pad(i + 1)}
@@ -235,14 +355,15 @@ function JurorHome({ juror, openId, setOpenId }: { juror: Juror; openId: string 
                       </p>
                       <h3>{t.title}</h3>
                       <p className="muted">
-                        {t.college} · {t.members.length} members
+                        {t.college} · {t.members.join(', ')}
                       </p>
                     </div>
                     <div className="p2-queue-action">
                       {ev ? (
-                        <Ring value={total(ev.scores)} max={MAX_TOTAL} size={54}>
-                          {total(ev.scores)}
-                        </Ring>
+                        <div className="p2-score-badge" title="Total weighted score out of 100">
+                          <span className="p2-score-num">{scoreValue.toFixed(2)}</span>
+                          <span className="p2-score-den">/ 100 pts</span>
+                        </div>
                       ) : live ? (
                         <span className="p2-phase is-present">
                           <i aria-hidden="true" />
@@ -251,10 +372,14 @@ function JurorHome({ juror, openId, setOpenId }: { juror: Juror; openId: string 
                       ) : upNext ? (
                         <span className="p2-phase">Up next</span>
                       ) : (
-                        <span className="p2-meta">Not scored</span>
+                        <span className="p2-meta">Pending</span>
                       )}
-                      <button type="button" className={ev ? 'button outline small' : 'button small'} onClick={() => setOpenId(t.id)}>
-                        {ev ? 'Edit' : 'Score'} <span aria-hidden="true">→</span>
+                      <button
+                        type="button"
+                        className={ev ? 'button outline small' : 'button small'}
+                        onClick={() => setOpenId(t.id)}
+                      >
+                        {ev ? 'Edit score' : 'Evaluate'} <span aria-hidden="true">→</span>
                       </button>
                     </div>
                   </li>
@@ -292,7 +417,7 @@ function LiveStrip({
     <section className={`p2-livestrip is-${phase}${compact ? ' is-sheet' : ''}`} aria-label="Now presenting">
       <div>
         <p className="p2-label">
-          {running ? <i className="p2-live-dot" aria-hidden="true" /> : null} Now presenting · {PHASE_LABEL[phase]}
+          {running ? <i className="p2-live-dot" aria-hidden="true" /> : null} Stage Timer · {PHASE_LABEL[phase]}
           {!running && phase !== 'ready' && phase !== 'over' ? ' (paused)' : ''}
         </p>
         <h2>{team.title}</h2>
@@ -313,7 +438,7 @@ function LiveStrip({
   );
 }
 
-/* ---------- Score sheet ---------- */
+/* ---------- 7-Criteria Score Sheet with Numeric Inputs ---------- */
 
 function ScoreSheet({
   live,
@@ -323,7 +448,7 @@ function ScoreSheet({
   onBack,
   onSubmit,
 }: {
-  live: { phase: Phase; elapsed: number } | null;
+  live: { phase: Phase; elapsed: number; running: boolean } | null;
   team: Team;
   index: number;
   initial?: { scores: Scores; comment: string };
@@ -333,20 +458,47 @@ function ScoreSheet({
   const [s, setS] = useState<Scores>(initial?.scores ?? blankScores());
   const [comment, setComment] = useState(initial?.comment ?? '');
   const [error, setError] = useState('');
-  const sum = total(s);
-  const filled = CRITERIA.filter((c) => s[c.id] > 0).length;
+  const [rawInputs, setRawInputs] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    for (const c of CRITERIA) {
+      const val = initial?.scores?.[c.id];
+      init[c.id] = val !== undefined && val > 0 ? String(val) : '';
+    }
+    return init;
+  });
+
+  const sum = totalWeightedScore(s);
+  const filled = CRITERIA.filter((c) => (s[c.id] ?? 0) > 0).length;
+
+  function handleScoreChange(id: string, text: string) {
+    setRawInputs((prev) => ({ ...prev, [id]: text }));
+    if (text === '') {
+      setS((prev) => ({ ...prev, [id as keyof Scores]: 0 }));
+      return;
+    }
+    const val = parseFloat(text);
+    if (!isNaN(val) && val >= 0 && val <= MAX_PER_CRITERION) {
+      setS((prev) => ({ ...prev, [id as keyof Scores]: Math.round(val * 100) / 100 }));
+    }
+  }
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    const missing = CRITERIA.filter((c) => s[c.id] === 0);
-    if (missing.length) return setError(`Still to score: ${missing.map((c) => c.label).join(', ')}.`);
+    const missing = CRITERIA.filter((c) => {
+      const val = s[c.id];
+      return typeof val !== 'number' || isNaN(val) || val <= 0;
+    });
+    if (missing.length) {
+      return setError(`Please enter a score (0.1–10) for: ${missing.map((c) => c.shortLabel).join(', ')}.`);
+    }
+    setError('');
     onSubmit(s, comment.trim());
   }
 
   return (
     <form className="p2-sheet" onSubmit={submit}>
       <button type="button" className="text-link p2-back" onClick={onBack}>
-        <span aria-hidden="true">←</span> All teams
+        <span aria-hidden="true">←</span> Back to all teams
       </button>
 
       <header className="p2-sheet-head">
@@ -359,6 +511,7 @@ function ScoreSheet({
         </p>
       </header>
 
+      {/* Summary Score Strip & 7-Axis Radar */}
       <dl className="detail-strip p2-sheet-strip">
         <div>
           <dt>Criteria scored</dt>
@@ -368,62 +521,118 @@ function ScoreSheet({
           </dd>
           <span className="p2-pips" aria-hidden="true">
             {CRITERIA.map((c) => (
-              <i key={c.id} className={s[c.id] ? 'is-on' : undefined} />
+              <i key={c.id} className={s[c.id] > 0 ? 'is-on' : undefined} />
             ))}
           </span>
+          <p className="p2-strip-sub">7 Official Criteria</p>
         </div>
         <div className="p2-radar-cell">
-          <dt>Score shape</dt>
-          <ScoreRadar scores={s} size={190} />
+          <dt>7-Axis Evaluation Profile</dt>
+          <ScoreRadar scores={s} size={200} />
         </div>
         <div>
-          <dt>Total</dt>
+          <dt>Total Weighted Score</dt>
           <div className="p2-sum-wrap">
             <Ring value={sum} max={MAX_TOTAL} size={84} stroke={5}>
               {Math.round((sum / MAX_TOTAL) * 100)}%
             </Ring>
             <dd className="accent p2-sum" key={sum}>
-              {sum}
+              {sum.toFixed(2)}
               <small> / {MAX_TOTAL}</small>
             </dd>
           </div>
+          <p className="p2-strip-sub">Sum of weighted points</p>
         </div>
       </dl>
 
-      <ol className="p2-crit">
-        {CRITERIA.map((c) => (
-          <li key={c.id}>
-            <div className="p2-crit-label" id={`c-${c.id}`}>
-              <span className="p2-crit-icon">
-                <Icon name={c.id} size={22} />
-              </span>
-              <div>
-                <h3>{c.label}</h3>
-                <p>{c.hint}</p>
-              </div>
-            </div>
-            <div className="p2-segments" role="radiogroup" aria-labelledby={`c-${c.id}`}>
-              {Array.from({ length: MAX_PER_CRITERION }, (_, k) => k + 1).map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  role="radio"
-                  aria-checked={s[c.id] === v}
-                  aria-label={`${v} out of ${MAX_PER_CRITERION}`}
-                  className={v <= s[c.id] ? 'is-filled' : undefined}
-                  onClick={() => setS((all) => ({ ...all, [c.id]: v }))}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-          </li>
-        ))}
-      </ol>
+      {/* 7 Official Criteria Numeric Inputs */}
+      <section className="p2-criteria-section">
+        <div className="p2-criteria-header">
+          <h2>Official Evaluation Rubric</h2>
+          <p className="muted">
+            Enter marks from <strong>0 to 10</strong> for each criterion. Decimals are accepted (e.g. 7.5, 8.25).
+            The weighted contribution is automatically calculated.
+          </p>
+        </div>
 
+        <div className="p2-criteria-grid">
+          {CRITERIA.map((c, i) => {
+            const rawVal = rawInputs[c.id] ?? '';
+            const mark = s[c.id] || 0;
+            const weighted = criterionWeightedScore(mark, c.weightage);
+            const isValid = mark >= 0 && mark <= 10;
+
+            return (
+              <div key={c.id} className={`p2-crit-card ${mark > 0 ? 'is-active' : ''}`}>
+                <div className="p2-crit-card-top">
+                  <span className="p2-crit-idx">0{i + 1}</span>
+                  <div className="p2-crit-title-wrap">
+                    <h3>{c.label}</h3>
+                    <p className="p2-crit-hint">{c.hint}</p>
+                  </div>
+                  <span className="p2-weight-badge">{c.weightage}% Weightage</span>
+                </div>
+
+                <div className="p2-crit-card-bottom">
+                  <div className="p2-input-group">
+                    <label htmlFor={`crit-input-${c.id}`}>Marks (0–10):</label>
+                    <div className="p2-num-box">
+                      <input
+                        id={`crit-input-${c.id}`}
+                        type="number"
+                        min="0"
+                        max="10"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={rawVal}
+                        onChange={(e) => handleScoreChange(c.id, e.target.value)}
+                        className={!isValid ? 'has-error' : ''}
+                      />
+                      <span className="p2-max-tag">/ 10</span>
+                    </div>
+                  </div>
+
+                  <div className="p2-preset-steppers">
+                    {[6, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        className={`p2-step-btn ${mark === v ? 'is-selected' : ''}`}
+                        onClick={() => handleScoreChange(c.id, String(v))}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="p2-crit-weighted">
+                    <span className="muted">Contribution:</span>
+                    <strong>{weighted.toFixed(2)}</strong>
+                    <small>/ {c.weightage} pts</small>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Dedicated Structured Comments Field */}
       <div className="field wide p2-remarks">
-        <label htmlFor="remarks">Comment for the organisers</label>
-        <textarea id="remarks" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="What stood out, what was weak, anything for the final decision" />
+        <label htmlFor="remarks">
+          <strong>Judge Feedback &amp; Observations</strong>
+          <span className="muted"> (For organisers and final panel deliberation)</span>
+        </label>
+        <p className="p2-remarks-hint">
+          Please note key <strong>strengths</strong>, <strong>technical weaknesses</strong>, and <strong>recommendations</strong>.
+        </p>
+        <textarea
+          id="remarks"
+          rows={4}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Strengths: ...&#10;Weaknesses: ...&#10;Suggestions for improvement: ...&#10;General observations: ..."
+        />
       </div>
 
       {error && (
@@ -432,23 +641,29 @@ function ScoreSheet({
         </p>
       )}
 
+      {/* Informational Stage Timer Banner & Sticky Action Bar */}
       <div className="p2-sheet-bar">
-        {live && (
+        {live ? (
           <span className={`p2-sheet-live is-${live.phase}`} role="timer">
             <i aria-hidden="true" />
-            {PHASE_LABEL[live.phase]} <b>{clock(remainingOf(live.phase, live.elapsed))}</b>
+            Stage: {PHASE_LABEL[live.phase]} <b>{clock(remainingOf(live.phase, live.elapsed))}</b>
+            <small style={{ marginLeft: '0.5rem', opacity: 0.8 }}>(Informational only)</small>
           </span>
+        ) : (
+          <span className="p2-sheet-live muted">Stage timer is idle</span>
         )}
+
         <span className="p2-sheet-bar-total">
-          <small>Total</small>
-          {sum}
-          <em>/{MAX_TOTAL}</em>
+          <small>Total Weighted</small>
+          <strong>{sum.toFixed(2)}</strong>
+          <em>/ {MAX_TOTAL}</em>
         </span>
+
         <button type="button" className="button outline" onClick={onBack}>
           Cancel
         </button>
-        <button className="button">
-          {initial ? 'Update score' : 'Submit score'} <span aria-hidden="true">↗</span>
+        <button className="button" type="submit">
+          {initial ? 'Update score' : 'Submit evaluation'} <span aria-hidden="true">↗</span>
         </button>
       </div>
     </form>

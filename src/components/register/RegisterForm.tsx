@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useReducer, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import {
   STEPS,
@@ -13,6 +14,7 @@ import {
   type FormState,
   type StudentDraft,
 } from './model';
+import { useRegistrationClosed } from './use-registration-closed';
 import { STEP_COMPONENTS } from './steps';
 import { rememberRegistration } from './registration-receipt';
 import { RegistrationSuccess, type RegistrationResult } from './RegistrationSuccess';
@@ -50,6 +52,8 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [problems, setProblems] = useState<ServerProblem[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [closedByServer, setClosedByServer] = useState(false);
+  const closed = useRegistrationClosed();
   const [result, setResult] = useState<RegistrationResult | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
   const inFlight = useRef(false);
@@ -167,6 +171,7 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
       const response = await fetch('/api/registrations', { method: 'POST', body });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
+        if (response.status === 410) setClosedByServer(true);
         const messages: string[] = data.errors ?? [
           data.error ??
             (response.status === 413
@@ -211,6 +216,18 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
   };
 
   if (result) return <RegistrationSuccess result={result} />;
+  if ((closed || closedByServer) && !submitting) {
+    return (
+      <section className="success" aria-labelledby="registration-closed-title">
+        <h1 id="registration-closed-title">Registration is closed.</h1>
+        <p>If you’ve already registered, you can still open your registration summary. If you paid and haven’t received confirmation, contact the organisers.</p>
+        <div className="success-actions">
+          <Link className="button" href="/summary">View registration</Link>
+          <Link className="button outline" href="/contact">Contact the organisers</Link>
+        </div>
+      </section>
+    );
+  }
 
   const Step = STEP_COMPONENTS[step];
   const current = STEPS[step];

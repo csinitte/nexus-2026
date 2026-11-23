@@ -1,8 +1,12 @@
 import { after } from 'next/server';
+import { isRegistrationClosed } from '@/lib/nexus/registration-window';
 import { parseRegistrationRequest, ValidationError } from '@/lib/nexus/validation';
 import { createRegistration, deliverRegistrationConfirmation } from '@/lib/nexus/registration-service';
 
 export async function POST(req: Request) {
+  if (isRegistrationClosed()) {
+    return Response.json({ error: 'Registration is closed. If you already paid, contact the organising team.' }, { status: 410 });
+  }
   try {
     const result = await createRegistration(await parseRegistrationRequest(req));
     const response = Response.json(result, { status: 201 });

@@ -18,12 +18,10 @@ import {
 } from '@/lib/nexus/constants';
 import { CheckList, ChoiceGroup, FieldError, SelectField, TextArea, TextField } from './fields';
 import {
-  ARRIVAL_LABELS,
   blankStudent,
   MAX_ABSTRACT_BYTES,
   MAX_DESCRIPTION_LENGTH,
   STEPS,
-  delegationPeople,
   studentCount,
   validatePaymentScreenshot,
   type Errors,
@@ -437,120 +435,14 @@ export function ExpoStep({ state, errors, update, abstract, setAbstract }: StepP
   );
 }
 
-export function AccommodationStep({ state, errors, update }: StepProps) {
-  const people = delegationPeople(state);
-  const toggle = (key: string) =>
-    update({
-      accommodationPeople: state.accommodationPeople.includes(key)
-        ? state.accommodationPeople.filter((k) => k !== key)
-        : [...state.accommodationPeople, key],
-    });
+export function AccommodationStep() {
   return (
-    <>
-      <p className="step-note">
-        Student participants requiring accommodation must indicate their requirements below. Faculty coordinators are not included. Accommodation is subject to availability.
-      </p>
-      <ChoiceGroup
-        id="accommodationRequired"
-        legend="Do you require accommodation?"
-        value={state.accommodationRequired}
-        onChange={(accommodationRequired) => update({ accommodationRequired })}
-        error={errors.accommodationRequired}
-        options={YES_NO('Yes', 'No')}
-      />
-      {state.accommodationRequired === 'yes' && (
-        <div className="conditional">
-          <ChoiceGroup
-            id="arrivalPlan"
-            legend="When do you plan to arrive?"
-            value={state.arrivalPlan}
-            onChange={(arrivalPlan) => update({ arrivalPlan })}
-            error={errors.arrivalPlan}
-            options={Object.entries(ARRIVAL_LABELS).map(([value, label]) => ({ value, label }))}
-          />
-          <CheckList
-            id="accommodationPeople"
-            legend="Which students require accommodation?"
-            hint={`Select from the students in this registration. ${state.accommodationPeople.length} selected.`}
-            items={people.map((p) => ({ key: p.key, label: p.name, detail: p.role }))}
-            selected={state.accommodationPeople}
-            onToggle={toggle}
-            error={errors.accommodationPeople}
-          />
-          <div className="fields" id="accommodationCounts" tabIndex={-1}>
-            <NumberField
-              id="maleAccommodationCount"
-              label="Number of male students"
-              value={state.maleAccommodationCount}
-              min={0}
-              max={people.length}
-              onChange={(maleAccommodationCount) => update({ maleAccommodationCount })}
-              error={errors.maleAccommodationCount}
-            />
-            <NumberField
-              id="femaleAccommodationCount"
-              label="Number of female students"
-              value={state.femaleAccommodationCount}
-              min={0}
-              max={people.length}
-              onChange={(femaleAccommodationCount) => update({ femaleAccommodationCount })}
-              error={errors.femaleAccommodationCount}
-            />
-            <FieldError id="accommodationCounts" message={errors.accommodationCounts} />
-          </div>
-          <p className="notice" role="note">
-            Accommodation is subject to availability. Submission of a request does not guarantee accommodation.
-          </p>
-        </div>
-      )}
-    </>
+    <p className="notice">
+      <strong>Accommodation requests are closed.</strong> You can continue registering your team without an accommodation request.
+    </p>
   );
 }
 
-function NumberField({
-  id,
-  label,
-  value,
-  min = 0,
-  max,
-  onChange,
-  error,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  min?: number;
-  max?: number;
-  onChange: (v: string) => void;
-  error?: string;
-}) {
-  const n = Number(value) || 0;
-  return (
-    <div className={`field stepper${error ? ' has-error' : ''}`}>
-      <label htmlFor={id}>{label}</label>
-      <div className="stepper-control">
-        <button type="button" onClick={() => onChange(String(Math.max(min, n - 1)))} aria-label={`Decrease ${label.toLowerCase()}`}>
-          −
-        </button>
-        <input
-          id={id}
-          type="number"
-          inputMode="numeric"
-          min={min}
-          max={max}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? `${id}-error` : undefined}
-        />
-        <button type="button" onClick={() => onChange(String(max === undefined ? n + 1 : Math.min(max, n + 1)))} aria-label={`Increase ${label.toLowerCase()}`}>
-          +
-        </button>
-        </div>
-        <FieldError id={id} message={error} />
-      </div>
-    );
-  }
 export function PaymentStep({ state, errors, update, screenshot, setScreenshot }: StepProps) {
   const fee = state.collegeCategory === 'active_csi' ? PAYMENT_FEES.ACTIVE_CSI : PAYMENT_FEES.NO_ACTIVE_CSI;
   const [preparing, setPreparing] = useState(false);
@@ -656,7 +548,6 @@ async function compressScreenshot(file: File): Promise<File> {
 }
 
 export function ReviewStep({ state, errors, update, abstract, screenshot, goTo }: StepProps) {
-  const people = delegationPeople(state);
   const yes = (v: YesNo) => (v === 'yes' ? 'Yes' : v === 'no' ? 'No' : '—');
   const sections: { step: number; rows: [string, string][] }[] = [
     {
@@ -699,17 +590,7 @@ export function ReviewStep({ state, errors, update, abstract, screenshot, goTo }
             ]
           : [['Project Expo', 'Not participating']],
     },
-    {
-      step: 5,
-      rows:
-        state.accommodationRequired === 'yes'
-          ? [
-              ['Arrival', ARRIVAL_LABELS[state.arrivalPlan as keyof typeof ARRIVAL_LABELS] ?? '—'],
-              ['Students requiring accommodation', state.accommodationPeople.map((k) => people.find((p) => p.key === k)?.name).join(', ')],
-              ['Male · female', `${state.maleAccommodationCount} · ${state.femaleAccommodationCount}`],
-            ]
-          : [['Accommodation', 'Not required']],
-    },
+    { step: 5, rows: [['Accommodation', 'Requests closed']] },
   ];
   return (
     <>

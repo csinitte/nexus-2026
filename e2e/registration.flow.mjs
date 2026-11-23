@@ -99,16 +99,8 @@ for (const name of ['Asha Rao', 'Bharath K', 'Chitra S', 'Dev N', 'Esha P']) {
 }
 ok((await page.getByRole('radio', { name: /^1 student/ }).count()) === 0, 'Expo does not offer solo teams');
 await step('Stay');
-
-await page.getByRole('radio', { name: /^Yes/ }).check();
-await page.getByRole('radio', { name: /previous night/ }).check();
-await page.getByRole('checkbox', { name: /Asha Rao/ }).check();
-await page.getByRole('checkbox', { name: /Bharath K/ }).check();
-ok((await page.getByRole('checkbox', { name: /Dr. Test Coordinator/ }).count()) === 0, 'faculty coordinator is not an accommodation student');
-await page.locator('#femaleAccommodationCount').fill('1');
-await step('Payment');
-ok(await page.getByText(/must equal the 2 students selected/).isVisible(), 'accommodation counts must match selected students');
-await page.locator('#maleAccommodationCount').fill('1');
+await page.getByText('Accommodation requests are closed.', { exact: true }).waitFor();
+ok((await page.getByRole('radio', { name: /^Yes/ }).count()) === 0, 'the stay step accepts no new requests');
 await step('Payment');
 
 await page.getByLabel(/UTR Number/).fill(String(Date.now()).slice(-12));
@@ -145,7 +137,6 @@ await page.getByRole('button', { name: /Submit registration/ }).click();
 await page.getByText('Your registration ID', { exact: true }).waitFor({ timeout: 15000 });
 const code = (await page.locator('.code-block strong').textContent())?.trim();
 ok(/^NEXUS26-\d{4}$/.test(code ?? ''), `confirmation shows registration ID ${code}`);
-ok(await page.getByText(/Accommodation is subject to availability/).isVisible(), 'confirmation does not guarantee accommodation');
 ok(await page.getByText(/not jury approval/).isVisible(), 'confirmation does not imply Expo jury approval');
 ok((await page.evaluate(() => localStorage.getItem('nexus26-registration-draft-v1'))) === null, 'draft is cleared after submitting');
 if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT, fullPage: true });

@@ -44,11 +44,6 @@ function completeState(overrides: Partial<FormState> = {}): FormState {
     description: 'Leak detection for campus water lines.',
     expoTeamSize: '2',
     teamIndexes: [0, 1],
-    accommodationRequired: 'yes',
-    arrivalPlan: '2026-11-24_NIGHT',
-    maleAccommodationCount: '1',
-    femaleAccommodationCount: '1',
-    accommodationPeople: ['s0', 's1'],
     utrNumber: '123456789012',
     declarationAccepted: true,
     ...overrides,
@@ -71,18 +66,11 @@ describe('registration student counts', () => {
       students: [...completeState().students, blankStudent(), blankStudent()],
       presenterIndex: 4,
       teamIndexes: [1, 4],
-      accommodationPeople: ['s0', 's4'],
     });
     const shrunk = syncDelegation({ ...expanded, students: expanded.students.slice(0, 4) });
     expect(shrunk.students).toHaveLength(4);
     expect(shrunk.presenterIndex).toBeNull();
     expect(shrunk.teamIndexes).toEqual([1]);
-  });
-
-  test('faculty is never included in accommodation selections', () => {
-    const next = syncDelegation({ ...completeState(), facultyAccompanying: 'no' });
-    expect(next.accommodationPeople).toEqual(['s0', 's1']);
-    expect(next.students).toHaveLength(3);
   });
 
   test('one student is insufficient even when faculty accompanies', () => {
@@ -145,9 +133,10 @@ describe('step validation', () => {
     expect(validateStep(step('expo'), completeState({ participatingInExpo: 'no', teamName: '' }), null).teamName).toBeUndefined();
   });
 
-  test('accommodation counts must equal the people selected', () => {
-    const errors = validateStep(step('accommodation'), completeState({ maleAccommodationCount: '2' }), pdf());
-    expect(errors.accommodationCounts).toContain('must equal');
+  test('saved drafts can continue without requesting accommodation', () => {
+    const oldDraft = { ...completeState(), accommodationRequired: 'yes', accommodationPeople: ['s0'] };
+    expect(validateStep(step('accommodation'), oldDraft, pdf())).toEqual({});
+    expect(buildPayload(oldDraft).accommodationRequired).toBe(false);
   });
 
   test('abstract must be a PDF within 3 MB', () => {
@@ -186,13 +175,22 @@ describe('payload contract with the server', () => {
     expect(parsed.chapterShowcasePresenter).toBe('Asha');
     expect(parsed.expo?.teamName).toBe('Grid Pioneers');
     expect(parsed.expo?.teamMembers).toEqual([0, 1]);
-    expect(parsed.accommodationParticipantNames).toEqual(['Asha', 'Bharath']);
+    expect(parsed.accommodationParticipantNames).toEqual([]);
+  });
+
+  test('rejects new accommodation requests from outdated forms', async () => {
+    const request = new Request('http://localhost/api/registrations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...buildPayload(completeState()), accommodationRequired: true }),
+    });
+    await expect(parseRegistrationRequest(request)).rejects.toThrow('Accommodation requests are closed');
   });
 
   test('without Expo or accommodation the payload omits those details', async () => {
-    const payload = buildPayload(completeState({ participatingInExpo: 'no', accommodationRequired: 'no' }));
+    const payload = buildPayload(completeState({ participatingInExpo: 'no' }));
     expect(payload.expo).toBeUndefined();
-    expect(payload.accommodationParticipantNames).toEqual([]);
+    expect(payload.accommodationRequired).toBe(false);
     const parsed = await validateRegistration({ ...payload, payment: { ...payload.payment, paymentScreenshot: png() } });
     expect(parsed.participatingInExpo).toBe(false);
   });

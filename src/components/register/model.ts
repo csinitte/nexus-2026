@@ -5,7 +5,6 @@
  * before submitting; the server remains the source of truth.
  */
 import {
-  ARRIVAL_PLANS,
   DEFAULT_MAX_ABSTRACT_BYTES,
   EXPO_PROJECT_CATEGORIES,
   MAX_EXPO_TEAM_MEMBERS,
@@ -48,12 +47,6 @@ export type FormState = {
   description: string;
   expoTeamSize: string;
   teamIndexes: number[];
-  accommodationRequired: YesNo;
-  arrivalPlan: string;
-  maleAccommodationCount: string;
-  femaleAccommodationCount: string;
-  /** Keys: `s0`, `s1`, … for students requiring accommodation. */
-  accommodationPeople: string[];
   utrNumber: string;
   declarationAccepted: boolean;
 };
@@ -73,11 +66,6 @@ export const STEPS = [
 
 export const MAX_DESCRIPTION_LENGTH = 800;
 export const MAX_ABSTRACT_BYTES = DEFAULT_MAX_ABSTRACT_BYTES;
-
-export const ARRIVAL_LABELS: Record<(typeof ARRIVAL_PLANS)[number], string> = {
-  '2026-11-24_NIGHT': '24 November 2026 (previous night)',
-  '2026-11-25_MORNING': '25 November 2026 (event morning)',
-};
 
 export const blankStudent = (): StudentDraft => ({ fullName: '', department: '', year: '', contactNumber: '', email: '' });
 
@@ -100,11 +88,6 @@ export const initialState: FormState = {
   description: '',
   expoTeamSize: '',
   teamIndexes: [],
-  accommodationRequired: '',
-  arrivalPlan: '',
-  maleAccommodationCount: '0',
-  femaleAccommodationCount: '0',
-  accommodationPeople: [],
   utrNumber: '',
   declarationAccepted: false,
 };
@@ -121,13 +104,7 @@ export function syncDelegation(state: FormState): FormState {
     ...state,
     presenterIndex: state.presenterIndex !== null && valid(state.presenterIndex) ? state.presenterIndex : null,
     teamIndexes: state.teamIndexes.filter(valid),
-    accommodationPeople: state.accommodationPeople.filter((key) => valid(Number(key.slice(1)))),
   };
-}
-
-/** Students who can be chosen for accommodation, keyed for stable selection. */
-export function delegationPeople(state: FormState): { key: string; name: string; role: string }[] {
-  return state.students.map((s, i) => ({ key: `s${i}`, name: s.fullName.trim() || `Student ${i + 1}`, role: 'Student' }));
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -213,20 +190,6 @@ export function validateStep(step: number, state: FormState, abstract: File | nu
         else if (team !== teamSize) e.teamIndexes = `Select ${teamSize} team member${teamSize === 1 ? '' : 's'} (currently ${team}).`;
       }
       break;
-    case 'accommodation':
-      if (!state.accommodationRequired) e.accommodationRequired = 'Tell us whether your delegation needs accommodation.';
-      if (state.accommodationRequired === 'yes') {
-        if (!ARRIVAL_PLANS.includes(state.arrivalPlan as never)) e.arrivalPlan = 'Choose when you plan to arrive.';
-        const male = Number(state.maleAccommodationCount);
-        const female = Number(state.femaleAccommodationCount);
-        const selected = state.accommodationPeople.length;
-        if (!Number.isInteger(male) || male < 0) e.maleAccommodationCount = 'Enter 0 or more.';
-        if (!Number.isInteger(female) || female < 0) e.femaleAccommodationCount = 'Enter 0 or more.';
-        if (selected < 1) e.accommodationPeople = 'Select everyone who needs accommodation.';
-        else if (!e.maleAccommodationCount && !e.femaleAccommodationCount && male + female !== selected)
-          e.accommodationCounts = `Male + female students (${male + female}) must equal the ${selected} ${selected === 1 ? 'student' : 'students'} selected.`;
-      }
-      break;
     case 'review':
       if (!state.declarationAccepted) e.declarationAccepted = 'Please confirm the declaration to submit.';
       break;
@@ -254,9 +217,7 @@ export function validatePaymentScreenshot(file: File | null): string | null {
 
 /** Builds the JSON payload expected by POST /api/registrations. */
 export function buildPayload(state: FormState) {
-  const people = delegationPeople(state);
   const expo = state.participatingInExpo === 'yes';
-  const accommodation = state.accommodationRequired === 'yes';
   const isActiveCsi = state.collegeCategory === 'active_csi';
   return {
     collegeName: state.collegeName.trim(),
@@ -287,13 +248,7 @@ export function buildPayload(state: FormState) {
           teamMembers: [...state.teamIndexes].sort((a, b) => a - b),
         }
       : undefined,
-    accommodationRequired: accommodation,
-    arrivalPlan: accommodation ? state.arrivalPlan : undefined,
-    maleAccommodationCount: accommodation ? Number(state.maleAccommodationCount) : 0,
-    femaleAccommodationCount: accommodation ? Number(state.femaleAccommodationCount) : 0,
-    accommodationParticipantNames: accommodation
-      ? state.accommodationPeople.map((key) => people.find((p) => p.key === key)?.name ?? '').filter(Boolean)
-      : [],
+    accommodationRequired: false,
     declarationAccepted: state.declarationAccepted,
     payment: {
       collegeCategory: state.collegeCategory,

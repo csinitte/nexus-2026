@@ -84,6 +84,9 @@ export async function parseRegistrationRequest(req: Request): Promise<Registrati
   } else {
     raw = await req.json();
   }
+  if (raw && bool(raw.accommodationRequired)) {
+    throw new ValidationError(['Accommodation requests are closed. Reopen the registration form to continue without accommodation.']);
+  }
   return validateRegistration(raw);
 }
 

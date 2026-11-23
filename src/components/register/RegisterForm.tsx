@@ -101,10 +101,9 @@ export function RegisterForm({ intro }: { intro?: ReactNode }) {
     setErrors((prev) => {
       if ('students' in patch) return {};
       const keys = Object.keys(patch);
-      if (!keys.some((k) => prev[k] || k.startsWith('maleAcc') || k.startsWith('femaleAcc') || k === 'accommodationPeople')) return prev;
+      if (!keys.some((k) => prev[k])) return prev;
       const next = { ...prev };
       for (const k of keys) delete next[k];
-      delete next.accommodationCounts;
       return next;
     });
   }, []);

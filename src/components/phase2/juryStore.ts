@@ -173,12 +173,12 @@ const send = stores.admin.mutate;
 export const jury = {
   addJuror: (input: { name: string; designation: string; email: string; panel: PanelId; password?: string }) => send('addJuror', input),
   removeJuror: (id: string) => send('removeJuror', { id }),
-  resetPassword: (id: string) => send('resetPassword', { id }),
+  resetPassword: (id: string, password?: string) => send('resetPassword', { id, password }),
   setJurorPanel: (id: string, panel: PanelId) => send('setJurorPanel', { id, panel }),
 
-  addVolunteer: (input: { name: string; panel: PanelId }) => send('addVolunteer', input),
+  addVolunteer: (input: { name: string; panel: PanelId; password?: string }) => send('addVolunteer', input),
   removeVolunteer: (id: string) => send('removeVolunteer', { id }),
-  resetVolunteerPassword: (id: string) => send('resetVolunteerPassword', { id }),
+  resetVolunteerPassword: (id: string, password?: string) => send('resetVolunteerPassword', { id, password }),
   setVolunteerPanel: (id: string, panel: PanelId) => send('setVolunteerPanel', { id, panel }),
 
   randomAssign: () => send('randomAssign'),

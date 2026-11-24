@@ -2502,6 +2502,12 @@
   justify-self: start;
   margin-top: 4px;
 }
+.p2-newcred-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+}
 .p2-initials.small {
   width: 30px;
   height: 30px;

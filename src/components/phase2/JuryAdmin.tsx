@@ -303,6 +303,22 @@ function JuryTab({ st }: { st: JuryState }) {
   const [panel, setPanel] = useState<PanelId>(2);
   const [password, setPassword] = useState('');
   const [created, setCreated] = useState<IssuedCredential | null>(null);
+  const [editing, setEditing] = useState<{ id: string; value: string } | null>(null);
+
+  function setPasswordFor(id: string) {
+    const juror = st.jurors.find((j) => j.id === id);
+    setEditing({ id, value: '' });
+    if (juror) setCreated(null);
+  }
+
+  async function savePassword(e: FormEvent, id: string) {
+    e.preventDefault();
+    if (!editing || !editing.value) return;
+    const credential = await jury.resetPassword(id, editing.value);
+    if (!credential) return;
+    setCreated(credential as IssuedCredential);
+    setEditing(null);
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -358,12 +374,9 @@ function JuryTab({ st }: { st: JuryState }) {
                 <button
                   type="button"
                   className="text-link"
-                  onClick={async () => {
-                    const credential = await jury.resetPassword(j.id);
-                    if (credential) setCreated(credential as IssuedCredential);
-                  }}
+                  onClick={() => setPasswordFor(j.id)}
                 >
-                  Issue new password
+                  Set password
                 </button>
                 <button type="button" className="text-link p2-danger" onClick={() => jury.removeJuror(j.id)}>
                   Remove
@@ -372,6 +385,37 @@ function JuryTab({ st }: { st: JuryState }) {
             </li>
           ))}
         </ul>
+
+        {editing && st.jurors.some((j) => j.id === editing.id) && (() => {
+          const juror = st.jurors.find((j) => j.id === editing.id)!;
+          return (
+            <form className="p2-newcred" onSubmit={(e) => savePassword(e, juror.id)}>
+              <p>
+                <small>Set password</small> {juror.name}
+              </p>
+              <div className="field wide">
+                <label htmlFor="j-set-password">New password for {juror.name}</label>
+                <input
+                  id="j-set-password"
+                  value={editing.value}
+                  onChange={(e) => setEditing({ id: juror.id, value: e.target.value })}
+                  placeholder="Type any password"
+                  autoComplete="new-password"
+                  autoFocus
+                  required
+                />
+              </div>
+              <div className="p2-newcred-actions">
+                <button className="button small" type="submit">
+                  Save password
+                </button>
+                <button type="button" className="text-link" onClick={() => setEditing(null)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          );
+        })()}
       </div>
 
       <div>
@@ -483,16 +527,19 @@ function JuryTab({ st }: { st: JuryState }) {
 function VolunteersTab({ st }: { st: JuryState }) {
   const [name, setName] = useState('');
   const [panel, setPanel] = useState<PanelId>(1);
+  const [password, setPassword] = useState('');
   const [created, setCreated] = useState<IssuedVolunteerCredential | null>(null);
+  const [editingVolunteer, setEditingVolunteer] = useState<{ id: string; value: string } | null>(null);
 
   const volunteers = st.volunteers ?? [];
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const v = await jury.addVolunteer({ name: name.trim(), panel });
+    const v = await jury.addVolunteer({ name: name.trim(), panel, password });
     if (!v) return;
     setCreated(v as IssuedVolunteerCredential);
     setName('');
+    setPassword('');
   }
 
   return (
@@ -535,12 +582,9 @@ function VolunteersTab({ st }: { st: JuryState }) {
                   <button
                     type="button"
                     className="text-link"
-                    onClick={async () => {
-                      const credential = await jury.resetVolunteerPassword(v.id);
-                      if (credential) setCreated(credential as IssuedVolunteerCredential);
-                    }}
+                    onClick={() => setEditingVolunteer({ id: v.id, value: '' })}
                   >
-                    Issue new password
+                    Set password
                   </button>
                   <button type="button" className="text-link p2-danger" onClick={() => jury.removeVolunteer(v.id)}>
                     Remove
@@ -550,13 +594,54 @@ function VolunteersTab({ st }: { st: JuryState }) {
             ))}
           </ul>
         )}
+
+        {editingVolunteer && volunteers.some((v) => v.id === editingVolunteer.id) && (() => {
+          const volunteer = volunteers.find((v) => v.id === editingVolunteer.id)!;
+          return (
+            <form
+              className="p2-newcred"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!editingVolunteer.value) return;
+                const credential = await jury.resetVolunteerPassword(volunteer.id, editingVolunteer.value);
+                if (!credential) return;
+                setCreated(credential as IssuedVolunteerCredential);
+                setEditingVolunteer(null);
+              }}
+            >
+              <p>
+                <small>Set password</small> {volunteer.name}
+              </p>
+              <div className="field wide">
+                <label htmlFor="v-set-password">New password for {volunteer.name}</label>
+                <input
+                  id="v-set-password"
+                  value={editingVolunteer.value}
+                  onChange={(e) => setEditingVolunteer({ id: volunteer.id, value: e.target.value })}
+                  placeholder="Type any password"
+                  autoComplete="new-password"
+                  autoFocus
+                  required
+                />
+              </div>
+              <div className="p2-newcred-actions">
+                <button className="button small" type="submit">
+                  Save password
+                </button>
+                <button type="button" className="text-link" onClick={() => setEditingVolunteer(null)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          );
+        })()}
       </div>
 
       <div>
         <form className="p2-side-form" onSubmit={submit}>
           <p className="p2-label">Add a stage volunteer</p>
           <p className="muted">
-            The volunteer will receive a login to access <strong>/volunteer</strong> to start, pause, resume, reset, and advance the 10-minute timer for their panel.
+            The volunteer will receive a login to access <strong>/volunteer</strong> to start, pause, resume, reset, and advance the 10-minute timer for their panel. Set your own password, or leave it blank to auto-generate one.
           </p>
           <div className="field wide">
             <label htmlFor="v-name">Volunteer full name</label>
@@ -566,6 +651,16 @@ function VolunteersTab({ st }: { st: JuryState }) {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Rahul Sharma"
               required
+            />
+          </div>
+          <div className="field wide">
+            <label htmlFor="v-password">Password (optional)</label>
+            <input
+              id="v-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Type any password, or leave blank to auto-generate"
+              autoComplete="new-password"
             />
           </div>
           <div className="field wide">

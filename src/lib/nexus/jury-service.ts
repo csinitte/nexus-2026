@@ -244,8 +244,8 @@ function issue(juror: StoredJuror, chosen?: string): IssuedCredential {
   return { ...publicJuror(juror), password };
 }
 
-function issueVolunteer(volunteer: StoredVolunteer): IssuedVolunteerCredential {
-  const password = randomBytes(12).toString('base64url');
+function issueVolunteer(volunteer: StoredVolunteer, chosen?: string): IssuedVolunteerCredential {
+  const password = chosen || randomBytes(12).toString('base64url');
   volunteer.passwordHash = hashPassword(password);
   return { ...publicVolunteer(volunteer), password };
 }
@@ -287,14 +287,14 @@ function addVolunteer(state: Control, input: JuryInput): IssuedVolunteerCredenti
     passwordHash: null,
   };
   state.volunteers.push(volunteer);
-  return issueVolunteer(volunteer);
+  return issueVolunteer(volunteer, chosenPassword(input.password));
 }
 
 function updateVolunteerRoster(state: Control, input: JuryInput) {
   state.volunteers ??= [];
   const volunteer = state.volunteers.find((v) => v.id === input.id);
   if (!volunteer) throw new JuryError('This volunteer is no longer on the roster.', 404);
-  if (input.action === 'resetVolunteerPassword') return issueVolunteer(volunteer);
+  if (input.action === 'resetVolunteerPassword') return issueVolunteer(volunteer, chosenPassword(input.password));
   if (input.action === 'removeVolunteer') {
     state.volunteers = state.volunteers.filter((v) => v.id !== volunteer.id);
     return;
@@ -314,7 +314,7 @@ function hasStarted(state: Control) {
 function updateRoster(state: Control, input: JuryInput) {
   const juror = state.jurors.find((j) => j.id === input.id);
   if (!juror) throw new JuryError('This judge is no longer on the roster.', 404);
-  if (input.action === 'resetPassword') return issue(juror);
+  if (input.action === 'resetPassword') return issue(juror, chosenPassword(input.password));
   if (hasStarted(state)) throw new JuryError('The jury roster can’t change after judging starts.', 409);
   if (input.action === 'removeJuror') state.jurors = state.jurors.filter((j) => j.id !== juror.id);
   else juror.panel = asPanel(input.panel);

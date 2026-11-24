@@ -1,0 +1,75 @@
+.mimo-main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-top: clamp(12px, 4vw, 52px);
+}
+
+.mimo .form-intro p {
+  color: var(--muted);
+}
+
+.mimo-nav {
+  border: 1px solid var(--line-strong);
+  background: var(--surface-solid);
+  border-radius: 14px;
+}
+
+.mimo-link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(12px, 3vw, 24px);
+  padding: clamp(16px, 4vw, 28px);
+  color: var(--heading);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.mimo-link + .mimo-link {
+  border-top: 1px solid var(--line);
+}
+
+.mimo-link:first-child {
+  border-radius: 13px 13px 0 0;
+}
+
+.mimo-link:last-child {
+  border-radius: 0 0 13px 13px;
+}
+
+.mimo-link:hover,
+.mimo-link:focus-visible {
+  background: rgba(140, 234, 90, 0.08);
+  color: var(--accent);
+}
+
+.mimo-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.mimo-icon {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+.mimo-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.mimo-copy strong {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(1.18rem, 3vw, 1.55rem);
+}
+
+.mimo-copy > span {
+  color: var(--muted);
+  font-size: 0.925rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mimo-link {
+    transition: none;
+  }
+}

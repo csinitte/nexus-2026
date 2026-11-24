@@ -301,6 +301,7 @@ function JuryTab({ st }: { st: JuryState }) {
   const [designation, setDesignation] = useState('');
   const [email, setEmail] = useState('');
   const [panel, setPanel] = useState<PanelId>(2);
+  const [password, setPassword] = useState('');
   const [created, setCreated] = useState<IssuedCredential | null>(null);
 
   async function submit(e: FormEvent) {
@@ -310,12 +311,14 @@ function JuryTab({ st }: { st: JuryState }) {
       designation: designation.trim() || `Jury · ${PANEL_NAMES[panel]}`,
       email: email.trim(),
       panel,
+      password,
     });
     if (!j) return;
     setCreated(j as IssuedCredential);
     setName('');
     setDesignation('');
     setEmail('');
+    setPassword('');
   }
 
   return (
@@ -374,7 +377,7 @@ function JuryTab({ st }: { st: JuryState }) {
       <div>
         <form className="p2-side-form" onSubmit={submit}>
           <p className="p2-label">Add a jury member</p>
-          <p className="muted">A login is created immediately. Provide credentials to the judge.</p>
+          <p className="muted">A login is created immediately. Set your own password, or leave it blank to auto-generate one.</p>
           <div className="field wide">
             <label htmlFor="j-name">Full name</label>
             <input
@@ -402,6 +405,16 @@ function JuryTab({ st }: { st: JuryState }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="judge@college.edu"
+            />
+          </div>
+          <div className="field wide">
+            <label htmlFor="j-password">Password (optional)</label>
+            <input
+              id="j-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Type any password, or leave blank to auto-generate"
+              autoComplete="new-password"
             />
           </div>
           <div className="field wide">
@@ -682,9 +695,9 @@ function PanelsTab({ st }: { st: JuryState }) {
                       <li key={id}>
                         <span className="p2-order">{pad(i + 1)}</span>
                         <div>
-                          <strong>{t.title}</strong>
+                          <strong>{t.name ?? t.title}</strong>
                           <small>
-                            {t.code} · {t.college}
+                            {t.code} · {t.title}
                           </small>
                         </div>
                         <button
@@ -801,14 +814,14 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
           </span>
           <span>
             <small>Start Team 01</small>
-            {teamById(st, order[0]).title}
+            {teamById(st, order[0]).name ?? teamById(st, order[0]).title}
           </span>
         </button>
       )}
 
       {team && (
         <>
-          <p className="p2-now-team">{team.title}</p>
+          <p className="p2-now-team">{team.name ?? team.title}</p>
           <div className="p2-stage-wrap">
             <StageClock phase={phase} elapsed={elapsed} size={280} />
           </div>
@@ -862,7 +875,7 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
           </div>
           {order[idx + 1] && (
             <p className="p2-upnext">
-              <span>Up next:</span> {teamById(st, order[idx + 1]).title}
+              <span>Up next:</span> {teamById(st, order[idx + 1]).name ?? teamById(st, order[idx + 1]).title}
             </p>
           )}
         </>

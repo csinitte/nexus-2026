@@ -21,12 +21,14 @@ export type JuryInput = Record<string, unknown>;
 const panels = [1, 2] as const;
 const blankControl = (): Control => ({
   ...emptyProgress(),
-  jurors: [
-    ['krishnaraj', 'Dr. Krishnaraj'],
-    ['sujay', 'Dr. Sujay Kumar'],
-    ['vineetha', 'Vineetha Pais'],
-  ].map(([username, name]) => ({
-    id: username, username, name, panel: 1, designation: 'Jury · Panel 1', email: '', passwordHash: null,
+  jurors: ([
+    ['krishnaraj', 'Dr. Krishnaraj Chadaga', 1],
+    ['vineetha', 'Dr. Vineetha Pais', 1],
+    ['chanchal', 'Dr. Chanchal Antony', 2],
+    ['sujay', 'Mr. Sujay Kumar', 2],
+    ['ramya', 'Dr. Ramya D. Shetty', 2],
+  ] as const).map(([username, name, panel]) => ({
+    id: username, username, name, panel, designation: `Jury · Panel ${panel}`, email: '', passwordHash: null,
   })),
   volunteers: [],
 });
@@ -163,7 +165,7 @@ export function volunteerCookie(token: string, maxAge = sessionSeconds) {
 export async function juryLogin(input: JuryInput) {
   if (!input || typeof input !== 'object') throw new JuryError('Invalid credentials.', 400);
   const username = field(input.username, 120).toLowerCase();
-  const password = field(input.password, 140);
+  const password = rawSecret(input.password);
   const state = await readControl();
   const juror = state.jurors.find((j) => j.username === username);
   if (!juror?.passwordHash || !verifyPassword(password, juror.passwordHash)) {
@@ -176,7 +178,7 @@ export async function juryLogin(input: JuryInput) {
 export async function volunteerLogin(input: JuryInput) {
   if (!input || typeof input !== 'object') throw new JuryError('Invalid volunteer credentials.', 400);
   const username = field(input.username, 120).toLowerCase();
-  const password = field(input.password, 140);
+  const password = rawSecret(input.password);
   const state = await readControl();
   const volunteer = (state.volunteers ?? []).find((v) => v.username.toLowerCase() === username);
   if (!volunteer?.passwordHash || !verifyPassword(password, volunteer.passwordHash)) {
@@ -220,13 +222,24 @@ function field(value: unknown, max: number) {
   return value.trim();
 }
 
+/** Organisers may type their own password: used verbatim, with no length or content rules. */
+function chosenPassword(value: unknown) {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+/** Passwords are compared exactly as typed, so surrounding spaces are preserved. */
+function rawSecret(value: unknown, max = 1000) {
+  if (typeof value !== 'string' || value.length > max) throw new JuryError('Invalid password.');
+  return value;
+}
+
 function asPanel(value: unknown): PanelId {
   if (value !== 1 && value !== 2) throw new JuryError('Choose Panel 1 or Panel 2.');
   return value;
 }
 
-function issue(juror: StoredJuror): IssuedCredential {
-  const password = randomBytes(18).toString('base64url');
+function issue(juror: StoredJuror, chosen?: string): IssuedCredential {
+  const password = chosen || randomBytes(18).toString('base64url');
   juror.passwordHash = hashPassword(password);
   return { ...publicJuror(juror), password };
 }
@@ -258,7 +271,7 @@ function addJuror(state: Control, input: JuryInput) {
     name, email, designation, panel, passwordHash: null,
   };
   state.jurors.push(juror);
-  return issue(juror);
+  return issue(juror, chosenPassword(input.password));
 }
 
 function addVolunteer(state: Control, input: JuryInput): IssuedVolunteerCredential {

@@ -171,7 +171,7 @@ export function averageOf(st: JuryState, teamId: string): number {
 const send = stores.admin.mutate;
 
 export const jury = {
-  addJuror: (input: { name: string; designation: string; email: string; panel: PanelId }) => send('addJuror', input),
+  addJuror: (input: { name: string; designation: string; email: string; panel: PanelId; password?: string }) => send('addJuror', input),
   removeJuror: (id: string) => send('removeJuror', { id }),
   resetPassword: (id: string) => send('resetPassword', { id }),
   setJurorPanel: (id: string, panel: PanelId) => send('setJurorPanel', { id, panel }),

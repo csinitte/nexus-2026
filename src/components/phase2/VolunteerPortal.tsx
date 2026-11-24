@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import Image from 'next/image';
+import { useRef, useState, type FormEvent } from 'react';
 import { Wordmark } from '@/components/site/Wordmark';
 import { WaveField } from './WaveField';
 import { Icon } from './Icons';
@@ -71,6 +72,31 @@ export function VolunteerPortal() {
         )}
       </main>
     </div>
+  );
+}
+
+function VolunteerQrDisplay() {
+  const dialog = useRef<HTMLDialogElement>(null);
+
+  return (
+    <>
+      <button type="button" className="button outline small" onClick={() => dialog.current?.showModal()}>
+        Show .xyz QR code
+      </button>
+      <dialog ref={dialog} className="p2-volunteer-qr" aria-label="Scan to claim a .xyz domain">
+        <button type="button" className="p2-volunteer-qr-close" onClick={() => dialog.current?.close()}>
+          <strong>Scan to claim a .xyz domain</strong>
+          <Image
+            src="/brand/nexus-claim-xyz-qr.png"
+            alt="QR code for the NEXUS .xyz domain claim page"
+            width={1176}
+            height={1176}
+            unoptimized
+          />
+          <span>Click anywhere or press Esc to close</span>
+        </button>
+      </dialog>
+    </>
   );
 }
 
@@ -252,6 +278,7 @@ function VolunteerDashboard({ panel, volunteerName }: { panel: PanelId; voluntee
           </h1>
         </div>
         <div className="p2-volunteer-meta">
+          <VolunteerQrDisplay />
           <span className="p2-livechip is-running">
             <i aria-hidden="true" />
             Panel {panel} Active

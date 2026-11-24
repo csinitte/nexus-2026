@@ -366,12 +366,19 @@ test('jury credentials, panel isolation, shared timer and final scoring', async 
   expect((await api('admin', { ...adminHeaders, 'Sec-Fetch-Site':'cross-site' }, { action:'clearAssignments' })).status).toBe(403);
 
   const live = await (await api('admin', adminHeaders)).json();
-  expect(live.jurors.map((j: { name: string }) => j.name)).toEqual(['Dr. Krishnaraj', 'Dr. Sujay Kumar', 'Vineetha Pais']);
+  const roster = live.jurors as { id: string; name: string; panel: number }[];
+  expect(roster.map(({ id, name, panel }) => [id, name, panel])).toEqual([
+    ['krishnaraj', 'Dr. Krishnaraj Chadaga', 1],
+    ['vineetha', 'Dr. Vineetha Pais', 1],
+    ['chanchal', 'Dr. Chanchal Antony', 2],
+    ['sujay', 'Mr. Sujay Kumar', 2],
+    ['ramya', 'Dr. Ramya D. Shetty', 2],
+  ]);
   expect(live.teams.some((team: { title: string }) => team.title === 'Jury Project 3')).toBe(false);
   expect(JSON.stringify(live)).not.toContain('passwordHash');
   const { credential: other } = await adminAction('addJuror', { panel: 2, name: 'Panel Two Judge', designation: '', email: '' });
   const credentials = [other];
-  for (const id of ['krishnaraj', 'sujay', 'vineetha']) credentials.push((await adminAction('resetPassword', { id })).credential);
+  for (const { id } of roster) credentials.push((await adminAction('resetPassword', { id })).credential);
   const login = async ({ username, password }: typeof other) => {
     const response = await api('login', {}, { username, password });
     expect(response.status).toBe(200);
@@ -393,16 +400,16 @@ test('jury credentials, panel isolation, shared timer and final scoring', async 
   const timer = judgeView.session[1];
   expect(phaseOf(timer, elapsedOf(timer, timer.startedAt + 300_000))).toBe('qa');
   expect(phaseOf(timer, elapsedOf(timer, timer.startedAt + 600_000))).toBe('over');
-  const scores = { innovation: 8, relevance: 7, technical: 6, demo: 8, presentation: 9 };
+  const scores = { problem_relevance: 7, innovation: 8, technical_depth: 6, functionality: 8, feasibility: 7, presentation: 9, scalability_impact: 7 };
   expect((await api('portal', cookies[0], { action:'submitEval', teamId:team, scores, comment:'' })).status).toBe(403);
-  expect((await api('portal', cookies[1], { action:'submitEval', teamId:team, scores:{ ...scores, demo:11 }, comment:'' })).status).toBe(400);
+  expect((await api('portal', cookies[1], { action:'submitEval', teamId:team, scores:{ ...scores, functionality:11 }, comment:'' })).status).toBe(400);
   expect((await api('admin', adminHeaders, { action:'randomAssign' })).status).toBe(409);
 
   const votes = await Promise.all(credentials.flatMap((judge, index) =>
     state.order[judge.panel].map((teamId: string) => api('portal', cookies[index], { action:'submitEval', teamId, scores, comment:'Judge notes' }))));
   expect(votes.every((vote) => vote.status === 200)).toBe(true);
   const all = await (await api('admin', adminHeaders)).json();
-  expect(Object.keys(all.evals[team])).toHaveLength(3);
+  expect(Object.keys(all.evals[team]).sort()).toEqual(['krishnaraj', 'vineetha']);
   expect(all.evals[team].krishnaraj.comment).toBe('Judge notes');
   const privateView = await (await api('portal', cookies[1])).json();
   expect(Object.keys(privateView.evals[team])).toEqual(['krishnaraj']);

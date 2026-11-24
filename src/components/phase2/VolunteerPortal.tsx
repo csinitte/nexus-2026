@@ -9,7 +9,6 @@ import {
   SLOT,
   SLOT_TOTAL,
   type PanelId,
-  type Team,
 } from './jury-types';
 import {
   signInVolunteer,
@@ -25,7 +24,6 @@ import {
   remainingOf,
   unlockAudio,
   usePhaseAlerts,
-  type Phase,
 } from './juryTimer';
 
 const pad = (n: number) => String(n).padStart(2, '0');

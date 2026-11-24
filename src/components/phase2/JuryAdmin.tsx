@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Wordmark } from '@/components/site/Wordmark';
 import { Ring } from './Fx';
@@ -17,8 +17,6 @@ import {
   type IssuedVolunteerCredential,
   type JuryState,
   type PanelId,
-  type Team,
-  type Volunteer,
 } from './jury-types';
 import { averageOf, elapsedOf, jury, useJuryConnection } from './juryStore';
 import { PHASE_LABEL, clock, remainingOf, unlockAudio, useNow, usePhaseAlerts } from './juryTimer';
@@ -211,7 +209,6 @@ function StepGuide({
   assigned: number;
   evaluated: number;
 }) {
-  const anyStarted = PANELS.some((p) => st.session[p].teamId);
   const done: Record<Tab, boolean> = {
     jury: st.jurors.length >= 2 && PANELS.every((p) => st.jurors.some((j) => j.panel === p)),
     volunteers: (st.volunteers?.length ?? 0) >= 2,

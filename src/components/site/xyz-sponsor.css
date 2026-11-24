@@ -1,0 +1,48 @@
+.xyz-sponsor {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  border: 1px solid var(--line-strong);
+  padding: clamp(20px, 4vw, 36px);
+  background: var(--surface-solid);
+}
+
+.xyz-sponsor-logo {
+  display: inline-grid;
+  place-items: center;
+  width: 142px;
+  min-height: 88px;
+  padding: 8px 13px;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.xyz-sponsor-logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.xyz-sponsor-label {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.xyz-sponsor-copy h2 {
+  margin: 4px 0;
+  font-size: clamp(1.25rem, 2.5vw, 1.85rem);
+}
+
+.xyz-sponsor-copy p:last-child {
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .xyz-sponsor {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    gap: 16px;
+  }
+}

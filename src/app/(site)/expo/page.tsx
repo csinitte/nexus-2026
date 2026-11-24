@@ -5,6 +5,7 @@ import { EVENT, EXPO } from '@/content/nexus';
 import { PrizePool } from '@/components/prize/PrizePool';
 import { TrackGallery } from '@/components/expo/TrackGallery';
 import { JuryEntry } from '@/components/phase2/JuryEntry';
+import { XyzSponsor } from '@/components/site/XyzSponsor';
 
 export const metadata: Metadata = {
   title: 'Student Project Expo',
@@ -51,6 +52,8 @@ export default function ExpoPage() {
       </dl>
 
       <PrizePool />
+
+      <XyzSponsor />
 
       <TrackGallery tracks={EXPO.categories} />
 

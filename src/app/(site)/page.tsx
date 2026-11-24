@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { RegistrationLink } from '@/components/site/RegistrationLink';
+import { XyzSponsor } from '@/components/site/XyzSponsor';
 import { IntroGate } from '@/components/intro/IntroGate';
 import { LogoStory } from '@/components/story/LogoStory';
 import { OBJECTS } from '@/components/story/shapes';
@@ -232,7 +233,9 @@ export default function HomePage() {
         </p>
         <LogoStory />
       </section>
-
+      <section className="section" aria-label="Sponsorship">
+        <XyzSponsor />
+      </section>
     </>
   );
 }

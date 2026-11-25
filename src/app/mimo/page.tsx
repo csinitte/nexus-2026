@@ -13,6 +13,7 @@ const portals: { href: string; label: string; description: string; icon: IconNam
   { href: '/admin', label: 'Admin Panel', description: 'Manage registrations, jury assignments and results.', icon: 'grid' },
   { href: '/jury', label: 'Jury', description: 'See your panel’s timer and submit scores and comments.', icon: 'jury' },
   { href: '/volunteer', label: 'Volunteer', description: 'Run the stage timer and show the .xyz QR code.', icon: 'timer' },
+  { href: '/leader', label: 'Leaderboards', description: 'View team rankings and scores by panel.', icon: 'podium' },
 ];
 
 export default function MimoPage() {

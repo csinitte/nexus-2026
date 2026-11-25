@@ -402,6 +402,19 @@ function VolunteerDashboard({ panel, volunteerName }: { panel: PanelId; voluntee
           </button>
         </div>
 
+        {team && (
+          <button
+            type="button"
+            className="button outline small"
+            onClick={() => {
+              setAlertMsg('');
+              void volunteerTimer.clearActiveTeam(panel, team.id);
+            }}
+          >
+            Clear active team
+          </button>
+        )}
+
         {nextTeam && (
           <div className="p2-upnext-banner">
             <span className="p2-upnext-tag">UP NEXT:</span>
@@ -445,7 +458,9 @@ function VolunteerDashboard({ panel, volunteerName }: { panel: PanelId; voluntee
                   </div>
                   <div className="p2-team-btn-status">
                     {isCurrent ? (
-                      <span className="p2-status-pill is-live">ON STAGE</span>
+                      <span className={session.running && phase !== 'over' ? 'p2-status-pill is-live' : 'p2-status-pill'}>
+                        {PHASE_LABEL[phase]}{!session.running && (phase === 'present' || phase === 'qa') ? ' (paused)' : ''}
+                      </span>
                     ) : scoredCount > 0 ? (
                       <span className="p2-status-pill is-scored">{scoredCount} judges scored</span>
                     ) : (

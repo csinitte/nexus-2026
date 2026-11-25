@@ -952,6 +952,16 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
             </button>
             <button
               type="button"
+              className="button small outline"
+              onClick={() => {
+                setAlert('');
+                void jury.clearActiveTeam(panel, team.id);
+              }}
+            >
+              Clear active team
+            </button>
+            <button
+              type="button"
               className="text-link"
               onClick={() => {
                 setAlert('');

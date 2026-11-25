@@ -188,6 +188,7 @@ export const jury = {
   start: (panel: PanelId) => send('start', { panel }),
   pause: (panel: PanelId) => send('pause', { panel }),
   resetTimer: (panel: PanelId) => send('resetTimer', { panel }),
+  clearActiveTeam: (panel: PanelId, teamId: string) => send('clearActiveTeam', { panel, teamId }),
   next: (panel: PanelId) => send('next', { panel }),
   toggleFinalist: (teamId: string) => send('toggleFinalist', { teamId }),
   setFinalsLocked: (locked: boolean) => send('setFinalsLocked', { locked }),
@@ -200,5 +201,6 @@ export const volunteerTimer = {
   start: (panel: PanelId) => stores.volunteer.mutate('start', { panel }),
   pause: (panel: PanelId) => stores.volunteer.mutate('pause', { panel }),
   resetTimer: (panel: PanelId) => stores.volunteer.mutate('resetTimer', { panel }),
+  clearActiveTeam: (panel: PanelId, teamId: string) => stores.volunteer.mutate('clearActiveTeam', { panel, teamId }),
   next: (panel: PanelId) => stores.volunteer.mutate('next', { panel }),
 };

@@ -379,6 +379,10 @@ function updateTimer(state: Control, input: JuryInput, actor?: { volunteer?: Sto
     case 'resetTimer':
       state.session[panel] = { ...emptySession(), teamId: current.teamId, ...volunteerInfo };
       break;
+    case 'clearActiveTeam':
+      if (current.teamId !== input.teamId) throw new JuryError('The active team changed. Check the timer and try again.', 409);
+      state.session[panel] = { ...emptySession(), ...volunteerInfo };
+      break;
     case 'next': {
       const index = current.teamId ? state.order[panel].indexOf(current.teamId) : -1;
       state.session[panel] = { ...emptySession(), teamId: state.order[panel][index + 1] ?? null, ...volunteerInfo };

@@ -426,6 +426,12 @@ test('jury credentials, panel isolation, shared timer and final scoring', async 
   expect(all.evals[team].krishnaraj.comment).toBe('Judge notes');
   const privateView = await (await api('portal', cookies[1])).json();
   expect(Object.keys(privateView.evals[team])).toEqual(['krishnaraj']);
+  expect((await api('admin', adminHeaders, { action: 'clearActiveTeam', panel: 1, teamId: state.order[2][0] })).status).toBe(409);
+  const { state: cleared } = await adminAction('clearActiveTeam', { panel: 1, teamId: team });
+  expect(cleared.session[1]).toMatchObject({ teamId: null, running: false, accumulated: 0 });
+  expect(cleared.order).toEqual(all.order);
+  expect(cleared.evals).toEqual(all.evals);
+  expect((await (await api('portal', cookies[1])).json()).session[1].teamId).toBeNull();
   await adminAction('toggleFinalist', { teamId: team });
   expect((await adminAction('setFinalsLocked', { locked: true })).state.finalists).toEqual([team]);
   expect((await api('portal', cookies[1], { action:'submitEval', teamId:team, scores, comment:'' })).status).toBe(409);

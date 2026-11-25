@@ -4,23 +4,35 @@ const pad = (value: number) => String(value).padStart(2, '0');
 
 export function PanelLeaderboards({
   panels,
+  combined = false,
   finalsLocked = true,
   onToggleFinalist,
 }: {
   panels: PanelStandings[];
+  combined?: boolean;
   finalsLocked?: boolean;
   onToggleFinalist?: (id: string) => void;
 }) {
+  const sections = panels.map(({ panel, judgeCount, ranked }) => ({
+    panel: panel as PanelStandings['panel'] | null,
+    ranked: ranked.map((row) => ({ ...row, panel, judgeCount })),
+  }));
+  const standings = combined ? [{
+    panel: null,
+    ranked: sections.flatMap(({ ranked }) => ranked)
+      .sort((a, b) => (b.average ?? -1) - (a.average ?? -1)),
+  }] : sections;
+
   return (
-    <div className="p2-panels">
-      {panels.map(({ panel: p, judgeCount, ranked }) => {
+    <div className={combined ? undefined : 'p2-panels'}>
+      {standings.map(({ panel, ranked }) => {
         const complete = ranked.filter((row) => row.average !== null);
         return (
-          <section key={p} className="p2-panelcol">
+          <section key={panel ?? 'overall'} className="p2-panelcol">
             <header>
-              <span className="p2-panel-no">0{p}</span>
+              {panel && <span className="p2-panel-no">0{panel}</span>}
               <div>
-                <h3>{PANEL_NAMES[p]}</h3>
+                <h3>{panel ? PANEL_NAMES[panel] : 'Overall standings'}</h3>
                 <p className="p2-meta">
                   {complete.length} of {ranked.length} teams fully scored · average out of {MAX_TOTAL}
                 </p>
@@ -38,7 +50,7 @@ export function PanelLeaderboards({
                   const complete = r.average !== null;
                   const teamId = r.id;
                   return (
-                    <li key={r.teamNumber} className={`${complete ? '' : 'is-pending'}${picked ? ' is-picked' : ''}`}>
+                    <li key={`${r.panel}-${r.teamNumber}`} className={`${complete ? '' : 'is-pending'}${picked ? ' is-picked' : ''}`}>
                       <span className="p2-lb-rank">{complete ? pad(i + 1) : '—'}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <strong>
@@ -46,7 +58,7 @@ export function PanelLeaderboards({
                           {i === 0 && complete && <em className="p2-leading">Leading</em>}
                         </strong>
                         <p className="p2-meta" style={{ margin: '2px 0 4px', fontSize: '11px' }}>
-                          Team {pad(r.teamNumber)} · {r.name && <>{r.title} · </>}{r.code && <>{r.code} · </>}{r.college} · {r.submittedCount}/{judgeCount} judges
+                          {combined && <>{PANEL_NAMES[r.panel]} · </>}Team {pad(r.teamNumber)} · {r.name && <>{r.title} · </>}{r.code && <>{r.code} · </>}{r.college} · {r.submittedCount}/{r.judgeCount} judges
                         </p>
                         <span className="p2-lb-bar" aria-hidden="true">
                           <span style={{ width: `${((r.average ?? 0) / MAX_TOTAL) * 100}%` }} />

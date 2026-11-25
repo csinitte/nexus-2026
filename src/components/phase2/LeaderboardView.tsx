@@ -6,7 +6,7 @@ import { Wordmark } from '@/components/site/Wordmark';
 import { PanelLeaderboards } from './PanelLeaderboards';
 import type { PanelStandings } from './panel-standings';
 
-export function LeaderboardView() {
+export function LeaderboardView({ combined = false }: { combined?: boolean }) {
   const [panels, setPanels] = useState<PanelStandings[]>();
   const [error, setError] = useState('');
 
@@ -45,11 +45,13 @@ export function LeaderboardView() {
       </header>
       <main id="main" className="section page p2-app-main" tabIndex={-1}>
         <header className="form-intro">
-          <h1>Expo <em>leaderboards.</em></h1>
-          <p className="muted">Teams are ranked within their panel by average weighted score out of 100.</p>
+          <h1>Expo <em>{combined ? 'overall leaderboard.' : 'leaderboards.'}</em></h1>
+          <p className="muted">
+            {combined ? 'Teams from both panels are ranked together' : 'Teams are ranked within their panel'} by average weighted score out of 100.
+          </p>
         </header>
         {error && <p className="form-alert" role="alert">{error}</p>}
-        {panels ? <PanelLeaderboards panels={panels} /> : !error && <p role="status">Loading leaderboards…</p>}
+        {panels ? <PanelLeaderboards panels={panels} combined={combined} /> : !error && <p role="status">Loading leaderboards…</p>}
       </main>
     </div>
   );

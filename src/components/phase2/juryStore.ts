@@ -200,6 +200,8 @@ export const volunteerTimer = {
   selectTeam: (panel: PanelId, teamId: string) => stores.volunteer.mutate('selectTeam', { panel, teamId }),
   start: (panel: PanelId) => stores.volunteer.mutate('start', { panel }),
   pause: (panel: PanelId) => stores.volunteer.mutate('pause', { panel }),
+  addTime: (panel: PanelId, teamId: string, phase: 'present' | 'qa', seconds: 60 | 300) =>
+    stores.volunteer.mutate('addTime', { panel, teamId, phase, seconds }),
   resetTimer: (panel: PanelId) => stores.volunteer.mutate('resetTimer', { panel }),
   clearActiveTeam: (panel: PanelId, teamId: string) => stores.volunteer.mutate('clearActiveTeam', { panel, teamId }),
   next: (panel: PanelId) => stores.volunteer.mutate('next', { panel }),

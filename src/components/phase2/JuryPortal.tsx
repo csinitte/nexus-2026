@@ -12,7 +12,7 @@ import {
   MAX_TOTAL,
   PANEL_NAMES,
   SLOT,
-  SLOT_TOTAL,
+  slotOf,
   blankScores,
   criterionWeightedScore,
   totalWeightedScore,
@@ -162,7 +162,7 @@ function SignIn() {
             <div>
               <h3>Live Stage Timer</h3>
               <p>
-                Each team gets {SLOT.presentSeconds / 60}m presentation + {SLOT.qaSeconds / 60}m Q&amp;A. Alerts chime at 5:00 and 10:00.
+                Each team gets {SLOT.presentSeconds / 60}m presentation + {SLOT.qaSeconds / 60}m Q&amp;A. Alerts chime at the end of each phase.
               </p>
             </div>
           </li>
@@ -194,6 +194,7 @@ function JurorHome({
 }) {
   const st = useJury();
   const session = st.session[juror.panel];
+  const slot = slotOf(session);
   const [toast, setToast] = useState<{ phase: Phase; team: string } | null>(null);
   const [savedTeamId, setSavedTeamId] = useState<string | null>(null);
   const editSavedScore = useRef<HTMLButtonElement>(null);
@@ -228,10 +229,10 @@ function JurorHome({
             <Icon name="bell" size={30} />
           </span>
           <div>
-            <strong>{toast.phase === 'qa' ? 'Presentation time ended (5:00)' : 'Time completed (10:00)'}</strong>
+            <strong>{toast.phase === 'qa' ? 'Presentation time ended' : 'Time completed'}</strong>
             <p>
               {toast.phase === 'qa'
-                ? `Q&A session is now underway for ${st.teams.find((t) => t.id === toast.team)?.title ?? 'this team'} (5 minutes remaining).`
+                ? `Q&A session is now underway for ${st.teams.find((t) => t.id === toast.team)?.title ?? 'this team'}.`
                 : 'Presentation and Q&A time are complete. Please finalize and submit your evaluation.'}
             </p>
           </div>
@@ -262,6 +263,7 @@ function JurorHome({
           team={current}
           phase={phase}
           elapsed={elapsed}
+          slot={slot}
           running={session.running}
           onScore={() => setOpenId(current.id)}
           scored={!!st.evals[current.id]?.[juror.id]}
@@ -272,7 +274,7 @@ function JurorHome({
       {open ? (
         <ScoreSheet
           key={open.id}
-          live={session.teamId === open.id ? { phase, elapsed, running: session.running } : null}
+          live={session.teamId === open.id ? { phase, elapsed, running: session.running, slot } : null}
           team={open}
           index={order.indexOf(open.id)}
           initial={st.evals[open.id]?.[juror.id]}
@@ -335,7 +337,7 @@ function JurorHome({
                 {current ? PHASE_LABEL[phase] : 'Idle'}
               </strong>
               <small className="p2-stat-sub">
-                {current ? `${clock(remainingOf(phase, elapsed))} · ${current.code}` : 'Awaiting start'}
+                {current ? `${clock(remainingOf(phase, elapsed, slot))} · ${current.code}` : 'Awaiting start'}
               </small>
             </div>
           </div>
@@ -441,6 +443,7 @@ function LiveStrip({
   team,
   phase,
   elapsed,
+  slot,
   running,
   onScore,
   scored,
@@ -450,12 +453,13 @@ function LiveStrip({
   team: Team;
   phase: Phase;
   elapsed: number;
+  slot: ReturnType<typeof slotOf>;
   running: boolean;
   onScore: () => void;
   scored: boolean;
   showScore: boolean;
 }) {
-  const pct = Math.min(100, (elapsed / SLOT_TOTAL) * 100);
+  const pct = Math.min(100, (elapsed / slot.totalSeconds) * 100);
   return (
     <section className={`p2-livestrip is-${phase}${compact ? ' is-sheet' : ''}`} aria-label="Stage timer">
       <div>
@@ -466,10 +470,10 @@ function LiveStrip({
         <h2>{team.title}</h2>
       </div>
       <div className="p2-livestrip-clock">
-        <span role="timer">{clock(remainingOf(phase, elapsed))}</span>
+        <span role="timer">{clock(remainingOf(phase, elapsed, slot))}</span>
         <div className="p2-split-bar" aria-hidden="true">
           <span className="p2-split-fill" style={{ width: `${pct}%` }} />
-          <i style={{ left: '50%' }} />
+          <i style={{ left: `${slot.presentSeconds / slot.totalSeconds * 100}%` }} />
         </div>
       </div>
       {showScore && (
@@ -491,7 +495,7 @@ function ScoreSheet({
   onBack,
   onSubmit,
 }: {
-  live: { phase: Phase; elapsed: number; running: boolean } | null;
+  live: { phase: Phase; elapsed: number; running: boolean; slot: ReturnType<typeof slotOf> } | null;
   team: Team;
   index: number;
   initial?: { scores: Scores; comment: string };
@@ -699,7 +703,7 @@ function ScoreSheet({
         {live ? (
           <span className={`p2-sheet-live is-${live.phase}`} role="timer">
             <i aria-hidden="true" />
-            Stage: {PHASE_LABEL[live.phase]} <b>{clock(remainingOf(live.phase, live.elapsed))}</b>
+            Stage: {PHASE_LABEL[live.phase]} <b>{clock(remainingOf(live.phase, live.elapsed, live.slot))}</b>
             <small style={{ marginLeft: '0.5rem', opacity: 0.8 }}>(Informational only)</small>
           </span>
         ) : (

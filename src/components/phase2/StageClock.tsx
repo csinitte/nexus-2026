@@ -1,16 +1,14 @@
-import { SLOT, SLOT_TOTAL } from './jury-types';
+import type { slotOf } from './jury-types';
 import { PHASE_LABEL, clock, remainingOf, type Phase } from './juryTimer';
 
 /**
- * Circular stage clock. The ring is the whole 10-minute slot: the first half
- * (green) is the presentation, the second half (yellow) is Q&A. A glowing
- * marker sweeps around as time passes.
+ * Circular clock showing the presentation and Q&A segments of the current slot.
  */
-export function StageClock({ phase, elapsed, size = 300, label = true }: { phase: Phase; elapsed: number; size?: number; label?: boolean }) {
+export function StageClock({ phase, elapsed, slot, size = 300, label = true }: { phase: Phase; elapsed: number; slot: ReturnType<typeof slotOf>; size?: number; label?: boolean }) {
   const r = 46;
   const C = 2 * Math.PI * r;
-  const split = SLOT.presentSeconds / SLOT_TOTAL;
-  const p = Math.min(1, Math.max(0, elapsed / SLOT_TOTAL));
+  const split = slot.presentSeconds / slot.totalSeconds;
+  const p = Math.min(1, Math.max(0, elapsed / slot.totalSeconds));
   const angle = p * 360 - 90;
   const tipX = 50 + r * Math.cos((angle * Math.PI) / 180);
   const tipY = 50 + r * Math.sin((angle * Math.PI) / 180);
@@ -18,7 +16,7 @@ export function StageClock({ phase, elapsed, size = 300, label = true }: { phase
   const qaDone = Math.max(0, p - split);
 
   return (
-    <div className={`p2-stage is-${phase}`} style={{ width: size, height: size }} role="timer" aria-label={`${PHASE_LABEL[phase]}, ${clock(remainingOf(phase, elapsed))}`}>
+    <div className={`p2-stage is-${phase}`} style={{ width: size, height: size }} role="timer" aria-label={`${PHASE_LABEL[phase]}, ${clock(remainingOf(phase, elapsed, slot))}`}>
       <svg viewBox="0 0 100 100" aria-hidden="true">
         {/* minute ticks */}
         {Array.from({ length: 60 }, (_, i) => {
@@ -43,14 +41,14 @@ export function StageClock({ phase, elapsed, size = 300, label = true }: { phase
         {/* elapsed */}
         <circle cx="50" cy="50" r={r} className="fill fill-present" strokeDasharray={`${C * presentDone} ${C}`} transform="rotate(-90 50 50)" />
         {qaDone > 0 && <circle cx="50" cy="50" r={r} className="fill fill-qa" strokeDasharray={`${C * qaDone} ${C}`} strokeDashoffset={-C * split} transform="rotate(-90 50 50)" />}
-        {/* half-way marker */}
-        <line x1="50" y1={50 + r - 4} x2="50" y2={50 + r + 4} className="mark" />
+        {/* Q&A transition marker */}
+        <line x1="50" y1={50 - r + 4} x2="50" y2={50 - r - 4} className="mark" transform={`rotate(${split * 360} 50 50)`} />
         {/* sweeping tip */}
         {phase !== 'idle' && <circle cx={tipX} cy={tipY} r="2.4" className="tip" />}
       </svg>
       <div className="p2-stage-center">
         {label && <span className="p2-stage-phase">{PHASE_LABEL[phase]}</span>}
-        <strong>{clock(remainingOf(phase, elapsed))}</strong>
+        <strong>{clock(remainingOf(phase, elapsed, slot))}</strong>
         {label && <span className="p2-stage-sub">{phase === 'qa' ? 'Q&A left' : phase === 'over' ? 'over time' : 'presentation left'}</span>}
       </div>
     </div>

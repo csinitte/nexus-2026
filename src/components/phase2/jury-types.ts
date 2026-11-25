@@ -141,9 +141,15 @@ export type PanelSession = {
   startedAt: number | null;
   accumulated: number;
   running: boolean;
+  extraPresentationSeconds?: number;
+  extraQaSeconds?: number;
   volunteerId?: string | null;
   volunteerName?: string | null;
 };
+export function slotOf(session?: PanelSession) {
+  const presentSeconds = SLOT.presentSeconds + (session?.extraPresentationSeconds ?? 0);
+  return { presentSeconds, totalSeconds: presentSeconds + SLOT.qaSeconds + (session?.extraQaSeconds ?? 0) };
+}
 export type JuryProgress = {
   order: Record<PanelId, string[]>;
   session: Record<PanelId, PanelSession>;

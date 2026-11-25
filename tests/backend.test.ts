@@ -329,8 +329,8 @@ test('confirmation tokens are scoped and expire securely', async () => {
 test('jury credentials, panel isolation, shared timer and final scoring', async () => {
   const { GET, POST } = await import('../src/app/api/jury/[scope]/route');
   const { createRegistration } = await import('../src/lib/nexus/registration-service');
-  const { phaseOf } = await import('../src/components/phase2/juryTimer');
-  const { elapsedOf } = await import('../src/components/phase2/jury-types');
+  const { phaseOf, remainingOf } = await import('../src/components/phase2/juryTimer');
+  const { elapsedOf, slotOf } = await import('../src/components/phase2/jury-types');
   for (const [i, cancelled] of [[1, false], [2, false], [3, true]] as const) {
     const created = await createRegistration(await validateRegistration({
       ...base(`12345678988${i}`), collegeName: `Jury Test College ${i}`, participatingInExpo: true,
@@ -377,6 +377,10 @@ test('jury credentials, panel isolation, shared timer and final scoring', async 
   expect(live.teams.some((team: { title: string }) => team.title === 'Jury Project 3')).toBe(false);
   expect(JSON.stringify(live)).not.toContain('passwordHash');
   const { credential: other } = await adminAction('addJuror', { panel: 2, name: 'Panel Two Judge', designation: '', email: '' });
+  const { credential: volunteer } = await adminAction('addVolunteer', { panel: 1, name: 'Timer Volunteer' });
+  const volunteerLogin = await api('volunteer-login', {}, volunteer);
+  expect(volunteerLogin.status).toBe(200);
+  const volunteerHeaders = { Cookie: volunteerLogin.headers.get('set-cookie')!.split(';')[0] };
   const credentials = [other];
   for (const { id } of roster) credentials.push((await adminAction('resetPassword', { id })).credential);
   const login = async ({ username, password }: typeof other) => {
@@ -413,6 +417,17 @@ test('jury credentials, panel isolation, shared timer and final scoring', async 
   const timer = judgeView.session[1];
   expect(phaseOf(timer, elapsedOf(timer, timer.startedAt + 300_000))).toBe('qa');
   expect(phaseOf(timer, elapsedOf(timer, timer.startedAt + 600_000))).toBe('over');
+  const addTime = { action: 'addTime', panel: 1, teamId: team, phase: 'present' };
+  expect((await api('volunteer', volunteerHeaders, { ...addTime, panel: 2, seconds: 60 })).status).toBe(403);
+  expect((await api('volunteer', volunteerHeaders, { ...addTime, phase: 'qa', seconds: 60 })).status).toBe(409);
+  expect((await api('volunteer', volunteerHeaders, { ...addTime, seconds: 60 })).status).toBe(200);
+  expect((await api('volunteer', volunteerHeaders, { ...addTime, seconds: 300 })).status).toBe(200);
+  const extended = (await (await api('portal', cookies[1])).json()).session[1];
+  expect(slotOf(extended)).toEqual({ presentSeconds: 660, totalSeconds: 960 });
+  expect(phaseOf(extended, 600)).toBe('present');
+  expect(remainingOf('present', 600, slotOf(extended))).toBe(60);
+  expect(phaseOf(extended, 660)).toBe('qa');
+  expect(phaseOf(extended, 960)).toBe('over');
   const scores = { problem_relevance: 7, innovation: 8, technical_depth: 6, functionality: 8, feasibility: 7, presentation: 9, scalability_impact: 7 };
   expect((await api('portal', cookies[0], { action:'submitEval', teamId:team, scores, comment:'' })).status).toBe(403);
   expect((await api('portal', cookies[1], { action:'submitEval', teamId:team, scores:{ ...scores, functionality:11 }, comment:'' })).status).toBe(400);

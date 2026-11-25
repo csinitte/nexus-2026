@@ -6,7 +6,7 @@ import { hashPassword, safeEqual, verifyPassword } from './admin-auth';
 import { readAbstractPdf } from './storage';
 import { getPanelStandings } from '@/components/phase2/panel-standings';
 import {
-  CRITERIA, MAX_PER_CRITERION, SLOT_TOTAL, elapsedOf, emptyProgress, emptySession, makeUsername,
+  CRITERIA, MAX_PER_CRITERION, slotOf, elapsedOf, emptyProgress, emptySession, makeUsername,
   type IssuedCredential, type IssuedVolunteerCredential, type Juror, type Volunteer, type JuryProgress,
   type JuryState, type PanelId, type Scores, type Team,
 } from '@/components/phase2/jury-types';
@@ -351,6 +351,8 @@ function updateTimer(state: Control, input: JuryInput, actor?: { volunteer?: Sto
   }
   const current = state.session[panel];
   const now = Date.now();
+  const elapsed = elapsedOf(current, now);
+  const slot = slotOf(current);
   const volunteerInfo = actor?.volunteer
     ? { volunteerId: actor.volunteer.id, volunteerName: actor.volunteer.name }
     : { volunteerId: current.volunteerId ?? null, volunteerName: current.volunteerName ?? null };
@@ -359,13 +361,13 @@ function updateTimer(state: Control, input: JuryInput, actor?: { volunteer?: Sto
     case 'selectTeam': {
       const teamId = field(input.teamId, 80);
       if (!state.order[panel].includes(teamId)) throw new JuryError('This team is outside this panel.');
-      if (current.running && elapsedOf(current, now) < SLOT_TOTAL) throw new JuryError('Pause the timer before picking a different team.', 409);
+      if (current.running && elapsed < slot.totalSeconds) throw new JuryError('Pause the timer before picking a different team.', 409);
       state.session[panel] = { ...emptySession(), teamId, ...volunteerInfo };
       break;
     }
     case 'start':
       if (!current.teamId) throw new JuryError('Choose a team first.');
-      if (elapsedOf(current, now) >= SLOT_TOTAL) throw new JuryError('Reset the timer before restarting.', 409);
+      if (elapsed >= slot.totalSeconds) throw new JuryError('Reset the timer before restarting.', 409);
       if (!current.running) {
         state.started = true;
         state.session[panel] = { ...current, running: true, startedAt: now, ...volunteerInfo };
@@ -377,11 +379,21 @@ function updateTimer(state: Control, input: JuryInput, actor?: { volunteer?: Sto
           ...current,
           running: false,
           startedAt: null,
-          accumulated: elapsedOf(current, now),
+          accumulated: elapsed,
           ...volunteerInfo,
         };
       }
       break;
+    case 'addTime': {
+      if (input.seconds !== 60 && input.seconds !== 300) throw new JuryError('Choose an extra 1 or 5 minutes.');
+      const phase = elapsed < slot.presentSeconds ? 'present' : 'qa';
+      if (!current.teamId || current.teamId !== input.teamId || elapsed >= slot.totalSeconds || phase !== input.phase) {
+        throw new JuryError('The stage timer changed. Check the current team and phase before adding time.', 409);
+      }
+      const field = phase === 'present' ? 'extraPresentationSeconds' : 'extraQaSeconds';
+      state.session[panel] = { ...current, [field]: (current[field] ?? 0) + input.seconds, ...volunteerInfo };
+      break;
+    }
     case 'resetTimer':
       state.session[panel] = { ...emptySession(), teamId: current.teamId, ...volunteerInfo };
       break;

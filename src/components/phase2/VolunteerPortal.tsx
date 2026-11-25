@@ -7,8 +7,7 @@ import { WaveField } from './WaveField';
 import { Icon } from './Icons';
 import {
   PANEL_NAMES,
-  SLOT,
-  SLOT_TOTAL,
+  slotOf,
   type PanelId,
 } from './jury-types';
 import {
@@ -185,7 +184,7 @@ function VolunteerSignIn() {
             </span>
             <div>
               <h3>10-Minute Total Slot</h3>
-              <p>5 minutes Presentation + 5 minutes Q&amp;A. Alerts fire automatically at 5:00 and 10:00.</p>
+              <p>Each team starts with 5 minutes for presentation and 5 minutes for Q&amp;A. Alerts follow the timer if you add time.</p>
             </div>
           </li>
           <li>
@@ -224,9 +223,9 @@ function VolunteerDashboard({ panel, volunteerName }: { panel: PanelId; voluntee
 
   const { phase, elapsed } = usePhaseAlerts(session, (to) => {
     if (to === 'qa') {
-      setAlertMsg('Presentation time ended (5:00). Switch to Q&A!');
+      setAlertMsg('Presentation time ended. Switch to Q&A!');
     } else if (to === 'over') {
-      setAlertMsg('TIME COMPLETED (10:00). Conclude presentation and Q&A!');
+      setAlertMsg('Conclude the Q&A for this team.');
     }
   });
 
@@ -235,8 +234,9 @@ function VolunteerDashboard({ panel, volunteerName }: { panel: PanelId; voluntee
   const nextTeamId = currentIdx >= 0 && currentIdx + 1 < order.length ? order[currentIdx + 1] : null;
   const nextTeam = nextTeamId ? teams.find((t) => t.id === nextTeamId) ?? null : null;
 
-  // Progress percentage of the 10 min slot
-  const pct = Math.min(100, (elapsed / SLOT_TOTAL) * 100);
+  const slot = slotOf(session);
+  const pct = Math.min(100, (elapsed / slot.totalSeconds) * 100);
+  const extensionPhase = phase === 'ready' ? 'present' : phase;
 
   function handleSelectTeam(id: string) {
     unlockAudio();
@@ -303,7 +303,7 @@ function VolunteerDashboard({ panel, volunteerName }: { panel: PanelId; voluntee
             <Icon name="bell" size={32} />
           </span>
           <div>
-            <strong>{phase === 'over' ? 'TIME UP — 10 MINUTES' : 'PRESENTATION ENDED — 5 MINUTES'}</strong>
+            <strong>{phase === 'over' ? 'TIME UP' : 'PRESENTATION ENDED'}</strong>
             <p>{alertMsg}</p>
           </div>
           <button type="button" className="p2-copy" onClick={() => setAlertMsg('')}>
@@ -341,28 +341,28 @@ function VolunteerDashboard({ panel, volunteerName }: { panel: PanelId; voluntee
           </div>
         )}
 
-        {/* 10-Minute Clock Display */}
+        {/* Stage clock */}
         <div className="p2-stage-clock-large">
           <div className="p2-clock-digits" role="timer">
-            {clock(remainingOf(phase, elapsed))}
+            {clock(remainingOf(phase, elapsed, slot))}
           </div>
           <p className="p2-clock-sub">
             {phase === 'present' || phase === 'ready'
-              ? `Presentation Phase (${clock(Math.max(0, SLOT.presentSeconds - elapsed))} remaining)`
+              ? `Presentation Phase (${clock(Math.max(0, slot.presentSeconds - elapsed))} remaining)`
               : phase === 'qa'
-              ? `Q&A Phase (${clock(Math.max(0, SLOT_TOTAL - elapsed))} remaining)`
+              ? `Q&A Phase (${clock(Math.max(0, slot.totalSeconds - elapsed))} remaining)`
               : 'Slot Duration Completed'}
           </p>
 
-          {/* Dual Segment Progress Bar (5m + 5m) */}
+          {/* Presentation and Q&A progress */}
           <div className="p2-split-bar large" aria-hidden="true">
             <span className="p2-split-fill" style={{ width: `${pct}%` }} />
-            <i style={{ left: '50%' }} title="5:00 min Q&A transition mark" />
+            <i style={{ left: `${slot.presentSeconds / slot.totalSeconds * 100}%` }} title="Q&A transition" />
           </div>
           <div className="p2-bar-markers">
             <span>0:00 Start</span>
-            <span style={{ color: 'var(--accent, #00ff88)' }}>5:00 Switch to Q&amp;A</span>
-            <span style={{ color: '#ff4d4f' }}>10:00 End</span>
+            <span style={{ color: 'var(--accent, #00ff88)' }}>{clock(slot.presentSeconds)} Switch to Q&amp;A</span>
+            <span style={{ color: '#ff4d4f' }}>{clock(slot.totalSeconds)} End</span>
           </div>
         </div>
 
@@ -377,7 +377,7 @@ function VolunteerDashboard({ panel, volunteerName }: { panel: PanelId; voluntee
               type="button"
               className="p2-btn-ctrl p2-btn-start"
               onClick={handleStart}
-              disabled={!team || elapsed >= SLOT_TOTAL}
+              disabled={!team || elapsed >= slot.totalSeconds}
             >
               <Icon name="play" size={24} /> {elapsed > 0 ? 'Resume' : 'Start Timer'}
             </button>
@@ -387,7 +387,7 @@ function VolunteerDashboard({ panel, volunteerName }: { panel: PanelId; voluntee
             type="button"
             className="p2-btn-ctrl p2-btn-reset"
             onClick={handleReset}
-            disabled={!team || elapsed === 0}
+            disabled={!team || (elapsed === 0 && slot.totalSeconds === slotOf().totalSeconds)}
           >
             <Icon name="reset" size={22} /> Reset (10:00)
           </button>
@@ -400,6 +400,24 @@ function VolunteerDashboard({ panel, volunteerName }: { panel: PanelId; voluntee
           >
             <Icon name="next" size={22} /> Next Team
           </button>
+        </div>
+
+        <div className="p2-timer-controls" aria-label="Extra time">
+          {([60, 300] as const).map((seconds) => (
+            <button
+              type="button"
+              key={seconds}
+              className="button small outline"
+              disabled={!team || (extensionPhase !== 'present' && extensionPhase !== 'qa')}
+              onClick={() => {
+                if (team && (extensionPhase === 'present' || extensionPhase === 'qa')) {
+                  void volunteerTimer.addTime(panel, team.id, extensionPhase, seconds);
+                }
+              }}
+            >
+              +{seconds / 60} min
+            </button>
+          ))}
         </div>
 
         {team && (

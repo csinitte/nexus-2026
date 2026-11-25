@@ -10,7 +10,7 @@ import {
   CRITERIA,
   MAX_TOTAL,
   PANEL_NAMES,
-  SLOT,
+  slotOf,
   criterionWeightedScore,
   totalWeightedScore,
   type IssuedCredential,
@@ -19,7 +19,7 @@ import {
   type PanelId,
 } from './jury-types';
 import { averageOf, elapsedOf, jury, useJuryConnection } from './juryStore';
-import { PHASE_LABEL, clock, remainingOf, unlockAudio, useNow, usePhaseAlerts } from './juryTimer';
+import { PHASE_LABEL, clock, phaseOf, remainingOf, unlockAudio, useNow, usePhaseAlerts } from './juryTimer';
 import { StageClock } from './StageClock';
 import { PanelLeaderboards } from './PanelLeaderboards';
 import { getPanelStandings } from './panel-standings';
@@ -181,20 +181,12 @@ function LiveChips({ st }: { st: JuryState }) {
         return (
           <span key={p} className={`p2-livechip is-${ph}${s.running ? ' is-running' : ''}`}>
             <i aria-hidden="true" />
-            P{p} · {PHASE_LABEL[ph]} <b>{clock(remainingOf(ph, el))}</b>
+            P{p} · {PHASE_LABEL[ph]} <b>{clock(remainingOf(ph, el, slotOf(s)))}</b>
           </span>
         );
       })}
     </span>
   );
-}
-
-function phaseOf(s: JuryState['session'][PanelId], elapsed: number) {
-  if (!s.teamId) return 'idle';
-  if (elapsed <= 0 && !s.running) return 'ready';
-  if (elapsed < SLOT.presentSeconds) return 'present';
-  if (elapsed < SLOT.presentSeconds + SLOT.qaSeconds) return 'qa';
-  return 'over';
 }
 
 /** 6-step progress line so admins navigate the jury workflow smoothly. */
@@ -844,8 +836,8 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
   const { phase, elapsed } = usePhaseAlerts(session, (to) =>
     setAlert(
       to === 'qa'
-        ? 'Presentation over (5:00) — Q&A started. Alert chime sounded.'
-        : 'Time up (10:00) — 10-minute presentation slot completed.'
+        ? 'Presentation ended. Q&A started.'
+        : 'Time up. The presentation and Q&A are complete.'
     )
   );
   const team = session.teamId ? teamById(st, session.teamId) : null;
@@ -917,7 +909,7 @@ function PanelTimer({ st, panel }: { st: JuryState; panel: PanelId }) {
         <>
           <p className="p2-now-team">{team.name ?? team.title}</p>
           <div className="p2-stage-wrap">
-            <StageClock phase={phase} elapsed={elapsed} size={280} />
+            <StageClock phase={phase} elapsed={elapsed} slot={slotOf(session)} size={280} />
           </div>
           {alert && (
             <p className="p2-alert" role="status">

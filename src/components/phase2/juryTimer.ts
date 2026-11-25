@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { SLOT, SLOT_TOTAL } from './jury-types';
+import { slotOf } from './jury-types';
 import { elapsedOf, type PanelSession } from './juryStore';
 
 export type Phase = 'idle' | 'ready' | 'present' | 'qa' | 'over';
@@ -17,16 +17,16 @@ export const PHASE_LABEL: Record<Phase, string> = {
 export function phaseOf(s: PanelSession, elapsed: number): Phase {
   if (!s.teamId) return 'idle';
   if (elapsed <= 0 && !s.running) return 'ready';
-  if (elapsed < SLOT.presentSeconds) return 'present';
-  if (elapsed < SLOT_TOTAL) return 'qa';
+  const slot = slotOf(s);
+  if (elapsed < slot.presentSeconds) return 'present';
+  if (elapsed < slot.totalSeconds) return 'qa';
   return 'over';
 }
 
 /** Seconds left in the current phase (negative once over time). */
-export function remainingOf(phase: Phase, elapsed: number) {
-  if (phase === 'present' || phase === 'ready') return SLOT.presentSeconds - elapsed;
-  if (phase === 'qa') return SLOT_TOTAL - elapsed;
-  if (phase === 'over') return SLOT_TOTAL - elapsed;
+export function remainingOf(phase: Phase, elapsed: number, slot = slotOf()) {
+  if (phase === 'present' || phase === 'ready') return slot.presentSeconds - elapsed;
+  if (phase === 'qa' || phase === 'over') return slot.totalSeconds - elapsed;
   return 0;
 }
 

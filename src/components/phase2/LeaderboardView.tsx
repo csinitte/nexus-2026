@@ -1,12 +1,41 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { Wordmark } from '@/components/site/Wordmark';
 import { PanelLeaderboards } from './PanelLeaderboards';
-import { useJuryConnection } from './juryStore';
+import type { PanelStandings } from './panel-standings';
 
 export function LeaderboardView() {
-  const { state, status, error } = useJuryConnection('admin');
+  const [panels, setPanels] = useState<PanelStandings[]>();
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let nextRefresh: ReturnType<typeof setTimeout>;
+
+    async function refresh() {
+      try {
+        const response = await fetch('/api/jury/leaderboard', { signal: controller.signal });
+        if (!response.ok) throw new Error();
+        const standings: PanelStandings[] = await response.json();
+        if (!controller.signal.aborted) {
+          setPanels(standings);
+          setError('');
+        }
+      } catch {
+        if (!controller.signal.aborted) setError('Could not refresh the leaderboards. Retrying shortly.');
+      } finally {
+        if (!controller.signal.aborted) nextRefresh = setTimeout(refresh, 5000);
+      }
+    }
+
+    void refresh();
+    return () => {
+      controller.abort();
+      clearTimeout(nextRefresh);
+    };
+  }, []);
 
   return (
     <div className="admin-shell p2-app">
@@ -19,17 +48,8 @@ export function LeaderboardView() {
           <h1>Expo <em>leaderboards.</em></h1>
           <p className="muted">Teams are ranked within their panel by average weighted score out of 100.</p>
         </header>
-        {status === 'ready' ? (
-          <>
-            {error && <p className="form-alert" role="alert">{error}</p>}
-            <PanelLeaderboards st={state} />
-          </>
-        ) : (
-          <div>
-            <p role="status">{status === 'loading' ? 'Checking organiser access…' : error || 'Sign in as an organiser to view the leaderboards.'}</p>
-            {status !== 'loading' && <Link href="/admin" className="button small">Open admin dashboard</Link>}
-          </div>
-        )}
+        {error && <p className="form-alert" role="alert">{error}</p>}
+        {panels ? <PanelLeaderboards panels={panels} /> : !error && <p role="status">Loading leaderboards…</p>}
       </main>
     </div>
   );

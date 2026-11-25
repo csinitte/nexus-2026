@@ -22,6 +22,7 @@ import { averageOf, elapsedOf, jury, useJuryConnection } from './juryStore';
 import { PHASE_LABEL, clock, remainingOf, unlockAudio, useNow, usePhaseAlerts } from './juryTimer';
 import { StageClock } from './StageClock';
 import { PanelLeaderboards } from './PanelLeaderboards';
+import { getPanelStandings } from './panel-standings';
 
 const TABS = [
   ['jury', 'Jury roster', 'jury'],
@@ -1183,7 +1184,7 @@ function BoardTab({ st }: { st: JuryState }) {
         </div>
       )}
 
-      <PanelLeaderboards st={st} onToggleFinalist={jury.toggleFinalist} />
+      <PanelLeaderboards panels={getPanelStandings(st)} finalsLocked={st.finalsLocked} onToggleFinalist={jury.toggleFinalist} />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { getDb } from '@/db';
 import { collegeRegistrations, expoProjects, expoTeamMembers, juryControl, participants } from '@/db/schema';
 import { hashPassword, safeEqual, verifyPassword } from './admin-auth';
 import { readAbstractPdf } from './storage';
+import { getPanelStandings } from '@/components/phase2/panel-standings';
 import {
   CRITERIA, MAX_PER_CRITERION, SLOT_TOTAL, elapsedOf, emptyProgress, emptySession, makeUsername,
   type IssuedCredential, type IssuedVolunteerCredential, type Juror, type Volunteer, type JuryProgress,
@@ -208,6 +209,11 @@ function requireVolunteer(req: Request, state: Control): StoredVolunteer {
   if (extra || !volunteer?.passwordHash || !signature || !Number.isSafeInteger(expires) || expires <= Date.now()
     || !safeEqual(signature, signVolunteer(volunteer, expires))) throw new JuryError('Sign in to the volunteer timer portal.', 401);
   return volunteer;
+}
+
+export async function getPublicLeaderboards() {
+  const [state, teams] = await Promise.all([readControl(), getTeams()]);
+  return getPanelStandings({ ...state, teams }, true);
 }
 
 export async function getJurorAbstract(req: Request, teamId: string) {

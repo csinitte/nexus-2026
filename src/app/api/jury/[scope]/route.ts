@@ -1,6 +1,7 @@
 import { session } from '@/lib/nexus/admin-auth';
 import {
   getJurorAbstract,
+  getPublicLeaderboards,
   getJuryState,
   juryCookie,
   JuryError,
@@ -39,6 +40,9 @@ export async function GET(req: Request, context: Context) {
     }
     if (scope === 'portal') {
       return json(await getJuryState(req, 'portal'));
+    }
+    if (scope === 'leaderboard') {
+      return json(await getPublicLeaderboards());
     }
     if (scope === 'abstract') {
       const teamId = new URL(req.url).searchParams.get('team') ?? '';

@@ -424,6 +424,15 @@ test('jury credentials, panel isolation, shared timer and final scoring', async 
   const all = await (await api('admin', adminHeaders)).json();
   expect(Object.keys(all.evals[team]).sort()).toEqual(['krishnaraj', 'vineetha']);
   expect(all.evals[team].krishnaraj.comment).toBe('Judge notes');
+  const publicResponse = await api('leaderboard');
+  expect(publicResponse.status).toBe(200);
+  const publicPanels = await publicResponse.json();
+  expect(publicPanels.map((panel: { panel: number }) => panel.panel)).toEqual([1, 2]);
+  const publicTeam = publicPanels[0].ranked.find((entry: { teamNumber: number }) => entry.teamNumber === 1);
+  expect(publicTeam).toMatchObject({ average: 74, submittedCount: 2 });
+  expect(publicTeam).not.toHaveProperty('id');
+  expect(publicTeam).not.toHaveProperty('code');
+  expect(JSON.stringify(publicPanels)).not.toContain('Judge notes');
   const privateView = await (await api('portal', cookies[1])).json();
   expect(Object.keys(privateView.evals[team])).toEqual(['krishnaraj']);
   expect((await api('admin', adminHeaders, { action: 'clearActiveTeam', panel: 1, teamId: state.order[2][0] })).status).toBe(409);

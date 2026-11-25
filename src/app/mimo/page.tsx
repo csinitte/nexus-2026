@@ -13,7 +13,8 @@ const portals: { href: string; label: string; description: string; icon: IconNam
   { href: '/admin', label: 'Admin Panel', description: 'Manage registrations, jury assignments and results.', icon: 'grid' },
   { href: '/jury', label: 'Jury', description: 'See your panel’s timer and submit scores and comments.', icon: 'jury' },
   { href: '/volunteer', label: 'Volunteer', description: 'Run the stage timer and show the .xyz QR code.', icon: 'timer' },
-  { href: '/leader', label: 'Leaderboards', description: 'View team rankings and scores by panel.', icon: 'podium' },
+  { href: '/leader', label: 'Panel-based ranking', description: 'View team rankings and scores within each panel.', icon: 'panels' },
+  { href: '/leaderboard', label: 'Overall leaderboard', description: 'View teams from both panels ranked together.', icon: 'podium' },
 ];
 
 export default function MimoPage() {
@@ -25,7 +26,7 @@ export default function MimoPage() {
       <main id="main" tabIndex={-1} className="mimo-main">
         <div className="form-intro">
           <h1>NEXUS <em>portals.</em></h1>
-          <p>Choose your role for the Student Project Expo.</p>
+          <p>Open a Student Project Expo portal or view the rankings.</p>
         </div>
         <nav aria-label="NEXUS portals" className="mimo-nav">
           {portals.map(({ href, label, description, icon }) => (

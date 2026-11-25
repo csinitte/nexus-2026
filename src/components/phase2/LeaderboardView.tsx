@@ -45,7 +45,7 @@ export function LeaderboardView({ combined = false }: { combined?: boolean }) {
       </header>
       <main id="main" className="section page p2-app-main" tabIndex={-1}>
         <header className="form-intro">
-          <h1>Expo <em>{combined ? 'overall leaderboard.' : 'leaderboards.'}</em></h1>
+          <h1>{combined ? <>Expo <em>overall leaderboard.</em></> : <>Panel-based <em>ranking.</em></>}</h1>
           <p className="muted">
             {combined ? 'Teams from both panels are ranked together' : 'Teams are ranked within their panel'} by average weighted score out of 100.
           </p>

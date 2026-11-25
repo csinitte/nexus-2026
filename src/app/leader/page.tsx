@@ -3,7 +3,7 @@ import { LeaderboardView } from '@/components/phase2/LeaderboardView';
 import '@/components/phase2/phase2.css';
 
 export const metadata: Metadata = {
-  title: 'Expo Leaderboards',
+  title: 'Panel-based ranking',
   robots: { index: false, follow: false },
 };
 

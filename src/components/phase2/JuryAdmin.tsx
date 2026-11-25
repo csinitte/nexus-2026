@@ -1149,7 +1149,7 @@ function BoardTab({ st }: { st: JuryState }) {
         meta={
           st.finalsLocked
             ? `${st.finalists.length} final teams confirmed`
-            : 'Ranked by average weighted score out of 100 · select finalist teams for final pitch'
+            : 'Ranked within each panel by the sum of its judges’ weighted scores'
         }
       >
         {st.finalsLocked ? (
@@ -1185,18 +1185,19 @@ function BoardTab({ st }: { st: JuryState }) {
       <div className="p2-panels">
         {PANELS.map((p) => {
           const judges = st.jurors.filter((judge) => judge.panel === p);
+          const maxScore = judges.length * MAX_TOTAL;
           const ranked = st.order[p]
             .map((id) => {
               const evals = st.evals[id] ?? {};
-              const submittedCount = Object.keys(evals).filter((jid) => judges.some((j) => j.id === jid)).length;
+              const submitted = Object.entries(evals).filter(([judgeId]) => judges.some((judge) => judge.id === judgeId));
               return {
                 id,
-                avg: averageOf(st, id),
-                submittedCount,
-                complete: judges.length > 0 && submittedCount === judges.length,
+                points: submitted.reduce((sum, [, evaluation]) => sum + Math.round(totalWeightedScore(evaluation.scores) * 100), 0),
+                submittedCount: submitted.length,
+                complete: judges.length > 0 && submitted.length === judges.length,
               };
             })
-            .sort((a, b) => Number(b.complete) - Number(a.complete) || b.avg - a.avg);
+            .sort((a, b) => Number(b.complete) - Number(a.complete) || b.points - a.points);
 
           const complete = ranked.filter((row) => row.complete);
 
@@ -1207,7 +1208,7 @@ function BoardTab({ st }: { st: JuryState }) {
                 <div>
                   <h3>{PANEL_NAMES[p]}</h3>
                   <p className="p2-meta">
-                    {complete.length} of {ranked.length} teams fully scored
+                    {complete.length} of {ranked.length} teams fully scored · out of {maxScore} points
                   </p>
                 </div>
               </header>
@@ -1226,17 +1227,17 @@ function BoardTab({ st }: { st: JuryState }) {
                         <span className="p2-lb-rank">{r.complete ? pad(i + 1) : '—'}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <strong>
-                            {t.title}
+                            {t.name || t.title}
                             {i === 0 && r.complete && <em className="p2-leading">Leading</em>}
                           </strong>
                           <p className="p2-meta" style={{ margin: '2px 0 4px', fontSize: '11px' }}>
-                            {t.code} · {t.college} · {r.submittedCount}/{judges.length} judges
+                            {t.name && <>{t.title} · </>}{t.code} · {t.college} · {r.submittedCount}/{judges.length} judges
                           </p>
                           <span className="p2-lb-bar" aria-hidden="true">
-                            <span style={{ width: `${Math.min(100, (r.avg / MAX_TOTAL) * 100)}%` }} />
+                            <span style={{ width: `${maxScore ? r.points / maxScore : 0}%` }} />
                           </span>
                         </div>
-                        <span className="p2-lb-score">{r.submittedCount > 0 ? r.avg.toFixed(2) : '—'}</span>
+                        <span className="p2-lb-score">{r.submittedCount > 0 ? (r.points / 100).toFixed(2) : '—'}</span>
                         <label className="p2-pick" title={picked ? 'Remove from final' : 'Send to final'}>
                           <input
                             type="checkbox"

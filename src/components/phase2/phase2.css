@@ -4843,6 +4843,45 @@ details.p2-demo-tools[open] {
 }
 
 
+.p2-rubric-reference {
+  margin-block: 16px;
+  border-block: 1px solid var(--line-strong);
+}
+
+.p2-rubric-reference summary {
+  padding-block: 14px;
+  color: var(--heading);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.p2-rubric-reference table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.p2-rubric-reference th,
+.p2-rubric-reference td {
+  padding: 9px 6px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+
+.p2-rubric-reference tbody th {
+  font-weight: 400;
+}
+
+.p2-rubric-reference tr > :last-child {
+  text-align: right;
+}
+
+.p2-rubric-reference td {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
 .p2-volunteer-qr {
   position: fixed;
   inset: 0;

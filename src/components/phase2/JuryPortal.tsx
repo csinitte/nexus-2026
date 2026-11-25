@@ -353,6 +353,23 @@ function JurorHome({
             </button>
           </div>
 
+          <details className="p2-rubric-reference">
+            <summary>Judging criteria and weights</summary>
+            <table>
+              <thead>
+                <tr><th scope="col">Evaluation criterion</th><th scope="col">Weight</th></tr>
+              </thead>
+              <tbody>
+                {CRITERIA.map(({ id, label, weightage }) => (
+                  <tr key={id}><th scope="row">{label}</th><td>{weightage}%</td></tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr><th scope="row">Total</th><td>{CRITERIA.reduce((sum, criterion) => sum + criterion.weightage, 0)}%</td></tr>
+              </tfoot>
+            </table>
+          </details>
+
           {mine.length === 0 ? (
             <p className="empty">
               Teams have not been assigned to {PANEL_NAMES[juror.panel]} yet. This list updates automatically when the admin assigns teams.

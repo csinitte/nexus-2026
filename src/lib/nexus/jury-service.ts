@@ -1,8 +1,9 @@
 import { createHmac, randomBytes, randomInt, randomUUID } from 'node:crypto';
-import { asc, eq, ne } from 'drizzle-orm';
+import { and, asc, eq, ne } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { collegeRegistrations, expoProjects, expoTeamMembers, juryControl, participants } from '@/db/schema';
 import { hashPassword, safeEqual, verifyPassword } from './admin-auth';
+import { readAbstractPdf } from './storage';
 import {
   CRITERIA, MAX_PER_CRITERION, SLOT_TOTAL, elapsedOf, emptyProgress, emptySession, makeUsername,
   type IssuedCredential, type IssuedVolunteerCredential, type Juror, type Volunteer, type JuryProgress,
@@ -50,6 +51,7 @@ async function getTeams(): Promise<Team[]> {
   const rows = await db.select({
     id: expoProjects.id, code: collegeRegistrations.registrationCode, title: expoProjects.projectTitle,
     name: expoProjects.teamName, category: expoProjects.category, college: collegeRegistrations.collegeName,
+    description: expoProjects.description,
   }).from(expoProjects).innerJoin(collegeRegistrations, eq(expoProjects.registrationId, collegeRegistrations.id))
     .where(ne(collegeRegistrations.registrationStatus, 'cancelled')).orderBy(asc(collegeRegistrations.submittedAt));
   const members = await db.select({ id: expoTeamMembers.projectId, name: participants.fullName })
@@ -206,6 +208,22 @@ function requireVolunteer(req: Request, state: Control): StoredVolunteer {
   if (extra || !volunteer?.passwordHash || !signature || !Number.isSafeInteger(expires) || expires <= Date.now()
     || !safeEqual(signature, signVolunteer(volunteer, expires))) throw new JuryError('Sign in to the volunteer timer portal.', 401);
   return volunteer;
+}
+
+export async function getJurorAbstract(req: Request, teamId: string) {
+  const state = await readControl();
+  const juror = requireJuror(req, state);
+  if (!state.order[juror.panel].includes(teamId)) throw new JuryError('Abstract not found in your panel.', 404);
+
+  const db = await getDb();
+  const [file] = await db.select({
+    provider: expoProjects.abstractStorageProvider,
+    key: expoProjects.abstractStorageKey,
+  }).from(expoProjects)
+    .innerJoin(collegeRegistrations, eq(expoProjects.registrationId, collegeRegistrations.id))
+    .where(and(eq(expoProjects.id, teamId), ne(collegeRegistrations.registrationStatus, 'cancelled')));
+  if (!file) throw new JuryError('Abstract not found in your panel.', 404);
+  return readAbstractPdf(file);
 }
 
 export async function getJuryState(req: Request, scope: 'admin' | 'portal' | 'volunteer') {

@@ -334,7 +334,7 @@ test('jury credentials, panel isolation, shared timer and final scoring', async 
   for (const [i, cancelled] of [[1, false], [2, false], [3, true]] as const) {
     const created = await createRegistration(await validateRegistration({
       ...base(`12345678988${i}`), collegeName: `Jury Test College ${i}`, participatingInExpo: true,
-      expo: { teamName: `Jury Team ${i}`, projectTitle: `Jury Project ${i}`, category: 'Open Innovation', teamMembers: [0, 1], abstract: pdf() },
+      expo: { teamName: `Jury Team ${i}`, projectTitle: `Jury Project ${i}`, description: 'Submitted project description', category: 'Open Innovation', teamMembers: [0, 1], abstract: pdf() },
     }));
     if (cancelled) {
       const { getDb } = await import('../src/db');
@@ -352,7 +352,7 @@ test('jury credentials, panel isolation, shared timer and final scoring', async 
       headers: { 'Content-Type': 'application/json', ...headers },
       ...(body && { method: 'POST', body: JSON.stringify(body) }),
     });
-    return (body ? POST : GET)(req, { params: Promise.resolve({ scope }) });
+    return (body ? POST : GET)(req, { params: Promise.resolve({ scope: scope.split('?')[0] }) });
   };
   const adminHeaders = { Authorization: `Bearer ${admin}` };
   const adminAction = async (action: string, fields: object = {}) => {
@@ -391,6 +391,19 @@ test('jury credentials, panel isolation, shared timer and final scoring', async 
   expect(new Set([...state.order[1], ...state.order[2]]).size).toBe(state.teams.length);
 
   const team = state.order[1][0];
+  const project = state.teams.find((entry: { title: string }) => entry.title === 'Jury Project 1');
+  const panel = state.order[1].includes(project.id) ? 1 : 2;
+  const assignedJudge = cookies[credentials.findIndex((judge) => judge.panel === panel)];
+  const otherJudge = cookies[credentials.findIndex((judge) => judge.panel !== panel)];
+  const abstractPath = `abstract?team=${project.id}`;
+  expect((await api(abstractPath)).status).toBe(401);
+  expect((await api(abstractPath, otherJudge)).status).toBe(404);
+  const abstract = await api(abstractPath, assignedJudge);
+  expect(abstract.status).toBe(200);
+  expect(abstract.headers.get('content-type')).toBe('application/pdf');
+  expect(abstract.headers.get('cache-control')).toBe('private, no-store');
+  const abstractView = await (await api('portal', assignedJudge)).json();
+  expect(abstractView.teams.find((entry: { id: string }) => entry.id === project.id).description).toBe('Submitted project description');
   await adminAction('selectTeam', { panel: 1, teamId: team });
   const { state: started } = await adminAction('start', { panel: 1 });
   const judgeView = await (await api('portal', cookies[1])).json();

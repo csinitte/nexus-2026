@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Wordmark } from '@/components/site/Wordmark';
 import { Ring } from './Fx';
 import { ScoreRadar } from './ScoreRadar';
@@ -195,6 +195,8 @@ function JurorHome({
   const st = useJury();
   const session = st.session[juror.panel];
   const [toast, setToast] = useState<{ phase: Phase; team: string } | null>(null);
+  const [savedTeamId, setSavedTeamId] = useState<string | null>(null);
+  const editSavedScore = useRef<HTMLButtonElement>(null);
 
   const { phase, elapsed } = usePhaseAlerts(session, (to) => {
     setToast({ phase: to, team: session.teamId ?? '' });
@@ -212,6 +214,11 @@ function JurorHome({
   const pending = mine.length - done;
   const current = session.teamId ? st.teams.find((t) => t.id === session.teamId) ?? null : null;
   const open = openId ? mine.find((t) => t.id === openId) ?? null : null;
+  const savedTeam = mine.find((team) => team.id === savedTeamId && st.evals[team.id]?.[juror.id]);
+
+  useEffect(() => {
+    if (!open && savedTeamId) editSavedScore.current?.focus();
+  }, [open, savedTeamId]);
 
   return (
     <>
@@ -230,6 +237,20 @@ function JurorHome({
           </div>
           <button type="button" className="p2-copy" onClick={() => setToast(null)}>
             Acknowledge
+          </button>
+        </div>
+      )}
+
+      {!open && savedTeam && (
+        <div className="callout">
+          <p role="status"><strong>Score saved</strong> · {savedTeam.title}</p>
+          <button
+            ref={editSavedScore}
+            type="button"
+            className="button outline small"
+            onClick={() => setOpenId(savedTeam.id)}
+          >
+            Edit submitted score
           </button>
         </div>
       )}
@@ -258,7 +279,10 @@ function JurorHome({
           onBack={() => setOpenId(null)}
           onSubmit={async (scores, comment) => {
             const res = await jury.submitEval(open.id, scores, comment);
-            if (res !== false) setOpenId(null);
+            if (res !== false) {
+              setSavedTeamId(open.id);
+              setOpenId(null);
+            }
           }}
         />
       ) : (
@@ -512,6 +536,16 @@ function ScoreSheet({
           {team.college} · {team.members.join(', ')}
         </p>
       </header>
+
+      <section aria-labelledby="jury-abstract-title" className="p2-criteria-section">
+        <div className="p2-criteria-header">
+          <h2 id="jury-abstract-title">Project abstract</h2>
+          {team.description?.trim() && <p style={{ whiteSpace: 'pre-wrap' }}>{team.description}</p>}
+          <a className="button outline small" href={`/api/jury/abstract?team=${encodeURIComponent(team.id)}`} target="_blank" rel="noopener noreferrer">
+            Open abstract PDF
+          </a>
+        </div>
+      </section>
 
       {/* Summary Score Strip & 7-Axis Radar */}
       <dl className="detail-strip p2-sheet-strip">

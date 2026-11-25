@@ -24,6 +24,7 @@ export type Team = {
   category: string;
   college: string;
   members: string[];
+  description?: string;
 };
 
 /** Official NEXUS 2026 Evaluation Rubric (7 Criteria, 100% Total). */

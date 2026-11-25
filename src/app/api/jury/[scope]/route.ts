@@ -1,5 +1,6 @@
 import { session } from '@/lib/nexus/admin-auth';
 import {
+  getJurorAbstract,
   getJuryState,
   juryCookie,
   JuryError,
@@ -38,6 +39,18 @@ export async function GET(req: Request, context: Context) {
     }
     if (scope === 'portal') {
       return json(await getJuryState(req, 'portal'));
+    }
+    if (scope === 'abstract') {
+      const teamId = new URL(req.url).searchParams.get('team') ?? '';
+      const bytes = await getJurorAbstract(req, teamId);
+      return new Response(new Uint8Array(bytes), {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'inline; filename="project-abstract.pdf"',
+          'Cache-Control': 'private, no-store',
+          'X-Content-Type-Options': 'nosniff',
+        },
+      });
     }
     return json({ error: 'Not found.' }, 404);
   } catch (error) {

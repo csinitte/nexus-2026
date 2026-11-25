@@ -337,7 +337,8 @@ function JurorHome({
             <ol className="p2-queue">
               {mine.map((t, i) => {
                 const ev = st.evals[t.id]?.[juror.id];
-                const live = session.teamId === t.id;
+                const selected = session.teamId === t.id;
+                const live = selected && session.running && (phase === 'present' || phase === 'qa');
                 const upNext = !!session.teamId && order.indexOf(session.teamId) + 1 === i;
                 const scoreValue = ev ? totalWeightedScore(ev.scores) : 0;
                 return (
@@ -364,10 +365,11 @@ function JurorHome({
                           <span className="p2-score-num">{scoreValue.toFixed(2)}</span>
                           <span className="p2-score-den">/ 100 pts</span>
                         </div>
-                      ) : live ? (
-                        <span className="p2-phase is-present">
-                          <i aria-hidden="true" />
-                          Presenting
+                      ) : selected ? (
+                        <span className={live ? `p2-phase is-${phase}` : 'p2-phase'}>
+                          {live && <i aria-hidden="true" />}
+                          {live && phase === 'present' ? 'Presenting' : PHASE_LABEL[phase]}
+                          {!session.running && (phase === 'present' || phase === 'qa') ? ' (paused)' : ''}
                         </span>
                       ) : upNext ? (
                         <span className="p2-phase">Up next</span>
@@ -414,7 +416,7 @@ function LiveStrip({
 }) {
   const pct = Math.min(100, (elapsed / SLOT_TOTAL) * 100);
   return (
-    <section className={`p2-livestrip is-${phase}${compact ? ' is-sheet' : ''}`} aria-label="Now presenting">
+    <section className={`p2-livestrip is-${phase}${compact ? ' is-sheet' : ''}`} aria-label="Stage timer">
       <div>
         <p className="p2-label">
           {running ? <i className="p2-live-dot" aria-hidden="true" /> : null} Stage Timer · {PHASE_LABEL[phase]}
